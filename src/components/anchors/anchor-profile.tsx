@@ -150,8 +150,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 space-y-4">
                 <Card>
                     <CardHeader><CardTitle>Company Information</CardTitle></CardHeader>
                     <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
@@ -171,7 +171,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                     <UserIcon className="h-5 w-5 text-muted-foreground" />
                                     <div>
                                         <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</div>
-                                        <div className="text-sm text-muted-foreground flex items-center gap-2">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</div>
+                                        <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2">{contact.designation} <span className="hidden sm:inline">&bull;</span> {contact.email} <span className="hidden sm:inline">&bull;</span> {contact.phone}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 w-full sm:w-auto">

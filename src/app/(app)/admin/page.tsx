@@ -76,7 +76,7 @@ export default function AdminPage() {
     <>
       <PageHeader title="Admin Panel" description="Manage unassigned leads and system users." />
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
-      <div className="grid gap-8">
+      <div className="grid gap-4">
         {currentUser.role === 'Admin' && (
           <Card>
             <CardHeader>
@@ -92,28 +92,50 @@ export default function AdminPage() {
                 </div>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg border">
+              {/* Desktop Table */}
+              <div className="hidden rounded-lg border md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead className="hidden sm:table-cell">Email</TableHead>
+                      <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead className="hidden sm:table-cell">Manager</TableHead>
+                      <TableHead>Manager</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {users.map(user => (
                       <TableRow key={user.uid}>
                         <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
+                        <TableCell>{user.email}</TableCell>
                         <TableCell>{user.role}</TableCell>
-                        <TableCell className="hidden sm:table-cell">{getManagerName(user.managerId)}</TableCell>
+                        <TableCell>{getManagerName(user.managerId)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
+              {/* Mobile Cards */}
+               <div className="space-y-4 md:hidden">
+                    {users.map(user => (
+                         <Card key={user.uid} className="p-0">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-base">{user.name}</CardTitle>
+                                <CardDescription>{user.email}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-1">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">Role:</span>
+                                    <span className="font-medium">{user.role}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground">Manager:</span>
+                                    <span className="font-medium">{getManagerName(user.managerId)}</span>
+                                </div>
+                            </CardContent>
+                         </Card>
+                    ))}
+                </div>
             </CardContent>
           </Card>
         )}
@@ -171,10 +193,12 @@ export default function AdminPage() {
             {/* Mobile Cards */}
             <div className="space-y-4 md:hidden">
               {leads.map(lead => (
-                <Card key={lead.id} className="p-4">
-                  <div className="space-y-3">
-                    <p className="font-medium">{lead.name}</p>
-                    <p className="text-sm text-muted-foreground">{(lead as any).contactNumber || (lead as any).industry}</p>
+                <Card key={lead.id} className="p-0">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{lead.name}</CardTitle>
+                    <CardDescription>{(lead as any).contactNumber || (lead as any).industry}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
                     <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select sales user" />
@@ -186,7 +210,7 @@ export default function AdminPage() {
                       </SelectContent>
                     </Select>
                     <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">Assign</Button>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>

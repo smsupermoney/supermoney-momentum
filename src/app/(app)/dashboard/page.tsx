@@ -53,9 +53,9 @@ const getHeaderDescription = (role: string) => {
 // Sales Dashboard
 function SalesDashboard() {
     return (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
             <PipelineCard />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>
@@ -68,9 +68,9 @@ function ZsmDashboard() {
     // For ZSM, the existing components will be filtered for their team's data
     // This is handled within the components themselves based on currentUser role
     return (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
             <PipelineCard />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>
@@ -90,7 +90,8 @@ function OnboardingDashboard() {
                 <CardDescription>Manage the onboarding process for these anchors and their spokes.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="rounded-lg border">
+                {/* Desktop Table */}
+                <div className="hidden rounded-lg border md:block">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -98,7 +99,7 @@ function OnboardingDashboard() {
                                 <TableHead>Industry</TableHead>
                                 <TableHead>Active/Total Dealers</TableHead>
                                 <TableHead>Active/Total Suppliers</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -113,7 +114,7 @@ function OnboardingDashboard() {
                                         <TableCell>{anchor.industry}</TableCell>
                                         <TableCell><Badge variant="secondary">{activeDealers}/{anchorDealers.length}</Badge></TableCell>
                                         <TableCell><Badge variant="secondary">{activeSuppliers}/{anchorSuppliers.length}</Badge></TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-right">
                                             <Button variant="outline" size="sm" asChild>
                                                 <Link href={`/anchors/${anchor.id}`}>View Details</Link>
                                             </Button>
@@ -128,6 +129,38 @@ function OnboardingDashboard() {
                         </TableBody>
                     </Table>
                 </div>
+                 {/* Mobile Cards */}
+                 <div className="space-y-4 md:hidden">
+                    {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
+                        const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
+                        const activeDealers = anchorDealers.filter(d => d.onboardingStatus === 'Active').length;
+                        const anchorSuppliers = suppliers.filter(s => s.anchorId === anchor.id);
+                        const activeSuppliers = anchorSuppliers.filter(s => s.onboardingStatus === 'Active').length;
+                        return (
+                             <Card key={anchor.id} className="p-0">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">{anchor.name}</CardTitle>
+                                    <CardDescription>{anchor.industry}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                     <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Dealers:</span>
+                                        <Badge variant="secondary">{activeDealers}/{anchorDealers.length} Active</Badge>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">Suppliers:</span>
+                                        <Badge variant="secondary">{activeSuppliers}/{anchorSuppliers.length} Active</Badge>
+                                    </div>
+                                    <Button variant="outline" size="sm" asChild className="w-full mt-2">
+                                        <Link href={`/anchors/${anchor.id}`}>View Details</Link>
+                                    </Button>
+                                </CardContent>
+                             </Card>
+                        )
+                    }) : (
+                         <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No anchors are currently in onboarding.</div>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
@@ -137,9 +170,9 @@ function OnboardingDashboard() {
 // Admin Dashboard (can be more comprehensive, but for now re-uses sales components which show global data for admin)
 function AdminDashboard() {
     return (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
             <PipelineCard />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>

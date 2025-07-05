@@ -87,13 +87,13 @@ function SalesReports() {
   const followUpRatio = completedTasks > 0 ? 65 : 0; // Static mock value
 
   return (
-    <div className="grid gap-6">
-      <div className="grid md:grid-cols-3 gap-6">
+    <div className="grid gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <StatCard title="Overdue Tasks" value={overdueTasks} icon={Target} />
         <StatCard title="Tasks For Today" value={todayTasks} icon={Target} />
         <StatCard title="Tasks This Week" value={thisWeekTasks} icon={Target} />
       </div>
-      <div className="grid md:grid-cols-5 gap-6">
+      <div className="grid md:grid-cols-5 gap-4">
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>My Pipeline</CardTitle>
@@ -115,7 +115,7 @@ function SalesReports() {
             </ChartContainer>
           </CardContent>
         </Card>
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-4">
              <Card>
                 <CardHeader>
                     <CardTitle>Activities Logged (Last 7 Days)</CardTitle>
@@ -163,7 +163,7 @@ function ZsmReports() {
         .sort((a, b) => b.activities - a.activities);
 
     return (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
             <Card>
                 <CardHeader>
                     <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
@@ -184,7 +184,7 @@ function ZsmReports() {
                     </ChartContainer>
                 </CardContent>
             </Card>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4">
                 <Card>
                     <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
                     <CardContent>
@@ -208,7 +208,7 @@ function ZsmReports() {
                         </Table>
                     </CardContent>
                 </Card>
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <StatCard title="Total Team Leads" value={teamAnchors.length} description="All leads assigned to your team members." icon={Users} />
                     <StatCard title="Lead Velocity" value="18 Days" description="Avg. time from Lead to Proposal for the team." icon={ArrowRight} isPlaceholder/>
                 </div>
@@ -259,7 +259,7 @@ function AdminReports() {
     const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <Card>
           <CardHeader>
               <CardTitle>Team Pipeline Value (by Stage)</CardTitle>
@@ -280,7 +280,7 @@ function AdminReports() {
               </ChartContainer>
           </CardContent>
       </Card>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader>
               <CardTitle>Activity Leaderboard</CardTitle>
@@ -312,13 +312,13 @@ function AdminReports() {
                 <CardTitle>Stage Conversion Rates</CardTitle>
                 <CardDescription>From one stage to the next</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 pt-2">
+            <CardContent className="space-y-4 pt-2">
                 <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
                 <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
                 <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
             </CardContent>
         </Card>
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4">
             <StatCard title="Spoke Activation Rate" value={`${spokeActivationRate.toFixed(1)}%`} description="Of invited spokes on active anchors." icon={CheckCircle}/>
             <StatCard title="Lead Velocity" value="12 Days" description="Avg. time from Lead to Proposal." icon={ArrowRight} isPlaceholder/>
         </div>
