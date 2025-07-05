@@ -7,8 +7,9 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 
 
 export const mockUsers: User[] = [
-  { uid: 'user-1', name: 'Ramesh Kumar', email: 'ramesh@supermoney.in', role: 'Sales' },
-  { uid: 'user-2', name: 'Priya Sharma', email: 'priya@supermoney.in', role: 'Sales' },
+  { uid: 'user-1', name: 'Ramesh Kumar', email: 'ramesh@supermoney.in', role: 'Sales', managerId: 'user-2' },
+  { uid: 'user-2', name: 'Priya Sharma', email: 'priya@supermoney.in', role: 'Zonal Sales Manager' },
+  { uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist' },
   { uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin' },
 ];
 
@@ -37,13 +38,13 @@ export const mockAnchors: Anchor[] = [
     id: 'anchor-2', 
     name: 'Tata Motors', 
     industry: 'Automotive',
-    status: 'Proposal',
+    status: 'Onboarding', // Changed to Onboarding for the specialist to see it
     primaryContactName: 'Sunita Rao',
     email: 'sunita.rao@tatamotors.com',
     contactNumber: '9876543211',
     assignedTo: 'user-1',
     createdAt: daysAgo(15),
-    dealerIds: [],
+    dealerIds: ['dealer-2'],
     supplierIds: [],
     leadSource: 'Conference / Event',
     annualTurnover: 8500000000,
@@ -90,7 +91,7 @@ export const mockAnchors: Anchor[] = [
     createdAt: daysAgo(2),
     dealerIds: [],
     supplierIds: [],
-    leadSource: 'Referral',
+    leadSource: 'CA / Financial Consultant Referral',
   },
    { 
     id: 'anchor-6', 
@@ -104,7 +105,7 @@ export const mockAnchors: Anchor[] = [
     createdAt: daysAgo(5),
     dealerIds: [],
     supplierIds: [],
-    leadSource: 'Website Inquiry',
+    leadSource: 'Content Marketing',
     annualTurnover: 750000000,
   },
 ];
@@ -195,6 +196,18 @@ export const mockTasks: Task[] = [
     assignedTo: 'user-1',
     createdAt: daysAgo(10),
   },
+  {
+    id: 'task-7',
+    title: 'Collect KYC for Pune Auto',
+    associatedWith: { anchorId: 'anchor-2' },
+    type: 'KYC Document Collection',
+    dueDate: daysFromNow(3),
+    priority: 'High',
+    description: 'Collect all required KYC documents for Pune Auto.',
+    status: 'To-Do',
+    assignedTo: 'user-3', // Assigned to Onboarding Specialist
+    createdAt: daysAgo(1),
+  },
 ];
 
 export const mockActivityLogs: ActivityLog[] = [
@@ -233,5 +246,15 @@ export const mockActivityLogs: ActivityLog[] = [
         title: "Negotiation call with 'Apollo Tyres'",
         outcome: "Client has some objections on the pricing. Scheduled a follow-up meeting.",
         userName: 'Priya Sharma',
-    }
+    },
+    {
+        id: 'log-5',
+        anchorId: 'anchor-2',
+        taskId: 'task-7',
+        timestamp: daysAgo(1),
+        type: 'Email',
+        title: 'Sent KYC document list to Pune Auto',
+        outcome: 'Emailed the list of required documents to the primary contact at Pune Auto.',
+        userName: 'Sonia Singh',
+      },
 ];

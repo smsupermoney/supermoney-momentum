@@ -34,13 +34,29 @@ const priorityColors: Record<TaskPriority, string> = {
 };
 
 export function TaskBoard() {
-  const { tasks, anchors, updateTask, currentUser } = useApp();
+  const { tasks, anchors, updateTask, currentUser, users } = useApp();
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
-  const userTasks = tasks.filter(task => task.assignedTo === currentUser.uid);
+  const getVisibleTasks = () => {
+    switch (currentUser.role) {
+      case 'Admin':
+        return tasks;
+      case 'Zonal Sales Manager':
+        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+        teamMemberIds.push(currentUser.uid);
+        return tasks.filter(task => teamMemberIds.includes(task.assignedTo));
+      case 'Onboarding Specialist':
+      case 'Sales':
+        return tasks.filter(task => task.assignedTo === currentUser.uid);
+      default:
+        return [];
+    }
+  }
+
+  const userTasks = getVisibleTasks();
   const columns: TaskStatus[] = ['To-Do', 'In Progress', 'Completed'];
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {

@@ -22,11 +22,24 @@ const iconMap: Record<TaskType, React.ElementType> = {
 
 
 export function RecentActivityCard({ className }: { className?: string }) {
-  const { activityLogs, currentUser } = useApp();
+  const { activityLogs, currentUser, users } = useApp();
 
-  const userLogs = activityLogs
-    .filter(log => log.userName === currentUser.name)
-    .slice(0, 7);
+  const getVisibleLogs = () => {
+     switch (currentUser.role) {
+      case 'Admin':
+        return activityLogs;
+      case 'Zonal Sales Manager':
+        const teamMemberNames = users.filter(u => u.managerId === currentUser.uid || u.uid === currentUser.uid).map(u => u.name);
+        return activityLogs.filter(log => teamMemberNames.includes(log.userName));
+      case 'Onboarding Specialist':
+      case 'Sales':
+        return activityLogs.filter(log => log.userName === currentUser.name);
+      default:
+        return [];
+    }
+  }
+
+  const userLogs = getVisibleLogs().slice(0, 7);
 
   return (
     <Card className={cn(className)}>
@@ -49,7 +62,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
                     <p className="text-sm font-medium leading-none">{log.title}</p>
                     <p className="text-sm text-muted-foreground">{log.outcome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                      {log.userName} &bull; {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                     </p>
                   </div>
                 </div>

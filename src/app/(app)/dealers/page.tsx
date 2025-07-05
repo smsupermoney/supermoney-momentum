@@ -15,9 +15,23 @@ export default function DealersPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
-  const userDealers = dealers.filter(d => 
-    currentUser.role === 'Admin' || d.assignedTo === currentUser.uid
-  );
+  if (currentUser.role === 'Onboarding Specialist') {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        </div>
+    );
+  }
+
+  const userDealers = dealers.filter(d => {
+    if (currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'Zonal Sales Manager') {
+        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+        teamMemberIds.push(currentUser.uid);
+        return teamMemberIds.includes(d.assignedTo || '');
+    }
+    return d.assignedTo === currentUser.uid;
+  });
 
   const getAnchorName = (anchorId: string | null) => {
     if (!anchorId) return 'N/A';

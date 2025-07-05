@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { User, Anchor, Dealer, Supplier, Task, ActivityLog, UserRole } from '@/lib/types';
+import type { User, Anchor, Dealer, Supplier, Task, ActivityLog } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockSuppliers, mockTasks, mockActivityLogs } from '@/lib/mock-data';
 
 interface AppContextType {
@@ -28,7 +28,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [users] = useState<User[]>(mockUsers);
-  const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]); // Default to first sales user
+  const [currentUser, setCurrentUser] = useState<User>(mockUsers.find(u => u.role === 'Sales') || mockUsers[0]);
   const [anchors, setAnchors] = useState<Anchor[]>(mockAnchors);
   const [dealers, setDealers] = useState<Dealer[]>(mockDealers);
   const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
@@ -55,7 +55,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
   };
   
-  const addActivityLog = (log: ActivityLog) => setActivityLogs(prev => [log, ...prev]);
+  const addActivityLog = (log: ActivityLog) => {
+    const user = users.find(u => u.uid === currentUser.uid);
+    const logWithUser = {...log, userName: user?.name || 'Unknown User'}
+    setActivityLogs(prev => [logWithUser, ...prev]);
+  }
 
   const value = {
     users,

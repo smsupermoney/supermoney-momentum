@@ -13,7 +13,13 @@ import { useApp } from '@/contexts/app-context';
 
 export default function TasksPage() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  const { anchors } = useApp();
+  const { anchors, currentUser } = useApp();
+
+  const userAnchors = anchors.filter(anchor => {
+    if (currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'Onboarding Specialist') return anchor.status === 'Onboarding';
+    return anchor.assignedTo === currentUser.uid;
+  })
 
   return (
     <div className="h-full flex flex-col">
@@ -35,7 +41,7 @@ export default function TasksPage() {
             <div className="flex items-center gap-2 w-full sm:w-auto">
                  <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Due Date" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="this-week">This Week</SelectItem><SelectItem value="overdue">Overdue</SelectItem></SelectContent></Select>
                  <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Priority" /></SelectTrigger><SelectContent><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent></Select>
-                 <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger><SelectContent>{anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
+                 <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger><SelectContent>{userAnchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
             </div>
         </div>
 

@@ -1,10 +1,11 @@
-export type UserRole = 'Admin' | 'Sales';
+export type UserRole = 'Admin' | 'Sales' | 'Zonal Sales Manager' | 'Onboarding Specialist';
 
 export interface User {
   uid: string;
   name: string;
   email: string;
   role: UserRole;
+  managerId?: string | null;
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted';

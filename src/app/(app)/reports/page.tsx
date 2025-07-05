@@ -7,20 +7,44 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar } from 'lucide-react';
-import type { Anchor, Task, ActivityLog } from '@/lib/types';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users } from 'lucide-react';
+import type { Anchor, Task, ActivityLog, UserRole } from '@/lib/types';
 
 
 // Main Page Component
 export default function ReportsPage() {
   const { currentUser } = useApp();
-  const pageTitle = currentUser.role === 'Admin' ? 'Management Reports' : 'My Performance Report';
-  const pageDescription = currentUser.role === 'Admin' ? 'Analytics for team performance and pipeline health.' : 'A summary of your sales activities and pipeline.';
+
+  const getPageTitle = (role: UserRole) => {
+    switch (role) {
+      case 'Admin': return 'Management Reports';
+      case 'Zonal Sales Manager': return 'Team Performance Report';
+      default: return 'My Performance Report';
+    }
+  }
+
+  const getPageDescription = (role: UserRole) => {
+     switch (role) {
+      case 'Admin': return 'Analytics for team performance and pipeline health.';
+      case 'Zonal Sales Manager': return 'A summary of your team\'s sales activities and pipeline.';
+      default: return 'A summary of your sales activities and pipeline.';
+    }
+  }
+
+  const renderReports = () => {
+    switch(currentUser.role) {
+        case 'Admin': return <AdminReports />;
+        case 'Zonal Sales Manager': return <ZsmReports />;
+        case 'Sales': return <SalesReports />;
+        default: return <div className="text-center p-8">No reports available for this role.</div>
+    }
+  }
+
 
   return (
     <>
-      <PageHeader title={pageTitle} description={pageDescription} />
-      {currentUser.role === 'Admin' ? <AdminReports /> : <SalesReports />}
+      <PageHeader title={getPageTitle(currentUser.role)} description={getPageDescription(currentUser.role)} />
+      {renderReports()}
     </>
   );
 }
@@ -109,6 +133,91 @@ function SalesReports() {
   );
 }
 
+// Reports for ZSM
+function ZsmReports() {
+    const { currentUser, users, anchors, activityLogs } = useApp();
+    const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+    teamMemberIds.push(currentUser.uid); // include ZSM
+    
+    const teamMemberNames = users.filter(u => teamMemberIds.includes(u.uid)).map(u => u.name);
+
+    const teamAnchors = anchors.filter(a => teamMemberIds.includes(a.assignedTo || ''));
+    const teamLogs = activityLogs.filter(l => teamMemberNames.includes(l.userName));
+
+    // Team Pipeline Value
+    const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
+    const pipelineValueData = pipelineStages.map(stage => ({
+        name: stage,
+        value: teamAnchors
+            .filter(a => a.status === stage)
+            .length
+    }));
+
+     // Activity Leaderboard
+    const activityCounts = users
+        .filter(u => teamMemberIds.includes(u.uid))
+        .map(user => ({
+            name: user.name,
+            activities: teamLogs.filter(log => log.userName === user.name).length
+        }))
+        .sort((a, b) => b.activities - a.activities);
+
+    return (
+        <div className="grid gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
+                    <CardDescription>Number of leads in each stage for your team.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
+                        <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                            <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                            <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" leads" allowDecimals={false}/>
+                            <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                {pipelineValueData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableBody>
+                                {activityCounts.map((user, index) => (
+                                    <TableRow key={user.name}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                                <div><p className="font-medium">{user.name}</p></div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <span className="text-lg font-bold">{user.activities}</span>
+                                            <span className="text-sm text-muted-foreground"> activities</span>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                <div className="space-y-6">
+                    <StatCard title="Total Team Leads" value={teamAnchors.length} description="All leads assigned to your team members." icon={Users} />
+                    <StatCard title="Lead Velocity" value="18 Days" description="Avg. time from Lead to Proposal for the team." icon={ArrowRight} isPlaceholder/>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
 // Reports for Admin Role
 function AdminReports() {
     const { anchors, users, dealers, suppliers, activityLogs } = useApp();
@@ -124,7 +233,7 @@ function AdminReports() {
     
     // Activity Leaderboard
     const activityCounts = users
-        .filter(u => u.role === 'Sales')
+        .filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager')
         .map(user => ({
             name: user.name,
             activities: activityLogs.filter(log => log.userName === user.name).length

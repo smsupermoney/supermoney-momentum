@@ -14,10 +14,24 @@ export default function SuppliersPage() {
   const { suppliers, anchors, users, currentUser } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+
+  if (currentUser.role === 'Onboarding Specialist') {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        </div>
+    );
+  }
   
-  const userSuppliers = suppliers.filter(s => 
-    currentUser.role === 'Admin' || s.assignedTo === currentUser.uid
-  );
+  const userSuppliers = suppliers.filter(s => {
+    if (currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'Zonal Sales Manager') {
+        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+        teamMemberIds.push(currentUser.uid);
+        return teamMemberIds.includes(s.assignedTo || '');
+    }
+    return s.assignedTo === currentUser.uid;
+  });
 
 
   const getAnchorName = (anchorId: string | null) => {

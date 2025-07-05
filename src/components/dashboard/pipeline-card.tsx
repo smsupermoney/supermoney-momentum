@@ -5,17 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Handshake, Target, FileText, Bot } from 'lucide-react';
 
 export function PipelineCard() {
-  const { anchors, currentUser } = useApp();
+  const { anchors, currentUser, users } = useApp();
 
-  const userAnchors = anchors.filter(
-    (anchor) => anchor.assignedTo === currentUser.uid
-  );
+  const getVisibleAnchors = () => {
+    switch (currentUser.role) {
+      case 'Admin':
+        return anchors;
+      case 'Zonal Sales Manager':
+        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+        teamMemberIds.push(currentUser.uid);
+        return anchors.filter(anchor => teamMemberIds.includes(anchor.assignedTo || ''));
+      case 'Sales':
+        return anchors.filter(anchor => anchor.assignedTo === currentUser.uid);
+      default:
+        return [];
+    }
+  }
+
+  const visibleAnchors = getVisibleAnchors();
 
   const pipeline = {
-    'New Leads': userAnchors.filter((a) => a.status === 'Lead').length,
-    'Contact Made': userAnchors.filter((a) => a.status === 'Initial Contact').length,
-    'Proposal Sent': userAnchors.filter((a) => a.status === 'Proposal').length,
-    'Negotiating': userAnchors.filter((a) => a.status === 'Negotiation').length,
+    'New Leads': visibleAnchors.filter((a) => a.status === 'Lead').length,
+    'Contact Made': visibleAnchors.filter((a) => a.status === 'Initial Contact').length,
+    'Proposal Sent': visibleAnchors.filter((a) => a.status === 'Proposal').length,
+    'Negotiating': visibleAnchors.filter((a) => a.status === 'Negotiation').length,
   };
 
   const pipelineItems = [
@@ -28,7 +41,9 @@ export function PipelineCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Pipeline</CardTitle>
+        <CardTitle>
+            {currentUser.role === 'Zonal Sales Manager' ? 'Team Pipeline' : 'My Pipeline'}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">

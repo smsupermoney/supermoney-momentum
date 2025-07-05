@@ -15,7 +15,15 @@ export default function AdminPage() {
   const { anchors, dealers, suppliers, users, updateAnchor, updateDealer, updateSupplier, currentUser } = useApp();
   const { toast } = useToast();
 
-  const salesUsers = users.filter(u => u.role === 'Sales');
+  const salesUsers = users.filter(u => {
+    if (currentUser.role === 'Admin') {
+        return u.role === 'Sales' || u.role === 'Zonal Sales Manager';
+    }
+    if (currentUser.role === 'Zonal Sales Manager') {
+        return u.role === 'Sales' && u.managerId === currentUser.uid;
+    }
+    return false;
+  });
 
   const unassignedAnchors = anchors.filter(a => a.assignedTo === null || a.status === 'Unassigned Lead');
   const unassignedDealers = dealers.filter(d => d.assignedTo === null || d.onboardingStatus === 'Unassigned Lead');
@@ -46,7 +54,7 @@ export default function AdminPage() {
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });
   };
   
-  if (currentUser.role !== 'Admin') {
+  if (currentUser.role !== 'Admin' && currentUser.role !== 'Zonal Sales Manager') {
     return (
         <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">You do not have permission to view this page.</p>

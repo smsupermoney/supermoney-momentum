@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { NewLeadDialog } from '../leads/new-lead-dialog';
+import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, Calendar, PenSquare, PlusCircle } from 'lucide-react';
@@ -36,12 +38,16 @@ interface AnchorProfileProps {
 }
 
 export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: initialSuppliers, activityLogs: initialLogs }: AnchorProfileProps) {
-  const { addActivityLog, addDealer, addSupplier, currentUser } = useApp();
+  const { addActivityLog, currentUser } = useApp();
   const { toast } = useToast();
   
   const [newActivity, setNewActivity] = useState('');
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Supplier'>('Dealer');
+
+  const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
+
 
   const handleLogActivity = () => {
     if (newActivity.trim() === '') return;
@@ -64,6 +70,13 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       setIsNewLeadOpen(true);
   }
 
+  const handleCreditCheck = () => {
+      toast({
+          title: 'Integration Placeholder',
+          description: 'This would trigger an API call to the credit underwriting system.'
+      })
+  }
+
   return (
     <>
       <PageHeader title={anchor.name} description={anchor.industry}>
@@ -74,12 +87,13 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                     <span className="font-bold text-primary">{anchor.leadScore}/100</span>
                 </div>
             )}
-            <Button variant="outline">Initiate Credit Check</Button>
-            <Button>Add Task</Button>
+            {isSalesRole && <Button variant="outline" onClick={handleCreditCheck}>Initiate Credit Check</Button>}
+            <Button onClick={() => setIsNewTaskOpen(true)}>Add Task</Button>
           </div>
       </PageHeader>
       
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
+      <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
 
       <Tabs defaultValue="details" className="w-full">
         <TabsList>
@@ -110,7 +124,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                     <p className="font-medium">{anchor.primaryContactName}</p>
                                     <p className="text-sm text-muted-foreground">{anchor.email} &bull; {anchor.contactNumber}</p>
                                 </div>
-                                <Button variant="outline" size="sm">Log Interaction</Button>
+                                <Button variant="outline" size="sm" onClick={() => setNewActivity(`Logged interaction with ${anchor.primaryContactName}. `)}>Log Interaction</Button>
                             </div>
                         </div>
                     </CardContent>
@@ -134,7 +148,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Associated Dealers</CardTitle>
-                    <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />Add New Dealer</Button>
+                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />Add New Dealer</Button>}
                 </div>
             </CardHeader>
             <CardContent>
@@ -148,7 +162,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
              <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle>Associated Suppliers</CardTitle>
-                    <Button onClick={() => openNewLeadDialog('Supplier')}><PlusCircle className="h-4 w-4 mr-2" />Add New Supplier</Button>
+                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Supplier')}><PlusCircle className="h-4 w-4 mr-2" />Add New Supplier</Button>}
                 </div>
             </CardHeader>
             <CardContent>
@@ -195,11 +209,23 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
 }
 
 function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 'Dealer' | 'Supplier' }) {
+    const { currentUser, updateDealer, updateSupplier } = useApp();
+    const isSpecialist = currentUser.role === 'Onboarding Specialist';
+
+    const handleStatusChange = (spoke: Dealer | Supplier, newStatus: OnboardingStatus) => {
+        if (type === 'Dealer') {
+            updateDealer({...(spoke as Dealer), onboardingStatus: newStatus});
+        } else {
+            updateSupplier({...(spoke as Supplier), onboardingStatus: newStatus});
+        }
+    }
+
     const getStatusVariant = (status: OnboardingStatus) => {
         if (status === 'Active') return 'default';
         if (status === 'KYC Pending') return 'secondary';
         return 'outline';
     };
+
     return (
         <div className="rounded-lg border">
             <Table>
@@ -216,7 +242,23 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                     <TableRow key={spoke.id}>
                         <TableCell className="font-medium">{spoke.name}</TableCell>
                         <TableCell>{spoke.contactNumber}</TableCell>
-                        <TableCell><Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge></TableCell>
+                        <TableCell>
+                            {isSpecialist ? (
+                                <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
+                                    <SelectTrigger className="w-[150px] h-8 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Invited">Invited</SelectItem>
+                                        <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                        <SelectItem value="Active">Active</SelectItem>
+                                        <SelectItem value="Inactive">Inactive</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
+                            )}
+                        </TableCell>
                         <TableCell className="text-right">
                             <Button variant="ghost" size="sm">View Details</Button>
                         </TableCell>

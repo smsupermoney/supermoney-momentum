@@ -30,17 +30,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { currentUser } = useApp();
 
-  const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/anchors', label: 'Anchors', icon: Building },
-    { href: '/dealers', label: 'Dealers', icon: Handshake },
-    { href: '/suppliers', label: 'Suppliers', icon: Users },
-    { href: '/tasks', label: 'Tasks', icon: ListTodo },
-    { href: '/reports', label: 'Reports', icon: BarChart },
+  const allNavItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Onboarding Specialist'] },
+    { href: '/anchors', label: 'Anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Onboarding Specialist'] },
+    { href: '/dealers', label: 'Dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager'] },
+    { href: '/suppliers', label: 'Suppliers', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager'] },
+    { href: '/tasks', label: 'Tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Onboarding Specialist'] },
+    { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager'] },
+    { href: '/admin', label: 'Admin Panel', icon: Shield, roles: ['Admin', 'Zonal Sales Manager'] },
   ];
 
-  if (currentUser.role === 'Admin') {
-    navItems.push({ href: '/admin', label: 'Admin Panel', icon: Shield });
+  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
+
+  if (currentUser.role === 'Onboarding Specialist') {
+      const anchorItem = navItems.find(i => i.href === '/anchors');
+      if (anchorItem) anchorItem.label = 'Onboarding';
   }
 
   return (

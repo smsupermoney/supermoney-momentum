@@ -23,7 +23,7 @@ export function UserSwitcher() {
         <SelectContent>
           {users.map(user => (
             <SelectItem key={user.uid} value={user.uid}>
-              {user.name} ({user.role})
+              {user.name}
             </SelectItem>
           ))}
         </SelectContent>
