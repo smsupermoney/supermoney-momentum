@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Mail, Phone, Calendar, PenSquare, MoreHorizontal } from 'lucide-react';
+import { Button } from "@/components/ui/button"
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import {
