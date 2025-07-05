@@ -2,12 +2,12 @@
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, User, Star } from 'lucide-react';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar } from 'lucide-react';
 import type { Anchor, Task, ActivityLog } from '@/lib/types';
 
 
@@ -47,10 +47,10 @@ function SalesReports() {
     { name: 'Initial Contact', value: userAnchors.filter(a => a.status === 'Initial Contact').length, fill: 'hsl(var(--chart-2))' },
     { name: 'Proposal', value: userAnchors.filter(a => a.status === 'Proposal').length, fill: 'hsl(var(--chart-3))' },
     { name: 'Negotiation', value: userAnchors.filter(a => a.status === 'Negotiation').length, fill: 'hsl(var(--chart-4))' },
-  ];
+  ].filter(d => d.value > 0);
 
   // Weekly Activity Data
-  const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
+  const sevenDaysAgo = new Date(new Date().setDate(today.getDate() - 7));
   const weeklyLogs = userLogs.filter(l => new Date(l.timestamp) > sevenDaysAgo);
   const weeklyActivities = {
     'Call': weeklyLogs.filter(l => l.type === 'Call').length,
@@ -69,34 +69,37 @@ function SalesReports() {
         <StatCard title="Tasks For Today" value={todayTasks} icon={Target} />
         <StatCard title="Tasks This Week" value={thisWeekTasks} icon={Target} />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid md:grid-cols-5 gap-6">
+        <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>My Pipeline</CardTitle>
             <CardDescription>A funnel view of your assigned leads.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={{}} className="aspect-video h-[250px]">
+            <ChartContainer config={{}} className="aspect-video h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <FunnelChart>
                         <Tooltip />
                         <Funnel dataKey="value" data={pipelineData} isAnimationActive>
-                           <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                           <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" />
+                             {pipelineData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
-        <div className="space-y-6">
+        <div className="md:col-span-2 space-y-6">
              <Card>
                 <CardHeader>
                     <CardTitle>Activities Logged (Last 7 Days)</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-3 gap-4">
-                     <StatCardMini title="Calls" value={weeklyActivities.Call} />
-                     <StatCardMini title="Emails" value={weeklyActivities.Email} />
-                     <StatCardMini title="Meetings" value={weeklyActivities.Meeting} />
+                <CardContent className="grid grid-cols-3 gap-4 text-center">
+                    <ActivityStat icon={Phone} label="Calls" value={weeklyActivities.Call} />
+                    <ActivityStat icon={Mail} label="Emails" value={weeklyActivities.Email} />
+                    <ActivityStat icon={Calendar} label="Meetings" value={weeklyActivities.Meeting} />
                 </CardContent>
              </Card>
              <StatCard title="Follow-up Ratio" value={`${followUpRatio}%`} description="Of completed tasks resulting in a follow-up." icon={Percent} />
@@ -126,13 +129,19 @@ function AdminReports() {
             name: user.name,
             activities: activityLogs.filter(log => log.userName === user.name).length
         }))
-        .sort((a, b) => b.activities - a.activities);
+        .sort((a, b) => b.activities - a.activities)
+        .slice(0, 5); // show top 5
         
     // Conversion Rates
     const getCount = (status: string) => anchors.filter(a => a.status === status).length;
-    const leadToContact = (getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active')) / (getCount('Lead') + getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active')) * 100;
-    const contactToProposal = (getCount('Proposal') + getCount('Negotiation') + getCount('Active')) / (getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active')) * 100;
-    const proposalToWon = (getCount('Active')) / (getCount('Proposal') + getCount('Negotiation') + getCount('Active')) * 100;
+    const allLeadsCount = getCount('Lead') + getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
+    const allContactsCount = getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
+    const allProposalsCount = getCount('Proposal') + getCount('Negotiation') + getCount('Active');
+    
+    const leadToContact = allLeadsCount > 0 ? (allContactsCount / allLeadsCount) * 100 : 0;
+    const contactToProposal = allContactsCount > 0 ? (allProposalsCount / allContactsCount) * 100 : 0;
+    const proposalToWon = allProposalsCount > 0 ? (getCount('Active') / allProposalsCount) * 100 : 0;
+
 
     // Spoke Activation Rate
     const activeAnchors = anchors.filter(a => a.status === 'Active');
@@ -148,12 +157,12 @@ function AdminReports() {
               <CardDescription>Estimated total value of deals (in ₹ Cr) in each stage.</CardDescription>
           </CardHeader>
           <CardContent>
-              <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[250px]">
-                  <BarChart data={pipelineValueData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+              <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
+                  <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                       <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                      <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="value" radius={4}>
+                      <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
+                      <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                         {pipelineValueData.map((entry, index) => (
                            <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
                         ))}
@@ -162,39 +171,47 @@ function AdminReports() {
               </ChartContainer>
           </CardContent>
       </Card>
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
-          <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+              <CardTitle>Activity Leaderboard</CardTitle>
+              <CardDescription>Top performers this week</CardDescription>
+          </CardHeader>
           <CardContent>
             <Table>
-                <TableHeader><TableRow><TableHead>Sales Executive</TableHead><TableHead className="text-right">Activities</TableHead></TableRow></TableHeader>
                 <TableBody>
                     {activityCounts.map((user, index) => (
                         <TableRow key={user.name}>
-                            <TableCell className="font-medium flex items-center gap-2">
-                                {index < 3 && <Star className={`w-4 h-4 ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-400' : 'text-orange-700'}`} />}
-                                {user.name}
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                    <div><p className="font-medium">{user.name}</p></div>
+                                </div>
                             </TableCell>
-                            <TableCell className="text-right font-bold">{user.activities}</TableCell>
+                            <TableCell className="text-right">
+                                <span className="text-lg font-bold">{user.activities}</span>
+                                <span className="text-sm text-muted-foreground"> activities</span>
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
           </CardContent>
         </Card>
-        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Card>
-                <CardHeader><CardTitle>Conversion Rates</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
-                    <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
-                    <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
-                </CardContent>
-            </Card>
-            <div className="space-y-6">
-                <StatCard title="Spoke Activation Rate" value={`${spokeActivationRate.toFixed(1)}%`} description="Of invited spokes on active anchors." icon={CheckCircle}/>
-                <StatCard title="Lead Velocity" value="12 Days" description="Avg. time from Lead to Proposal." icon={ArrowRight} isPlaceholder/>
-            </div>
+        <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>Stage Conversion Rates</CardTitle>
+                <CardDescription>From one stage to the next</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-2">
+                <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
+                <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
+                <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
+            </CardContent>
+        </Card>
+        <div className="lg:col-span-1 space-y-6">
+            <StatCard title="Spoke Activation Rate" value={`${spokeActivationRate.toFixed(1)}%`} description="Of invited spokes on active anchors." icon={CheckCircle}/>
+            <StatCard title="Lead Velocity" value="12 Days" description="Avg. time from Lead to Proposal." icon={ArrowRight} isPlaceholder/>
         </div>
       </div>
     </div>
@@ -219,11 +236,12 @@ function StatCard({ title, value, icon: Icon, description, isPlaceholder }: { ti
   );
 }
 
-function StatCardMini({ title, value }: { title: string; value: string | number }) {
+function ActivityStat({ icon: Icon, label, value }: { icon: React.ElementType, label: string; value: string | number }) {
   return (
-    <div className="text-center">
-        <p className="text-sm text-muted-foreground">{title}</p>
+    <div>
+        <Icon className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
         <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   )
 }
@@ -235,8 +253,8 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
                 <span>{from} <ArrowRight className="inline h-3 w-3 mx-1"/> {to}</span>
                 <span className="font-bold">{value.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-secondary rounded-full h-2.5 mt-1">
-                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${value}%` }}></div>
+            <div className="w-full bg-secondary rounded-full h-2 mt-1">
+                <div className="bg-primary h-2 rounded-full" style={{ width: `${value}%` }}></div>
             </div>
         </div>
     )
