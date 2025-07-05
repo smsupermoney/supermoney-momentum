@@ -49,6 +49,7 @@ export function SupplierDetailsDialog({ supplier, open, onOpenChange }: Supplier
         <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><p className="text-muted-foreground">Contact Number</p><p>{supplier.contactNumber}</p></div>
+                <div><p className="text-muted-foreground">Email</p><p>{supplier.email || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">Location</p><p>{supplier.location || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">GSTIN</p><p>{supplier.gstin || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">Associated Anchor</p><p>{anchorName}</p></div>

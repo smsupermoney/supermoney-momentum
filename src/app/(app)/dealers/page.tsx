@@ -9,16 +9,20 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload } from 'lucide-react';
+import { PlusCircle, Upload, Mail } from 'lucide-react';
 import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
+  
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'dealer' } } | null>(null);
 
   const userDealers = dealers.filter(d => {
     if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
@@ -60,6 +64,16 @@ export default function DealersPage() {
     }
   };
 
+  const handleEmailClick = (e: React.MouseEvent, dealer: Dealer) => {
+    e.stopPropagation();
+    if (!dealer.email) return;
+
+    setEmailConfig({
+        recipientEmail: dealer.email,
+        entity: { id: dealer.id, name: dealer.name, type: 'dealer' }
+    });
+    setIsEmailDialogOpen(true);
+  }
 
   return (
     <>
@@ -83,6 +97,14 @@ export default function DealersPage() {
             onOpenChange={(open) => { if(!open) setSelectedDealer(null); }}
         />
       )}
+      {emailConfig && (
+        <ComposeEmailDialog 
+            open={isEmailDialogOpen} 
+            onOpenChange={setIsEmailDialogOpen}
+            recipientEmail={emailConfig.recipientEmail}
+            entity={emailConfig.entity}
+        />
+      )}
 
 
       {/* Desktop Table View */}
@@ -91,8 +113,7 @@ export default function DealersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden lg:table-cell">Contact Number</TableHead>
-              <TableHead className="hidden lg:table-cell">Location</TableHead>
+              <TableHead className="hidden lg:table-cell">Contact</TableHead>
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
               <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
@@ -103,15 +124,20 @@ export default function DealersPage() {
             {userDealers.length > 0 ? userDealers.map(dealer => (
               <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                 <TableCell className="font-medium">{dealer.name}</TableCell>
-                <TableCell className="hidden lg:table-cell">{dealer.contactNumber}</TableCell>
-                <TableCell className="hidden lg:table-cell">{dealer.location || 'N/A'}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                    <div>{dealer.contactNumber}</div>
+                    <div className="text-xs text-muted-foreground">{dealer.email || 'No email'}</div>
+                </TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
-                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
+                        <Mail className="h-4 w-4"/>
+                    </Button>
+                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
                             Start Onboarding
                         </Link>
@@ -140,8 +166,12 @@ export default function DealersPage() {
                   <CardContent>
                       <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                       <p className="text-sm text-muted-foreground mt-2">{dealer.contactNumber}</p>
+                      <p className="text-sm text-muted-foreground">{dealer.email || 'No email'}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex justify-end gap-2">
+                       <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
+                           <Mail className="h-4 w-4"/>
+                       </Button>
                        <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
                                 Start Onboarding

@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { NewAnchorDialog } from '@/components/anchors/new-anchor-dialog';
-import type { LeadStatus } from '@/lib/types';
-import { PlusCircle } from 'lucide-react';
+import type { Anchor, Contact, LeadStatus } from '@/lib/types';
+import { PlusCircle, Mail } from 'lucide-react';
+import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 
 export default function AnchorsPage() {
   const { anchors, currentUser, users } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
 
   const pageTitle = currentUser.role === 'Onboarding Specialist' ? 'Onboarding Anchors' : 'Anchors';
 
@@ -44,6 +47,16 @@ export default function AnchorsPage() {
     }
   };
 
+  const handleEmailClick = (e: React.MouseEvent, anchor: Anchor, contact: Contact) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setEmailConfig({
+        recipientEmail: contact.email,
+        entity: { id: anchor.id, name: anchor.name, type: 'anchor' }
+    });
+    setIsEmailDialogOpen(true);
+  }
+
   return (
     <>
       <PageHeader title={pageTitle} description="Manage your anchor clients from lead to active.">
@@ -54,6 +67,14 @@ export default function AnchorsPage() {
       </PageHeader>
       
       <NewAnchorDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      {emailConfig && (
+        <ComposeEmailDialog 
+            open={isEmailDialogOpen} 
+            onOpenChange={setIsEmailDialogOpen}
+            recipientEmail={emailConfig.recipientEmail}
+            entity={emailConfig.entity}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {userAnchors.map(anchor => {
@@ -72,7 +93,12 @@ export default function AnchorsPage() {
                   {primaryContact && (
                     <div className="text-sm text-muted-foreground">
                       <p className="font-medium">{primaryContact.name}</p>
-                      <p>{primaryContact.email}</p>
+                      <div className="flex items-center justify-between">
+                        <p>{primaryContact.email}</p>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleEmailClick(e, anchor, primaryContact)}>
+                            <Mail className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
               </CardContent>

@@ -60,10 +60,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
       rows.forEach(row => {
         const columns = row.split(',').map(c => c.trim());
-        // Expected format: Name,Contact Number,GSTIN,Location,Anchor Name
+        // Expected format: Name, Contact Number, Email, GSTIN, Location, Anchor Name
         if (columns.length >= 2 && columns[0] && columns[1]) {
           try {
-            const anchorName = columns[4] || '';
+            const anchorName = columns[5] || '';
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
             
@@ -71,8 +71,9 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               id: `${type.toLowerCase()}-${Date.now()}-${Math.random()}`,
               name: columns[0],
               contactNumber: columns[1],
-              gstin: columns[2] || undefined,
-              location: columns[3] || undefined,
+              email: columns[2] || undefined,
+              gstin: columns[3] || undefined,
+              location: columns[4] || undefined,
               assignedTo: currentUser.uid,
               onboardingStatus: finalAnchorId ? 'Invited' : 'Unassigned Lead',
               anchorId: finalAnchorId,
@@ -115,7 +116,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: Name, Contact Number, GSTIN, Location, Anchor Name. The first row should be headers.
+            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name. The first row should be headers.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

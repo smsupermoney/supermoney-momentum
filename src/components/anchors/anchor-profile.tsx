@@ -49,8 +49,9 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   const [activeTab, setActiveTab] = useState('details'); 
   const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [emailRecipient, setEmailRecipient] = useState('');
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
+
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
   const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
@@ -92,8 +93,11 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   };
   
   const handleEmailClick = (contact: Contact) => {
-    setEmailRecipient(contact.email);
-    setEmailDialogOpen(true);
+    setEmailConfig({
+        recipientEmail: contact.email,
+        entity: { id: anchor.id, name: anchor.name, type: 'anchor' }
+    });
+    setIsEmailDialogOpen(true);
   };
 
 
@@ -127,12 +131,14 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
-      <ComposeEmailDialog 
-        open={emailDialogOpen} 
-        onOpenChange={setEmailDialogOpen}
-        recipientEmail={emailRecipient}
-        anchor={anchor}
-      />
+      {emailConfig && (
+        <ComposeEmailDialog 
+            open={isEmailDialogOpen} 
+            onOpenChange={setIsEmailDialogOpen}
+            recipientEmail={emailConfig.recipientEmail}
+            entity={emailConfig.entity}
+        />
+      )}
 
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">

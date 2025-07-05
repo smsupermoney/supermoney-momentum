@@ -29,6 +29,7 @@ import type { Dealer, Supplier } from '@/lib/types';
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
   contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+  email: z.string().email({ message: 'A valid email is required.' }).optional().or(z.literal('')),
   gstin: z.string().optional(),
   location: z.string().optional(),
   anchorId: z.string().optional(),
@@ -52,6 +53,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     defaultValues: {
       name: '',
       contactNumber: '',
+      email: '',
       gstin: '',
       location: '',
       anchorId: '',
@@ -71,6 +73,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       id: `${type.toLowerCase()}-${Date.now()}`,
       name: values.name,
       contactNumber: values.contactNumber,
+      email: values.email,
       gstin: values.gstin,
       location: values.location,
       assignedTo: isSpecialist ? null : currentUser.uid,
@@ -116,19 +119,34 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="contactNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter contact number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="contactNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="9876543210" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="contact@company.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             {!anchorId && (
                 <FormField

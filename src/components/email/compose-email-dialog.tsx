@@ -24,11 +24,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { ActivityLog, Anchor } from '@/lib/types';
+import type { ActivityLog } from '@/lib/types';
 import { useEffect } from 'react';
 
 const formSchema = z.object({
   to: z.string().email(),
+  cc: z.string().email().optional().or(z.literal('')),
   subject: z.string().min(3, 'Subject is required'),
   body: z.string().min(10, 'Email body cannot be empty'),
 });
@@ -39,10 +40,10 @@ interface ComposeEmailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipientEmail: string;
-  anchor: Anchor;
+  entity: { id: string; name: string; type: 'anchor' | 'dealer' | 'supplier' };
 }
 
-export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, anchor }: ComposeEmailDialogProps) {
+export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity }: ComposeEmailDialogProps) {
   const { addActivityLog, currentUser } = useApp();
   const { toast } = useToast();
 
@@ -50,6 +51,7 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, anchor 
     resolver: zodResolver(formSchema),
     defaultValues: {
       to: recipientEmail,
+      cc: '',
       subject: '',
       body: '',
     },
@@ -58,6 +60,7 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, anchor 
   useEffect(() => {
     form.reset({
       to: recipientEmail,
+      cc: '',
       subject: '',
       body: '',
     });
@@ -74,17 +77,29 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, anchor 
         return;
     }
 
-    const newLog: ActivityLog = {
+    let logOutcome = values.body;
+    if (values.cc) {
+        logOutcome = `CC: ${values.cc}\n\n${values.body}`;
+    }
+    
+    const newLog: Partial<ActivityLog> = {
       id: `log-${Date.now()}`,
-      anchorId: anchor.id,
       timestamp: new Date().toISOString(),
       type: 'Email',
-      title: `Email: ${values.subject}`,
-      outcome: values.body,
+      title: `Email: ${values.subject} to ${entity.name}`,
+      outcome: logOutcome,
       userName: currentUser.name,
     };
+    
+    if (entity.type === 'anchor') {
+        newLog.anchorId = entity.id;
+    } else if (entity.type === 'dealer') {
+        newLog.dealerId = entity.id;
+    } else if (entity.type === 'supplier') {
+        newLog.supplierId = entity.id;
+    }
 
-    addActivityLog(newLog);
+    addActivityLog(newLog as ActivityLog);
 
     toast({
       title: 'Email Sent (Simulation)',
@@ -112,6 +127,19 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, anchor 
                   <FormLabel>To</FormLabel>
                   <FormControl>
                     <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CC (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="cc@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

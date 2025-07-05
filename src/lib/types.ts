@@ -27,13 +27,14 @@ export interface BaseLead {
   id: string;
   name: string;
   contactNumber: string;
+  email?: string;
   gstin?: string;
   location?: string;
   assignedTo: string | null;
   createdAt: string;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name'> {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email'> {
   name: string; // Anchor name is company name
   industry: string;
   annualTurnover?: number;
@@ -77,7 +78,9 @@ export interface Task {
 
 export interface ActivityLog {
   id: string;
-  anchorId: string;
+  anchorId?: string;
+  dealerId?: string;
+  supplierId?: string;
   taskId?: string;
   timestamp: string;
   type: TaskType;

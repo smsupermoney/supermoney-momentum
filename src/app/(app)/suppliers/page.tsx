@@ -9,10 +9,11 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload } from 'lucide-react';
+import { PlusCircle, Upload, Mail } from 'lucide-react';
 import type { Supplier, OnboardingStatus } from '@/lib/types';
 import { SupplierDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 
 
 export default function SuppliersPage() {
@@ -20,6 +21,9 @@ export default function SuppliersPage() {
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'supplier' } } | null>(null);
 
   const userSuppliers = suppliers.filter(s => {
     if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
@@ -62,6 +66,17 @@ export default function SuppliersPage() {
     }
   };
 
+  const handleEmailClick = (e: React.MouseEvent, supplier: Supplier) => {
+    e.stopPropagation();
+    if (!supplier.email) return;
+
+    setEmailConfig({
+        recipientEmail: supplier.email,
+        entity: { id: supplier.id, name: supplier.name, type: 'supplier' }
+    });
+    setIsEmailDialogOpen(true);
+  }
+
   return (
     <>
       <PageHeader title="Suppliers" description="Manage all supplier relationships.">
@@ -84,6 +99,14 @@ export default function SuppliersPage() {
             onOpenChange={(open) => { if(!open) setSelectedSupplier(null); }}
         />
       )}
+       {emailConfig && (
+        <ComposeEmailDialog 
+            open={isEmailDialogOpen} 
+            onOpenChange={setIsEmailDialogOpen}
+            recipientEmail={emailConfig.recipientEmail}
+            entity={emailConfig.entity}
+        />
+      )}
 
 
       {/* Desktop Table View */}
@@ -92,8 +115,7 @@ export default function SuppliersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden lg:table-cell">Contact Number</TableHead>
-              <TableHead className="hidden lg:table-cell">Location</TableHead>
+              <TableHead className="hidden lg:table-cell">Contact</TableHead>
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
               <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
@@ -104,15 +126,20 @@ export default function SuppliersPage() {
             {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
               <TableRow key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
                 <TableCell className="font-medium">{supplier.name}</TableCell>
-                <TableCell className="hidden lg:table-cell">{supplier.contactNumber}</TableCell>
-                <TableCell className="hidden lg:table-cell">{supplier.location || 'N/A'}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                    <div>{supplier.contactNumber}</div>
+                    <div className="text-xs text-muted-foreground">{supplier.email || 'No email'}</div>
+                </TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(supplier.onboardingStatus)}>{supplier.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(supplier.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(supplier.assignedTo)}</TableCell>
                 <TableCell className="text-right">
-                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" disabled={!supplier.email} onClick={(e) => handleEmailClick(e, supplier)}>
+                        <Mail className="h-4 w-4"/>
+                    </Button>
+                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
                             Start Onboarding
                         </Link>
@@ -141,8 +168,12 @@ export default function SuppliersPage() {
                   <CardContent>
                       <Badge variant={getStatusVariant(supplier.onboardingStatus)}>{supplier.onboardingStatus}</Badge>
                       <p className="text-sm text-muted-foreground mt-2">{supplier.contactNumber}</p>
+                      <p className="text-sm text-muted-foreground">{supplier.email || 'No email'}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-end">
+                  <CardFooter className="flex justify-end gap-2">
+                       <Button variant="ghost" size="icon" disabled={!supplier.email} onClick={(e) => handleEmailClick(e, supplier)}>
+                           <Mail className="h-4 w-4"/>
+                       </Button>
                        <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
                                 Start Onboarding
