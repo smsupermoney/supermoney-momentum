@@ -21,7 +21,7 @@ export default function AdminPage() {
 
   const salesUsers = users.filter(u => {
     if (!currentUser) return false;
-    if (currentUser.role === 'Admin') {
+    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') {
         return u.role === 'Sales' || u.role === 'Zonal Sales Manager';
     }
     if (currentUser.role === 'Zonal Sales Manager') {
@@ -59,7 +59,7 @@ export default function AdminPage() {
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });
   };
   
-  if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Zonal Sales Manager')) {
+  if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Zonal Sales Manager' && currentUser.role !== 'Onboarding Specialist')) {
     return (
         <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">You do not have permission to view this page.</p>

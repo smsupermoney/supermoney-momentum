@@ -64,6 +64,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   }
 
   const onSubmit = (values: NewLeadFormValues) => {
+    const isSpecialist = currentUser.role === 'Onboarding Specialist';
     const finalAnchorId = anchorId || values.anchorId || null;
     
     const commonData = {
@@ -72,8 +73,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       contactNumber: values.contactNumber,
       gstin: values.gstin,
       location: values.location,
-      assignedTo: currentUser.uid,
-      onboardingStatus: finalAnchorId ? 'Invited' : 'Unassigned Lead',
+      assignedTo: isSpecialist ? null : currentUser.uid,
+      onboardingStatus: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
       anchorId: finalAnchorId,
       createdAt: new Date().toISOString()
     }

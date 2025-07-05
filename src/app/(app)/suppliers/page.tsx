@@ -21,16 +21,8 @@ export default function SuppliersPage() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
-  if (currentUser.role === 'Onboarding Specialist') {
-    return (
-        <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        </div>
-    );
-  }
-  
   const userSuppliers = suppliers.filter(s => {
-    if (currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
     if (currentUser.role === 'Zonal Sales Manager') {
         const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
         teamMemberIds.push(currentUser.uid);

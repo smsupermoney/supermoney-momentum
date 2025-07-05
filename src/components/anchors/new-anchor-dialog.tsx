@@ -94,6 +94,8 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       };
 
       const scoreResult = await leadScoring(leadScoringInput);
+      
+      const isSpecialist = currentUser.role === 'Onboarding Specialist';
 
       const newAnchor: Anchor = {
         id: `anchor-${Date.now()}`,
@@ -110,8 +112,8 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
-        status: 'Lead',
-        assignedTo: currentUser.uid,
+        status: isSpecialist ? 'Unassigned Lead' : 'Lead',
+        assignedTo: isSpecialist ? null : currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],
         supplierIds: [],
