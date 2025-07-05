@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { UserSwitcher } from '@/components/user-switcher';
 import { useApp } from '@/contexts/app-context';
@@ -95,8 +96,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <UserSwitcher />
         </SidebarFooter>
       </Sidebar>
-      <main className="flex-1">
-        <div className="p-4 sm:p-6 lg:p-8 h-full">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-background px-4 md:hidden">
+          <SidebarTrigger />
+          <div className="flex items-center gap-2 font-headline text-xl font-bold text-primary">
+            <Logo className="h-8 w-8 text-primary" />
+            Supermoney
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>
