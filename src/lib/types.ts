@@ -9,7 +9,7 @@ export interface User {
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted';
-export type OnboardingStatus = 'Invited' | 'KYC Pending' | 'Documentation Pending' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested';
+export type OnboardingStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested';
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';

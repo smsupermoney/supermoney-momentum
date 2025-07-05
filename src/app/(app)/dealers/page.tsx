@@ -59,7 +59,7 @@ export default function DealersPage() {
             return 'outline';
         case 'Invited':
         case 'KYC Pending':
-        case 'Documentation Pending':
+        case 'Not reachable':
         case 'Agreement Pending':
             return 'secondary';
         default:

@@ -80,7 +80,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
 
   const handleLogInteractionClick = (contactName: string) => {
     setNewActivity(`Logged interaction with ${contactName}. `);
-    setActiveTab('activity'); // Switch to interactions tab
+    setActiveTab('interactions'); // Switch to interactions tab
     setTimeout(() => {
       activityTextareaRef.current?.focus();
       activityTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -123,7 +123,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="dealers">Dealers ({initialDealers.length})</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers ({initialSuppliers.length})</TabsTrigger>
-          <TabsTrigger value="activity">Interactions ({initialLogs.length})</TabsTrigger>
+          <TabsTrigger value="interactions">Interactions ({initialLogs.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
@@ -199,7 +199,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
           </Card>
         </TabsContent>
 
-        <TabsContent value="activity" className="mt-4">
+        <TabsContent value="interactions" className="mt-4">
             <Card>
                 <CardHeader><CardTitle>Interaction Log</CardTitle></CardHeader>
                 <CardContent>
@@ -265,7 +265,7 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                 return 'outline';
             case 'Invited':
             case 'KYC Pending':
-            case 'Documentation Pending':
+            case 'Not reachable':
             case 'Agreement Pending':
                 return 'secondary';
             default:
@@ -298,7 +298,7 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                                     <SelectContent>
                                         <SelectItem value="Invited">Invited</SelectItem>
                                         <SelectItem value="KYC Pending">KYC Pending</SelectItem>
-                                        <SelectItem value="Documentation Pending">Documentation Pending</SelectItem>
+                                        <SelectItem value="Not reachable">Not reachable</SelectItem>
                                         <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
                                         <SelectItem value="Active">Active</SelectItem>
                                         <SelectItem value="Inactive">Inactive</SelectItem>
