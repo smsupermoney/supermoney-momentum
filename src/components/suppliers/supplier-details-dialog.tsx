@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { Supplier, OnboardingStatus } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 interface SupplierDetailsDialogProps {
@@ -39,21 +40,36 @@ export function SupplierDetailsDialog({ supplier, open, onOpenChange }: Supplier
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{supplier.name}</DialogTitle>
           <DialogDescription>
             Update the onboarding status and view details for this supplier.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><p className="text-muted-foreground">Contact Number</p><p>{supplier.contactNumber}</p></div>
                 <div><p className="text-muted-foreground">Email</p><p>{supplier.email || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">Location</p><p>{supplier.location || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">GSTIN</p><p>{supplier.gstin || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">Associated Anchor</p><p>{anchorName}</p></div>
+                <div><p className="text-muted-foreground">Product Interest</p><p>{supplier.product || 'N/A'}</p></div>
             </div>
+            {supplier.leadScore && (
+                <Card className="bg-secondary">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-base">AI Scoring Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <span className="text-2xl font-bold text-primary">{supplier.leadScore}</span>
+                            <span className="text-sm text-muted-foreground">/ 100</span>
+                        </div>
+                        <p className="text-xs text-secondary-foreground italic">"{supplier.leadScoreReason}"</p>
+                    </CardContent>
+                </Card>
+            )}
             <div className="space-y-2">
                 <Label htmlFor="onboarding-status">Onboarding Status</Label>
                 <Select onValueChange={(v) => handleStatusChange(v as OnboardingStatus)} defaultValue={supplier.onboardingStatus}>

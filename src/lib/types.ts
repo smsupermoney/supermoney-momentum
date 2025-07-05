@@ -30,11 +30,12 @@ export interface BaseLead {
   email?: string;
   gstin?: string;
   location?: string;
+  product?: string;
   assignedTo: string | null;
   createdAt: string;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email'> {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product'> {
   name: string; // Anchor name is company name
   industry: string;
   annualTurnover?: number;
@@ -52,11 +53,15 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
 export interface Dealer extends BaseLead {
   onboardingStatus: OnboardingStatus;
   anchorId: string | null;
+  leadScore?: number;
+  leadScoreReason?: string;
 }
 
 export interface Supplier extends BaseLead {
   onboardingStatus: OnboardingStatus;
   anchorId: string | null;
+  leadScore?: number;
+  leadScoreReason?: string;
 }
 
 export interface Task {

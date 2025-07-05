@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,6 +26,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Supplier } from '@/lib/types';
+import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
@@ -33,6 +36,7 @@ const formSchema = z.object({
   gstin: z.string().optional(),
   location: z.string().optional(),
   anchorId: z.string().optional(),
+  product: z.string().optional(),
 });
 
 type NewLeadFormValues = z.infer<typeof formSchema>;
@@ -47,6 +51,7 @@ interface NewLeadDialogProps {
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
   const { addDealer, addSupplier, currentUser, anchors } = useApp();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewLeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -57,6 +62,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       gstin: '',
       location: '',
       anchorId: '',
+      product: '',
     },
   });
   
@@ -65,34 +71,70 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     onOpenChange(false);
   }
 
-  const onSubmit = (values: NewLeadFormValues) => {
-    const isSpecialist = currentUser.role === 'Onboarding Specialist';
-    const finalAnchorId = anchorId || values.anchorId || null;
-    
-    const commonData = {
-      id: `${type.toLowerCase()}-${Date.now()}`,
-      name: values.name,
-      contactNumber: values.contactNumber,
-      email: values.email,
-      gstin: values.gstin,
-      location: values.location,
-      assignedTo: isSpecialist ? null : currentUser.uid,
-      onboardingStatus: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
-      anchorId: finalAnchorId,
-      createdAt: new Date().toISOString()
+  const onSubmit = async (values: NewLeadFormValues) => {
+    setIsSubmitting(true);
+    if (!currentUser) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        setIsSubmitting(false);
+        return;
     }
+    try {
+        const isSpecialist = currentUser.role === 'Onboarding Specialist';
+        const finalAnchorId = anchorId || values.anchorId || null;
+        const associatedAnchor = finalAnchorId ? anchors.find(a => a.id === finalAnchorId) : null;
 
-    if (type === 'Dealer') {
-      addDealer(commonData as Dealer);
-    } else {
-      addSupplier(commonData as Supplier);
+        const scoringInput: SpokeScoringInput = {
+            name: values.name,
+            product: values.product,
+            location: values.location,
+            anchorName: associatedAnchor?.name,
+            anchorIndustry: associatedAnchor?.industry,
+        };
+
+        const scoreResult = await spokeScoring(scoringInput);
+        
+        const commonData = {
+          id: `${type.toLowerCase()}-${Date.now()}`,
+          name: values.name,
+          contactNumber: values.contactNumber,
+          email: values.email,
+          gstin: values.gstin,
+          location: values.location,
+          product: values.product || undefined,
+          assignedTo: isSpecialist ? null : currentUser.uid,
+          onboardingStatus: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
+          anchorId: finalAnchorId,
+          createdAt: new Date().toISOString(),
+          leadScore: scoreResult.score,
+          leadScoreReason: scoreResult.reason,
+        }
+
+        if (type === 'Dealer') {
+          addDealer(commonData as Dealer);
+        } else {
+          addSupplier(commonData as Supplier);
+        }
+
+        toast({
+          title: `${type} Lead Created & Scored!`,
+          description: (
+            <div>
+              <p>{values.name} has been added as a new lead.</p>
+              <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
+            </div>
+          ),
+        });
+        handleClose();
+    } catch (error) {
+        console.error('Failed to create or score lead:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to create new ${type.toLowerCase()}. Please try again.`,
+        });
+    } finally {
+        setIsSubmitting(false);
     }
-
-    toast({
-      title: `${type} Lead Created`,
-      description: `${values.name} has been added as a new ${type.toLowerCase()} lead.`,
-    });
-    handleClose();
   };
 
   return (
@@ -172,6 +214,33 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
                 />
             )}
+            
+            <FormField
+              control={form.control}
+              name="product"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product (Optional)</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a product" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SCF - Primary">SCF - Primary</SelectItem>
+                      <SelectItem value="SCF - Secondary">SCF - Secondary</SelectItem>
+                      <SelectItem value="BL">BL</SelectItem>
+                      <SelectItem value="LAP">LAP</SelectItem>
+                      <SelectItem value="WCDL">WCDL</SelectItem>
+                      <SelectItem value="WCTL">WCTL</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
              <FormField
               control={form.control}
@@ -201,7 +270,10 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
             />
             <DialogFooter>
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button type="submit">Add {type}</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Add {type}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

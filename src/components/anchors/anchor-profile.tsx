@@ -18,6 +18,8 @@ import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
+import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
+import { SupplierDetailsDialog } from '../suppliers/supplier-details-dialog';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -51,6 +53,9 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
+
+  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
@@ -99,6 +104,14 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
     });
     setIsEmailDialogOpen(true);
   };
+  
+  const handleViewDetails = (spoke: Dealer | Supplier, type: 'Dealer' | 'Supplier') => {
+    if (type === 'Dealer') {
+        setSelectedDealer(spoke as Dealer);
+    } else {
+        setSelectedSupplier(spoke as Supplier);
+    }
+  }
 
 
   return (
@@ -137,6 +150,20 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
             onOpenChange={setIsEmailDialogOpen}
             recipientEmail={emailConfig.recipientEmail}
             entity={emailConfig.entity}
+        />
+      )}
+      {selectedDealer && (
+        <DealerDetailsDialog
+            dealer={selectedDealer}
+            open={!!selectedDealer}
+            onOpenChange={(open) => { if(!open) setSelectedDealer(null); }}
+        />
+      )}
+      {selectedSupplier && (
+        <SupplierDetailsDialog
+            supplier={selectedSupplier}
+            open={!!selectedSupplier}
+            onOpenChange={(open) => { if(!open) setSelectedSupplier(null); }}
         />
       )}
 
@@ -208,7 +235,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                 </div>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialDealers} type="Dealer" />
+                <SpokeTable spokes={initialDealers} type="Dealer" onViewDetails={handleViewDetails} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -222,7 +249,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                 </div>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialSuppliers} type="Supplier" />
+                <SpokeTable spokes={initialSuppliers} type="Supplier" onViewDetails={handleViewDetails} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -269,7 +296,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   );
 }
 
-function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 'Dealer' | 'Supplier' }) {
+function SpokeTable({ spokes, type, onViewDetails }: { spokes: Array<Dealer | Supplier>; type: 'Dealer' | 'Supplier'; onViewDetails: (spoke: Dealer | Supplier, type: 'Dealer' | 'Supplier') => void; }) {
     const { currentUser, updateDealer, updateSupplier } = useApp();
     const isSpecialist = currentUser?.role === 'Onboarding Specialist';
 
@@ -341,7 +368,7 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                                 )}
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm">View Details</Button>
+                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(spoke, type)}>View Details</Button>
                             </TableCell>
                         </TableRow>
                         )) : (
@@ -382,7 +409,7 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                                     <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
                                 )}
                             </div>
-                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto">View Details</Button>
+                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(spoke, type)}>View Details</Button>
                         </CardContent>
                     </Card>
                 )) : (
