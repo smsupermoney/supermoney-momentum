@@ -1,33 +1,65 @@
 'use client';
 
 import { useApp } from '@/contexts/app-context';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useRouter } from 'next/navigation';
 
 export function UserSwitcher() {
-  const { users, currentUser, setCurrentUser } = useApp();
+  const { currentUser, logout } = useApp();
+  const router = useRouter();
 
-  const handleValueChange = (uid: string) => {
-    const user = users.find(u => u.uid === uid);
-    if (user) {
-      setCurrentUser(user);
-    }
-  };
+  if (!currentUser) return null;
+
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+  
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-sidebar-foreground/80">View as:</span>
-      <Select value={currentUser.uid} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-auto border-none bg-transparent text-sidebar-foreground hover:bg-sidebar-accent h-8 px-2 focus:ring-0 focus:ring-offset-0">
-          <SelectValue placeholder="Select user" />
-        </SelectTrigger>
-        <SelectContent>
-          {users.map(user => (
-            <SelectItem key={user.uid} value={user.uid}>
-              {user.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start p-2 h-auto text-left">
+                 <div className="flex items-center gap-2 overflow-hidden">
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col overflow-hidden">
+                        <span className="text-sm font-semibold text-sidebar-foreground truncate">{currentUser.name}</span>
+                        <span className="text-xs text-sidebar-foreground/70 truncate">{currentUser.role}</span>
+                    </div>
+                 </div>
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {currentUser.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

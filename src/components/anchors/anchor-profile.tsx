@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus } from '@/lib/types';
+import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from 'lucide-react';
+import { ComposeEmailDialog } from '../email/compose-email-dialog';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -45,15 +46,18 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Supplier'>('Dealer');
-  const [activeTab, setActiveTab] = useState('details'); // For tab control
-  const activityTextareaRef = useRef<HTMLTextAreaElement>(null); // For focusing textarea
+  const [activeTab, setActiveTab] = useState('details'); 
+  const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
   const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
 
 
   const handleLogActivity = () => {
-    if (newActivity.trim() === '') return;
+    if (newActivity.trim() === '' || !currentUser) return;
     const log: ActivityLog = {
       id: `log-${Date.now()}`,
       anchorId: anchor.id,
@@ -80,12 +84,18 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
 
   const handleLogInteractionClick = (contactName: string) => {
     setNewActivity(`Logged interaction with ${contactName}. `);
-    setActiveTab('interactions'); // Switch to interactions tab
+    setActiveTab('interactions'); 
     setTimeout(() => {
       activityTextareaRef.current?.focus();
       activityTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100); // Timeout to allow tab to render before focus
+    }, 100); 
   };
+  
+  const handleEmailClick = (contact: Contact) => {
+    setEmailRecipient(contact.email);
+    setEmailDialogOpen(true);
+  };
+
 
   return (
     <>
@@ -117,6 +127,13 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
+      <ComposeEmailDialog 
+        open={emailDialogOpen} 
+        onOpenChange={setEmailDialogOpen}
+        recipientEmail={emailRecipient}
+        anchor={anchor}
+      />
+
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full overflow-x-auto justify-start">
@@ -132,10 +149,10 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                 <Card>
                     <CardHeader><CardTitle>Company Information</CardTitle></CardHeader>
                     <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
-                        <div><p className="text-muted-foreground">GSTIN</p><p>{anchor.gstin || 'N/A'}</p></div>
-                        <div><p className="text-muted-foreground">Credit Rating</p><p>{anchor.creditRating || 'N/A'}</p></div>
-                        <div><p className="text-muted-foreground">Annual Turnover</p><p>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</p></div>
-                        <div><p className="text-muted-foreground">Address</p><p>{anchor.address || 'N/A'}</p></div>
+                        <div><div className="text-muted-foreground">GSTIN</div><div>{anchor.gstin || 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">Credit Rating</div><div>{anchor.creditRating || 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">Annual Turnover</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">Address</div><div>{anchor.address || 'N/A'}</div></div>
                     </CardContent>
                 </Card>
                  <Card>
@@ -148,10 +165,15 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                     <UserIcon className="h-5 w-5 text-muted-foreground" />
                                     <div>
                                         <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</div>
-                                        <p className="text-sm text-muted-foreground">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</p>
+                                        <div className="text-sm text-muted-foreground flex items-center gap-2">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</div>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">Log Interaction</Button>
+                                <div className="flex items-center gap-1 w-full sm:w-auto">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
+                                        <Mail className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">Log Interaction</Button>
+                                </div>
                             </div>
                            ))}
                         </div>
@@ -243,7 +265,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
 
 function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 'Dealer' | 'Supplier' }) {
     const { currentUser, updateDealer, updateSupplier } = useApp();
-    const isSpecialist = currentUser.role === 'Onboarding Specialist';
+    const isSpecialist = currentUser?.role === 'Onboarding Specialist';
 
     const handleStatusChange = (spoke: Dealer | Supplier, newStatus: OnboardingStatus) => {
         if (type === 'Dealer') {

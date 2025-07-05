@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -11,6 +11,7 @@ import {
   ListTodo,
   Shield,
   BarChart,
+  Loader2
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -28,7 +29,23 @@ import { Logo } from '@/components/logo';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { currentUser } = useApp();
+  const router = useRouter();
+  const { currentUser, isLoading } = useApp();
+
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.replace('/login');
+    }
+  }, [currentUser, isLoading, router]);
+
+  if (isLoading || !currentUser) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
 
   const allNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Onboarding Specialist'] },

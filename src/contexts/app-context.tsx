@@ -1,13 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { User, Anchor, Dealer, Supplier, Task, ActivityLog } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockSuppliers, mockTasks, mockActivityLogs } from '@/lib/mock-data';
 
 interface AppContextType {
   users: User[];
-  currentUser: User;
+  currentUser: User | null;
   setCurrentUser: (user: User) => void;
+  login: (email: string) => boolean;
+  logout: () => void;
+  isLoading: boolean;
   anchors: Anchor[];
   addAnchor: (anchor: Anchor) => void;
   updateAnchor: (anchor: Anchor) => void;
@@ -28,12 +31,41 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [users] = useState<User[]>(mockUsers);
-  const [currentUser, setCurrentUser] = useState<User>(mockUsers.find(u => u.role === 'Sales') || mockUsers[0]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [anchors, setAnchors] = useState<Anchor[]>(mockAnchors);
   const [dealers, setDealers] = useState<Dealer[]>(mockDealers);
   const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
+
+  useEffect(() => {
+    try {
+      const storedUser = sessionStorage.getItem('currentUser');
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error("Could not parse user from session storage", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const login = (email: string): boolean => {
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      setCurrentUser(user);
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    sessionStorage.removeItem('currentUser');
+  };
 
   const addAnchor = (anchor: Anchor) => setAnchors(prev => [anchor, ...prev]);
   const updateAnchor = (updatedAnchor: Anchor) => {
@@ -56,7 +88,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addActivityLog = (log: ActivityLog) => {
-    const user = users.find(u => u.uid === currentUser.uid);
+    const user = users.find(u => u.name === log.userName);
     const logWithUser = {...log, userName: user?.name || 'Unknown User'}
     setActivityLogs(prev => [logWithUser, ...prev]);
   }
@@ -65,6 +97,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     users,
     currentUser,
     setCurrentUser,
+    login,
+    logout,
+    isLoading,
     anchors,
     addAnchor,
     updateAnchor,
