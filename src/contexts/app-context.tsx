@@ -6,6 +6,7 @@ import { mockUsers, mockAnchors, mockDealers, mockSuppliers, mockTasks, mockActi
 
 interface AppContextType {
   users: User[];
+  addUser: (user: User) => void;
   currentUser: User | null;
   setCurrentUser: (user: User) => void;
   login: (email: string) => boolean;
@@ -30,7 +31,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [users] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>(mockUsers);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [anchors, setAnchors] = useState<Anchor[]>(mockAnchors);
@@ -92,9 +93,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const logWithUser = {...log, userName: user?.name || 'Unknown User'}
     setActivityLogs(prev => [logWithUser, ...prev]);
   }
+  
+  const addUser = (user: User) => setUsers(prev => [user, ...prev]);
 
   const value = {
     users,
+    addUser,
     currentUser,
     setCurrentUser,
     login,
