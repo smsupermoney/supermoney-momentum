@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
 import type { Supplier, OnboardingStatus } from '@/lib/types';
 import { SupplierDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export default function SuppliersPage() {
   const { suppliers, anchors, users, currentUser } = useApp();
@@ -92,16 +94,17 @@ export default function SuppliersPage() {
       )}
 
 
-      <div className="rounded-lg border">
+      {/* Desktop Table View */}
+      <div className="hidden rounded-lg border md:block">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Contact Number</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead className="hidden lg:table-cell">Contact Number</TableHead>
+              <TableHead className="hidden lg:table-cell">Location</TableHead>
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
-              <TableHead>Assigned To</TableHead>
+              <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -109,13 +112,13 @@ export default function SuppliersPage() {
             {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
               <TableRow key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
                 <TableCell className="font-medium">{supplier.name}</TableCell>
-                <TableCell>{supplier.contactNumber}</TableCell>
-                <TableCell>{supplier.location || 'N/A'}</TableCell>
+                <TableCell className="hidden lg:table-cell">{supplier.contactNumber}</TableCell>
+                <TableCell className="hidden lg:table-cell">{supplier.location || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(supplier.onboardingStatus)}>{supplier.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(supplier.anchorId)}</TableCell>
-                <TableCell>{getAssignedToName(supplier.assignedTo)}</TableCell>
+                <TableCell className="hidden lg:table-cell">{getAssignedToName(supplier.assignedTo)}</TableCell>
                 <TableCell className="text-right">
                     <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                         <Link href="https://supermoney.in/onboarding" target="_blank">
@@ -133,6 +136,33 @@ export default function SuppliersPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid gap-4 md:hidden">
+          {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
+              <Card key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
+                  <CardHeader>
+                      <CardTitle>{supplier.name}</CardTitle>
+                      <CardDescription>{getAnchorName(supplier.anchorId)}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Badge variant={getStatusVariant(supplier.onboardingStatus)}>{supplier.onboardingStatus}</Badge>
+                      <p className="text-sm text-muted-foreground mt-2">{supplier.contactNumber}</p>
+                  </CardContent>
+                  <CardFooter className="flex justify-end">
+                       <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                            <Link href="https://supermoney.in/onboarding" target="_blank">
+                                Start Onboarding
+                            </Link>
+                        </Button>
+                  </CardFooter>
+              </Card>
+          )) : (
+              <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+                  No suppliers found.
+              </div>
+          )}
       </div>
     </>
   );

@@ -80,7 +80,8 @@ export default function AdminPage() {
             <CardTitle>{title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border">
+            {/* Desktop Table */}
+            <div className="hidden rounded-lg border md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -118,6 +119,30 @@ export default function AdminPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            {/* Mobile Cards */}
+            <div className="space-y-4 md:hidden">
+              {leads.length > 0 ? leads.map(lead => (
+                <Card key={lead.id} className="p-4">
+                  <div className="space-y-3">
+                    <p className="font-medium">{lead.name}</p>
+                    <p className="text-sm text-muted-foreground">{lead.contactNumber || lead.industry}</p>
+                    <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select sales user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {salesUsers.map(user => (
+                          <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">Assign</Button>
+                  </div>
+                </Card>
+              )) : (
+                <div className="h-24 text-center flex items-center justify-center text-muted-foreground">No unassigned leads.</div>
+              )}
             </div>
           </CardContent>
         </Card>

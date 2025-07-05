@@ -93,7 +93,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
           <div className="flex items-center gap-2">
             {isSalesRole && (
               <Select onValueChange={(v) => handleStatusChange(v as LeadStatus)} defaultValue={anchor.status}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -119,7 +119,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto justify-start">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="dealers">Dealers ({initialDealers.length})</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers ({initialSuppliers.length})</TabsTrigger>
@@ -143,7 +143,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                     <CardContent>
                         <div className="space-y-4">
                            {anchor.contacts.map(contact => (
-                             <div key={contact.id} className="flex items-center justify-between">
+                             <div key={contact.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                 <div className="flex items-center gap-3">
                                     <UserIcon className="h-5 w-5 text-muted-foreground" />
                                     <div>
@@ -151,7 +151,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                         <p className="text-sm text-muted-foreground">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)}>Log Interaction</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">Log Interaction</Button>
                             </div>
                            ))}
                         </div>
@@ -219,7 +219,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                 const Icon = iconMap[log.type] || PenSquare;
                                 return (
                                 <div key={log.id} className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary flex-shrink-0">
                                         <Icon className="h-5 w-5 text-secondary-foreground" />
                                     </div>
                                     <div>
@@ -274,53 +274,93 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
     };
 
     return (
-        <div className="rounded-lg border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>{type} Name</TableHead>
-                        <TableHead>Contact Number</TableHead>
-                        <TableHead>Onboarding Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {spokes.length > 0 ? spokes.map(spoke => (
-                    <TableRow key={spoke.id}>
-                        <TableCell className="font-medium">{spoke.name}</TableCell>
-                        <TableCell>{spoke.contactNumber}</TableCell>
-                        <TableCell>
-                            {isSpecialist ? (
-                                <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
-                                    <SelectTrigger className="w-[180px] h-8 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Invited">Invited</SelectItem>
-                                        <SelectItem value="KYC Pending">KYC Pending</SelectItem>
-                                        <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                        <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
-                                        <SelectItem value="Active">Active</SelectItem>
-                                        <SelectItem value="Inactive">Inactive</SelectItem>
-                                        <SelectItem value="Rejected">Rejected</SelectItem>
-                                        <SelectItem value="Not Interested">Not Interested</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">View Details</Button>
-                        </TableCell>
-                    </TableRow>
-                    )) : (
+        <div>
+            {/* Desktop Table View */}
+            <div className="hidden rounded-lg border md:block">
+                <Table>
+                    <TableHeader>
                         <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">No {type.toLowerCase()}s associated yet.</TableCell>
+                            <TableHead>{type} Name</TableHead>
+                            <TableHead>Contact Number</TableHead>
+                            <TableHead>Onboarding Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {spokes.length > 0 ? spokes.map(spoke => (
+                        <TableRow key={spoke.id}>
+                            <TableCell className="font-medium">{spoke.name}</TableCell>
+                            <TableCell>{spoke.contactNumber}</TableCell>
+                            <TableCell>
+                                {isSpecialist ? (
+                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
+                                        <SelectTrigger className="w-[180px] h-8 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                            <SelectItem value="Not reachable">Not reachable</SelectItem>
+                                            <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
+                                            <SelectItem value="Active">Active</SelectItem>
+                                            <SelectItem value="Inactive">Inactive</SelectItem>
+                                            <SelectItem value="Rejected">Rejected</SelectItem>
+                                            <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
+                                )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="sm">View Details</Button>
+                            </TableCell>
+                        </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">No {type.toLowerCase()}s associated yet.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+            {/* Mobile Card View */}
+            <div className="grid gap-4 md:hidden">
+                {spokes.length > 0 ? spokes.map(spoke => (
+                    <Card key={spoke.id}>
+                        <CardContent className="p-4 space-y-3">
+                            <div>
+                                <p className="font-medium">{spoke.name}</p>
+                                <p className="text-sm text-muted-foreground">{spoke.contactNumber}</p>
+                            </div>
+                            <div>
+                                {isSpecialist ? (
+                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
+                                        <SelectTrigger className="w-full h-9 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                            <SelectItem value="Not reachable">Not reachable</SelectItem>
+                                            <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
+                                            <SelectItem value="Active">Active</SelectItem>
+                                            <SelectItem value="Inactive">Inactive</SelectItem>
+                                            <SelectItem value="Rejected">Rejected</SelectItem>
+                                            <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
+                                )}
+                            </div>
+                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto">View Details</Button>
+                        </CardContent>
+                    </Card>
+                )) : (
+                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No {type.toLowerCase()}s associated yet.</div>
+                )}
+            </div>
         </div>
     )
 }

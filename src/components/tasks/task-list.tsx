@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import type { Task, TaskPriority } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
+import { Card, CardContent } from '@/components/ui/card';
 
 export function TaskList() {
   const { tasks, anchors, currentUser, users, updateTask } = useApp();
@@ -65,61 +66,93 @@ export function TaskList() {
 
   return (
     <>
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Priority</TableHead>
-            <TableHead>Task Title</TableHead>
-            <TableHead>Associated Anchor</TableHead>
-            {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableHead>Assigned To</TableHead>}
-            <TableHead>Task Type</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {userTasks.length > 0 ? userTasks.map(task => (
-            <TableRow key={task.id}>
-              <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
-              <TableCell className="font-medium">{task.title}</TableCell>
-              <TableCell>{getAnchorName(task.associatedWith.anchorId)}</TableCell>
-              {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableCell>{getAssignedToName(task.assignedTo)}</TableCell>}
-              <TableCell>{task.type}</TableCell>
-              <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
-              <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
-              <TableCell className="text-right">
-                {task.status !== 'Completed' && (
-                    <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>Complete</Button>
-                )}
-              </TableCell>
+      {/* Desktop Table */}
+      <div className="hidden rounded-lg border md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Priority</TableHead>
+              <TableHead>Task Title</TableHead>
+              <TableHead>Associated Anchor</TableHead>
+              {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableHead className="hidden lg:table-cell">Assigned To</TableHead>}
+              <TableHead className="hidden lg:table-cell">Task Type</TableHead>
+              <TableHead>Due Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          )) : (
-             <TableRow>
-                <TableCell colSpan={(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') ? 8 : 7} className="h-24 text-center">
-                  No tasks found.
+          </TableHeader>
+          <TableBody>
+            {userTasks.length > 0 ? userTasks.map(task => (
+              <TableRow key={task.id}>
+                <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
+                <TableCell className="font-medium">{task.title}</TableCell>
+                <TableCell>{getAnchorName(task.associatedWith.anchorId)}</TableCell>
+                {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableCell className="hidden lg:table-cell">{getAssignedToName(task.assignedTo)}</TableCell>}
+                <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
+                <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
+                <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
+                <TableCell className="text-right">
+                  {task.status !== 'Completed' && (
+                      <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>Complete</Button>
+                  )}
                 </TableCell>
               </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-    {completedTask && (
-    <LogOutcomeDialog 
-        open={isLogOutcomeOpen} 
-        onOpenChange={setIsLogOutcomeOpen}
-        task={completedTask}
-        onSubmit={handleLogOutcomeSubmit}
-    />
-    )}
-    {completedTask && (
-    <NewTaskDialog
-        open={isNewTaskOpen}
-        onOpenChange={setIsNewTaskOpen}
-        prefilledAnchorId={completedTask.associatedWith.anchorId}
-    />
-    )}
+            )) : (
+              <TableRow>
+                  <TableCell colSpan={(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') ? 8 : 7} className="h-24 text-center">
+                    No tasks found.
+                  </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid gap-4 md:hidden">
+        {userTasks.length > 0 ? userTasks.map(task => (
+          <Card key={task.id}>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex justify-between items-start gap-2">
+                <p className="font-medium pr-2">{task.title}</p>
+                <Badge variant={priorityVariant[task.priority]} className="flex-shrink-0">{task.priority}</Badge>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p><span className="font-medium">Anchor:</span> {getAnchorName(task.associatedWith.anchorId)}</p>
+                {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <p><span className="font-medium">Assigned:</span> {getAssignedToName(task.assignedTo)}</p>}
+                <p><span className="font-medium">Due:</span> {format(new Date(task.dueDate), 'PP')}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">{task.type}</Badge>
+                <Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge>
+              </div>
+              {task.status !== 'Completed' && (
+                  <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)} className="w-full">Complete Task</Button>
+              )}
+            </CardContent>
+          </Card>
+        )) : (
+          <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+            No tasks found.
+          </div>
+        )}
+      </div>
+
+      {completedTask && (
+        <LogOutcomeDialog 
+            open={isLogOutcomeOpen} 
+            onOpenChange={setIsLogOutcomeOpen}
+            task={completedTask}
+            onSubmit={handleLogOutcomeSubmit}
+        />
+      )}
+      {completedTask && (
+        <NewTaskDialog
+            open={isNewTaskOpen}
+            onOpenChange={setIsNewTaskOpen}
+            prefilledAnchorId={completedTask.associatedWith.anchorId}
+        />
+      )}
     </>
   );
 }

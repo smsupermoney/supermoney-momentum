@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
 import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser } = useApp();
@@ -92,16 +93,17 @@ export default function DealersPage() {
       )}
 
 
-      <div className="rounded-lg border">
+      {/* Desktop Table View */}
+      <div className="hidden rounded-lg border md:block">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Contact Number</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead className="hidden lg:table-cell">Contact Number</TableHead>
+              <TableHead className="hidden lg:table-cell">Location</TableHead>
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
-              <TableHead>Assigned To</TableHead>
+              <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -109,13 +111,13 @@ export default function DealersPage() {
             {userDealers.length > 0 ? userDealers.map(dealer => (
               <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                 <TableCell className="font-medium">{dealer.name}</TableCell>
-                <TableCell>{dealer.contactNumber}</TableCell>
-                <TableCell>{dealer.location || 'N/A'}</TableCell>
+                <TableCell className="hidden lg:table-cell">{dealer.contactNumber}</TableCell>
+                <TableCell className="hidden lg:table-cell">{dealer.location || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
-                <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
+                <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
                     <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
                         <Link href="https://supermoney.in/onboarding" target="_blank">
@@ -133,6 +135,33 @@ export default function DealersPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+      
+      {/* Mobile Card View */}
+      <div className="grid gap-4 md:hidden">
+          {userDealers.length > 0 ? userDealers.map(dealer => (
+              <Card key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
+                  <CardHeader>
+                      <CardTitle>{dealer.name}</CardTitle>
+                      <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
+                      <p className="text-sm text-muted-foreground mt-2">{dealer.contactNumber}</p>
+                  </CardContent>
+                  <CardFooter className="flex justify-end">
+                       <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                            <Link href="https://supermoney.in/onboarding" target="_blank">
+                                Start Onboarding
+                            </Link>
+                        </Button>
+                  </CardFooter>
+              </Card>
+          )) : (
+              <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
+                  No dealers found.
+              </div>
+          )}
       </div>
     </>
   );
