@@ -14,16 +14,18 @@ import type { Vendor, OnboardingStatus } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function VendorsPage() {
-  const { vendors, anchors, users, currentUser } = useApp();
+  const { vendors, anchors, users, currentUser, updateVendor } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'vendor' } } | null>(null);
+  const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
     if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
@@ -76,6 +78,29 @@ export default function VendorsPage() {
     });
     setIsEmailDialogOpen(true);
   }
+
+  const handleStartOnboarding = (e: React.MouseEvent, vendor: Vendor) => {
+    e.stopPropagation();
+    
+    updateVendor({ ...vendor, onboardingStatus: 'Invited' });
+
+    toast({
+        title: 'Onboarding Initiated',
+        description: `The onboarding process for ${vendor.name} has started.`,
+    });
+
+    setTimeout(() => {
+        const currentVendor = vendors.find(v => v.id === vendor.id);
+        if (currentVendor) {
+            updateVendor({ ...currentVendor, onboardingStatus: 'KYC Pending' });
+            toast({
+                title: 'Status Updated via Webhook',
+                description: `${vendor.name}'s status is now 'KYC Pending'.`,
+            });
+        }
+    }, 3000);
+  };
+
 
   return (
     <>
@@ -138,14 +163,16 @@ export default function VendorsPage() {
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(vendor.assignedTo)}</TableCell>
                 <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="icon" disabled={!vendor.email} onClick={(e) => handleEmailClick(e, vendor)}>
                         <Mail className="h-4 w-4"/>
                     </Button>
-                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()} className="ml-2">
+                    <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
                             Start Onboarding
                         </Link>
                     </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             )) : (
@@ -179,7 +206,7 @@ export default function VendorsPage() {
                        <Button variant="ghost" size="icon" disabled={!vendor.email} onClick={(e) => handleEmailClick(e, vendor)}>
                            <Mail className="h-4 w-4"/>
                        </Button>
-                       <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                       <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
                                 Start Onboarding
                             </Link>

@@ -14,15 +14,17 @@ import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DealersPage() {
-  const { dealers, anchors, users, currentUser } = useApp();
+  const { dealers, anchors, users, currentUser, updateDealer } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'dealer' } } | null>(null);
+  const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
     if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
@@ -74,6 +76,29 @@ export default function DealersPage() {
     });
     setIsEmailDialogOpen(true);
   }
+
+  const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
+    e.stopPropagation();
+    
+    updateDealer({ ...dealer, onboardingStatus: 'Invited' });
+
+    toast({
+        title: 'Onboarding Initiated',
+        description: `The onboarding process for ${dealer.name} has started.`,
+    });
+
+    setTimeout(() => {
+        const currentDealer = dealers.find(d => d.id === dealer.id);
+        if (currentDealer) {
+            updateDealer({ ...currentDealer, onboardingStatus: 'KYC Pending' });
+            toast({
+                title: 'Status Updated via Webhook',
+                description: `${dealer.name}'s status is now 'KYC Pending'.`,
+            });
+        }
+    }, 3000);
+  };
+
 
   return (
     <>
@@ -136,14 +161,16 @@ export default function DealersPage() {
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
                         <Mail className="h-4 w-4"/>
                     </Button>
-                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()} className="ml-2">
+                    <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
                         <Link href="https://supermoney.in/onboarding" target="_blank">
                             Start Onboarding
                         </Link>
                     </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             )) : (
@@ -177,7 +204,7 @@ export default function DealersPage() {
                        <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
                            <Mail className="h-4 w-4"/>
                        </Button>
-                       <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                       <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
                                 Start Onboarding
                             </Link>
