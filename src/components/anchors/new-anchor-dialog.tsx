@@ -1,0 +1,286 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useApp } from '@/contexts/app-context';
+import { leadScoring, LeadScoringInput } from '@/ai/flows/lead-scoring';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import type { Anchor } from '@/lib/types';
+
+const formSchema = z.object({
+  companyName: z.string().min(2, { message: 'Company name is required' }),
+  industry: z.string().min(2, { message: 'Industry is required' }),
+  primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
+  leadSource: z.string().min(1, { message: 'Lead source is required' }),
+  gstin: z.string().optional(),
+  location: z.string().optional(),
+});
+
+type NewAnchorFormValues = z.infer<typeof formSchema>;
+
+interface NewAnchorDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
+  const { addAnchor, currentUser } = useApp();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<NewAnchorFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      companyName: '',
+      industry: '',
+      primaryContactName: '',
+      email: '',
+      phone: '',
+      leadSource: '',
+      gstin: '',
+      location: '',
+    },
+  });
+
+  const handleClose = () => {
+    form.reset();
+    onOpenChange(false);
+  }
+
+  const onSubmit = async (values: NewAnchorFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const leadScoringInput: LeadScoringInput = {
+        companyName: values.companyName,
+        industry: values.industry,
+        primaryContactName: values.primaryContactName,
+        email: values.email,
+        phone: values.phone,
+        leadSource: values.leadSource,
+        gstin: values.gstin,
+        location: values.location,
+      };
+
+      const scoreResult = await leadScoring(leadScoringInput);
+
+      const newAnchor: Anchor = {
+        id: `anchor-${Date.now()}`,
+        name: values.companyName,
+        industry: values.industry,
+        primaryContactName: values.primaryContactName,
+        email: values.email,
+        contactNumber: values.phone,
+        leadSource: values.leadSource,
+        gstin: values.gstin,
+        location: values.location,
+        status: 'Lead',
+        assignedTo: currentUser.uid,
+        createdAt: new Date().toISOString(),
+        dealerIds: [],
+        supplierIds: [],
+        leadScore: scoreResult.score,
+        leadScoreReason: scoreResult.reason,
+      };
+
+      addAnchor(newAnchor);
+
+      toast({
+        title: 'Anchor Created & Scored!',
+        description: (
+          <div>
+            <p>{values.companyName} has been added as a new lead.</p>
+            <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
+            <p className="text-xs">{scoreResult.reason}</p>
+          </div>
+        ),
+      });
+      handleClose();
+
+    } catch (error) {
+      console.error('Failed to create or score anchor:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create new anchor. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>+ New Anchor</DialogTitle>
+          <DialogDescription>
+            Add a new anchor lead to your pipeline. The lead will be automatically scored by AI.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Tata Motors" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="industry"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Industry</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Automotive" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="primaryContactName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Contact Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Ramesh Kumar" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="contact@company.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="9876543210" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+               <FormField
+                  control={form.control}
+                  name="gstin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GSTIN (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="27AACCR1234A1Z5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Mumbai" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+             </div>
+            <FormField
+              control={form.control}
+              name="leadSource"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lead Source</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a lead source" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Banker Referral">Banker Referral</SelectItem>
+                      <SelectItem value="CA / Financial Consultant Referral">CA / Financial Consultant Referral</SelectItem>
+                      <SelectItem value="Industry Association">Industry Association</SelectItem>
+                      <SelectItem value="Anchor Ecosystem (Cross-sell)">Anchor Ecosystem (Cross-sell)</SelectItem>
+                      <SelectItem value="Conference / Event">Conference / Event</SelectItem>
+                      <SelectItem value="Website Inquiry">Website Inquiry</SelectItem>
+                      <SelectItem value="LinkedIn Campaign">LinkedIn Campaign</SelectItem>
+                      <SelectItem value="Content Marketing">Content Marketing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create & Score Lead
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

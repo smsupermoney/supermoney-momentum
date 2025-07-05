@@ -1,0 +1,85 @@
+'use client';
+
+import { useState } from 'react';
+import { useApp } from '@/contexts/app-context';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
+import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { PlusCircle, Upload } from 'lucide-react';
+
+export default function SuppliersPage() {
+  const { suppliers, anchors, users, currentUser } = useApp();
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  
+  const userSuppliers = suppliers.filter(s => 
+    currentUser.role === 'Admin' || s.assignedTo === currentUser.uid
+  );
+
+
+  const getAnchorName = (anchorId: string | null) => {
+    if (!anchorId) return 'N/A';
+    return anchors.find(a => a.id === anchorId)?.name || 'Unknown';
+  };
+
+  const getAssignedToName = (userId: string | null) => {
+    if (!userId) return 'Unassigned';
+    return users.find(u => u.uid === userId)?.name || 'Unknown';
+  };
+
+  return (
+    <>
+      <PageHeader title="Suppliers" description="Manage all supplier relationships.">
+        <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
+          <Upload className="mr-2 h-4 w-4" />
+          Bulk Upload
+        </Button>
+        <Button onClick={() => setIsNewLeadOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Supplier Lead
+        </Button>
+      </PageHeader>
+      
+      <NewLeadDialog type="Supplier" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
+      <BulkUploadDialog type="Supplier" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Contact Number</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Onboarding Status</TableHead>
+              <TableHead>Associated Anchor</TableHead>
+              <TableHead>Assigned To</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
+              <TableRow key={supplier.id}>
+                <TableCell className="font-medium">{supplier.name}</TableCell>
+                <TableCell>{supplier.contactNumber}</TableCell>
+                <TableCell>{supplier.location || 'N/A'}</TableCell>
+                <TableCell>
+                  <Badge variant={supplier.onboardingStatus === 'Active' ? 'default' : 'secondary'}>{supplier.onboardingStatus}</Badge>
+                </TableCell>
+                <TableCell>{getAnchorName(supplier.anchorId)}</TableCell>
+                <TableCell>{getAssignedToName(supplier.assignedTo)}</TableCell>
+              </TableRow>
+            )) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No suppliers found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
