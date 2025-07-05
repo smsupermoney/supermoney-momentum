@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar>
         <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
-                 <Logo className="text-accent h-8 w-8" />
+                 <Logo className="text-sidebar-foreground h-8 w-8" />
                  <h1 className="text-xl font-headline font-bold text-sidebar-foreground">Supermoney</h1>
             </div>
         </SidebarHeader>
