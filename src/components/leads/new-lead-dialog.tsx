@@ -28,7 +28,7 @@ import type { Dealer, Supplier } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
-  contactNumber: z.string().min(10, { message: 'A valid contact number is required' }),
+  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
   gstin: z.string().optional(),
   location: z.string().optional(),
   anchorId: z.string().optional(),

@@ -65,7 +65,14 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
   }, [prefilledAnchorId, form]);
 
   const handleClose = () => {
-    form.reset();
+    form.reset({
+        title: '',
+        anchorId: prefilledAnchorId || '',
+        type: '',
+        priority: 'Medium',
+        description: '',
+        dueDate: undefined
+    });
     onOpenChange(false);
   };
 
@@ -119,20 +126,42 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                         </Select><FormMessage />
                     </FormItem>
                 )}/>
-                <FormField name="dueDate" control={form.control} render={({ field }) => (
-                    <FormItem className="flex flex-col"><FormLabel>Due Date</FormLabel>
-                        <Popover><PopoverTrigger asChild>
-                            <FormControl>
-                                <Button variant="outline" className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
-                                    {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
+                <FormField
+                  control={form.control}
+                  name="dueDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Due Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={'outline'}
+                            className={cn(
+                              'w-full pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent>
-                        </Popover><FormMessage />
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
-                )}/>
+                  )}
+                />
              </div>
              <FormField name="priority" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Priority</FormLabel>

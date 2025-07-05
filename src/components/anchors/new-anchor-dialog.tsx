@@ -41,7 +41,7 @@ const formSchema = z.object({
   primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
   primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
   email: z.string().email({ message: 'Invalid email address' }),
-  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
+  phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
   leadSource: z.string().min(1, { message: 'Lead source is required' }),
   gstin: z.string().optional(),
   location: z.string().optional(),
