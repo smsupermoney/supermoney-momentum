@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -15,6 +14,7 @@ import type { User } from '@/lib/types';
 
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
 
+// Component defined at the top level for correct structure and to avoid parsing issues.
 function LeadTable({ 
   title, 
   leads, 
