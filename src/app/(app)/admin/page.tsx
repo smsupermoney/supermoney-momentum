@@ -15,6 +15,94 @@ import type { User } from '@/lib/types';
 
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
 
+function LeadTable({ 
+  title, 
+  leads, 
+  onAssign, 
+  salesUsers, 
+  assignments, 
+  setAssignments 
+}: { 
+  title: string, 
+  leads: any[], 
+  onAssign: (id: string) => void,
+  salesUsers: User[],
+  assignments: Record<string, string>,
+  setAssignments: React.Dispatch<React.SetStateAction<Record<string, string>>>
+}) {
+  if (leads.length === 0) return null;
+  
+  return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Desktop Table */}
+          <div className="hidden rounded-lg border md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact / Industry</TableHead>
+                  <TableHead>Assign To</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leads.map(lead => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">{lead.name}</TableCell>
+                    <TableCell>{(lead as any).contactNumber || (lead as any).industry}</TableCell>
+                    <TableCell>
+                      <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select sales user" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {salesUsers.map(user => (
+                            <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]}>Assign</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile Cards */}
+          <div className="space-y-4 md:hidden">
+            {leads.map(lead => (
+              <Card key={lead.id} className="p-0">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-base">{lead.name}</CardTitle>
+                  <CardDescription>{(lead as any).contactNumber || (lead as any).industry}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-3">
+                  <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select sales user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesUsers.map(user => (
+                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">Assign</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+  );
+}
+
 export default function AdminPage() {
   const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
   const { toast } = useToast();
@@ -65,7 +153,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">You do not have permission to view this page.</p>
         </div>
-    )
+    );
   }
 
   const getManagerName = (managerId?: string | null) => {
@@ -73,15 +161,11 @@ export default function AdminPage() {
     return users.find(u => u.uid === managerId)?.name || 'Unknown';
   };
 
-  const handleDialogChange = (open: boolean) => {
-    setIsNewUserDialogOpen(open);
-  };
-
   return (
     <>
       <PageHeader title="Admin Panel" description="Manage unassigned leads and system users." />
-      <NewUserDialog open={isNewUserDialogOpen} onOpenChange={handleDialogChange} />
-      <div className="grid gap-4">
+      <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
+      <div className="grid gap-4 mt-6">
         {currentUser.role === 'Admin' && (
           <Card>
             <CardHeader>
@@ -124,11 +208,11 @@ export default function AdminPage() {
                <div className="space-y-4 md:hidden">
                     {users.map(user => (
                          <Card key={user.uid} className="p-0">
-                            <CardHeader className="pb-2">
+                            <CardHeader className="p-4 pb-2">
                                 <CardTitle className="text-base">{user.name}</CardTitle>
                                 <CardDescription>{user.email}</CardDescription>
                             </Header>
-                            <CardContent className="space-y-1">
+                            <CardContent className="p-4 pt-0 space-y-1">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">Role:</span>
                                     <span className="font-medium">{user.role}</span>
@@ -144,83 +228,31 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         )}
-        <LeadTable title="Unassigned Anchors" leads={unassignedAnchors} onAssign={(id) => handleAssign(id, 'Anchor')} />
-        <LeadTable title="Unassigned Dealers" leads={unassignedDealers} onAssign={(id) => handleAssign(id, 'Dealer')} />
-        <LeadTable title="Unassigned Vendors" leads={unassignedVendors} onAssign={(id) => handleAssign(id, 'Vendor')} />
+        <LeadTable 
+            title="Unassigned Anchors" 
+            leads={unassignedAnchors} 
+            onAssign={(id) => handleAssign(id, 'Anchor')}
+            salesUsers={salesUsers}
+            assignments={assignments}
+            setAssignments={setAssignments}
+        />
+        <LeadTable 
+            title="Unassigned Dealers" 
+            leads={unassignedDealers} 
+            onAssign={(id) => handleAssign(id, 'Dealer')}
+            salesUsers={salesUsers}
+            assignments={assignments}
+            setAssignments={setAssignments}
+        />
+        <LeadTable 
+            title="Unassigned Vendors" 
+            leads={unassignedVendors} 
+            onAssign={(id) => handleAssign(id, 'Vendor')}
+            salesUsers={salesUsers}
+            assignments={assignments}
+            setAssignments={setAssignments}
+        />
       </div>
     </>
   );
-
-  function LeadTable({ title, leads, onAssign }: { title: string, leads: any[], onAssign: (id: string) => void }) {
-    if (leads.length === 0) return null;
-    return (
-        <Card>
-          <CardHeader>
-            <CardTitle>{title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Desktop Table */}
-            <div className="hidden rounded-lg border md:block">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Contact / Industry</TableHead>
-                    <TableHead>Assign To</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {leads.map(lead => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="font-medium">{lead.name}</TableCell>
-                      <TableCell>{(lead as any).contactNumber || (lead as any).industry}</TableCell>
-                      <TableCell>
-                        <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select sales user" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {salesUsers.map(user => (
-                              <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]}>Assign</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {/* Mobile Cards */}
-            <div className="space-y-4 md:hidden">
-              {leads.map(lead => (
-                <Card key={lead.id} className="p-0">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{lead.name}</CardTitle>
-                    <CardDescription>{(lead as any).contactNumber || (lead as any).industry}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Select onValueChange={(value) => setAssignments(prev => ({ ...prev, [lead.id]: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select sales user" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {salesUsers.map(user => (
-                          <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">Assign</Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-    )
-  }
 }
