@@ -47,24 +47,22 @@ export default function AnchorsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {userAnchors.map(anchor => (
-          <Link key={anchor.id} href={`/anchors/${anchor.id}`} legacyBehavior>
-            <a className="block">
-                <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{anchor.name}</CardTitle>
-                        <Badge variant={getStatusVariant(anchor.status)}>{anchor.status}</Badge>
-                    </div>
-                    <CardDescription>{anchor.industry}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-sm text-muted-foreground">
-                    <p className="font-medium">{anchor.primaryContactName}</p>
-                    <p>{anchor.email}</p>
-                    </div>
-                </CardContent>
-                </Card>
-            </a>
+          <Link key={anchor.id} href={`/anchors/${anchor.id}`} className="block">
+            <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{anchor.name}</CardTitle>
+                    <Badge variant={getStatusVariant(anchor.status)}>{anchor.status}</Badge>
+                </div>
+                <CardDescription>{anchor.industry}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="text-sm text-muted-foreground">
+                <p className="font-medium">{anchor.primaryContactName}</p>
+                <p>{anchor.email}</p>
+                </div>
+            </CardContent>
+            </Card>
           </Link>
         ))}
       </div>
