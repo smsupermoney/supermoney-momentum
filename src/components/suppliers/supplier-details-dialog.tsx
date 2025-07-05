@@ -62,8 +62,12 @@ export function SupplierDetailsDialog({ supplier, open, onOpenChange }: Supplier
                     <SelectContent>
                         <SelectItem value="Invited">Invited</SelectItem>
                         <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                        <SelectItem value="Documentation Pending">Documentation Pending</SelectItem>
+                        <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
                         <SelectItem value="Active">Active</SelectItem>
                         <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Rejected">Rejected</SelectItem>
+                        <SelectItem value="Not Interested">Not Interested</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

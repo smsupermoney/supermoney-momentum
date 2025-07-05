@@ -253,10 +253,24 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
         }
     }
 
-    const getStatusVariant = (status: OnboardingStatus) => {
-        if (status === 'Active') return 'default';
-        if (status === 'KYC Pending') return 'secondary';
-        return 'outline';
+    const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+        switch (status) {
+            case 'Active':
+                return 'default';
+            case 'Rejected':
+            case 'Not Interested':
+            case 'Inactive':
+                return 'destructive';
+            case 'Unassigned Lead':
+                return 'outline';
+            case 'Invited':
+            case 'KYC Pending':
+            case 'Documentation Pending':
+            case 'Agreement Pending':
+                return 'secondary';
+            default:
+                return 'outline';
+        }
     };
 
     return (
@@ -278,14 +292,18 @@ function SpokeTable({ spokes, type }: { spokes: Array<Dealer | Supplier>; type: 
                         <TableCell>
                             {isSpecialist ? (
                                 <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
-                                    <SelectTrigger className="w-[150px] h-8 text-xs">
+                                    <SelectTrigger className="w-[180px] h-8 text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Invited">Invited</SelectItem>
                                         <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                        <SelectItem value="Documentation Pending">Documentation Pending</SelectItem>
+                                        <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
                                         <SelectItem value="Active">Active</SelectItem>
                                         <SelectItem value="Inactive">Inactive</SelectItem>
+                                        <SelectItem value="Rejected">Rejected</SelectItem>
+                                        <SelectItem value="Not Interested">Not Interested</SelectItem>
                                     </SelectContent>
                                 </Select>
                             ) : (

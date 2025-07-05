@@ -10,7 +10,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
-import type { Supplier } from '@/lib/types';
+import type { Supplier, OnboardingStatus } from '@/lib/types';
 import { SupplierDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 
 export default function SuppliersPage() {
@@ -46,6 +46,26 @@ export default function SuppliersPage() {
   const getAssignedToName = (userId: string | null) => {
     if (!userId) return 'Unassigned';
     return users.find(u => u.uid === userId)?.name || 'Unknown';
+  };
+
+  const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+    switch (status) {
+        case 'Active':
+            return 'default';
+        case 'Rejected':
+        case 'Not Interested':
+        case 'Inactive':
+            return 'destructive';
+        case 'Unassigned Lead':
+            return 'outline';
+        case 'Invited':
+        case 'KYC Pending':
+        case 'Documentation Pending':
+        case 'Agreement Pending':
+            return 'secondary';
+        default:
+            return 'outline';
+    }
   };
 
   return (
@@ -87,26 +107,21 @@ export default function SuppliersPage() {
           </TableHeader>
           <TableBody>
             {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
-              <TableRow key={supplier.id}>
+              <TableRow key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
                 <TableCell className="font-medium">{supplier.name}</TableCell>
                 <TableCell>{supplier.contactNumber}</TableCell>
                 <TableCell>{supplier.location || 'N/A'}</TableCell>
                 <TableCell>
-                  <Badge variant={supplier.onboardingStatus === 'Active' ? 'default' : 'secondary'}>{supplier.onboardingStatus}</Badge>
+                  <Badge variant={getStatusVariant(supplier.onboardingStatus)}>{supplier.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(supplier.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(supplier.assignedTo)}</TableCell>
                 <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedSupplier(supplier)}>
-                            View Details
-                        </Button>
-                        <Button size="sm" asChild>
-                            <Link href="https://supermoney.in/onboarding" target="_blank">
-                                Start Onboarding
-                            </Link>
-                        </Button>
-                    </div>
+                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                        <Link href="https://supermoney.in/onboarding" target="_blank">
+                            Start Onboarding
+                        </Link>
+                    </Button>
                 </TableCell>
               </TableRow>
             )) : (

@@ -10,7 +10,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
-import type { Dealer } from '@/lib/types';
+import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 
 export default function DealersPage() {
@@ -46,6 +46,27 @@ export default function DealersPage() {
     if (!userId) return 'Unassigned';
     return users.find(u => u.uid === userId)?.name || 'Unknown';
   };
+  
+  const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+    switch (status) {
+        case 'Active':
+            return 'default';
+        case 'Rejected':
+        case 'Not Interested':
+        case 'Inactive':
+            return 'destructive';
+        case 'Unassigned Lead':
+            return 'outline';
+        case 'Invited':
+        case 'KYC Pending':
+        case 'Documentation Pending':
+        case 'Agreement Pending':
+            return 'secondary';
+        default:
+            return 'outline';
+    }
+  };
+
 
   return (
     <>
@@ -86,26 +107,21 @@ export default function DealersPage() {
           </TableHeader>
           <TableBody>
             {userDealers.length > 0 ? userDealers.map(dealer => (
-              <TableRow key={dealer.id}>
+              <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                 <TableCell className="font-medium">{dealer.name}</TableCell>
                 <TableCell>{dealer.contactNumber}</TableCell>
                 <TableCell>{dealer.location || 'N/A'}</TableCell>
                 <TableCell>
-                  <Badge variant={dealer.onboardingStatus === 'Active' ? 'default' : 'secondary'}>{dealer.onboardingStatus}</Badge>
+                  <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedDealer(dealer)}>
-                            View Details
-                        </Button>
-                        <Button size="sm" asChild>
-                            <Link href="https://supermoney.in/onboarding" target="_blank">
-                                Start Onboarding
-                            </Link>
-                        </Button>
-                    </div>
+                    <Button size="sm" asChild onClick={(e) => e.stopPropagation()}>
+                        <Link href="https://supermoney.in/onboarding" target="_blank">
+                            Start Onboarding
+                        </Link>
+                    </Button>
                 </TableCell>
               </TableRow>
             )) : (
