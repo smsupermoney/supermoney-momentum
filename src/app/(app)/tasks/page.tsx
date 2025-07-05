@@ -13,6 +13,10 @@ export default function TasksPage() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const { anchors, currentUser } = useApp();
 
+  const [dueDateFilter, setDueDateFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [anchorFilter, setAnchorFilter] = useState('all');
+
   const userAnchors = anchors.filter(anchor => {
     if (currentUser.role === 'Admin') return true;
     if (currentUser.role === 'Onboarding Specialist') return anchor.status === 'Onboarding';
@@ -31,15 +35,41 @@ export default function TasksPage() {
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4">
-          <div className="flex items-center gap-2 w-full sm:w-auto ml-auto">
-               <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Due Date" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="this-week">This Week</SelectItem><SelectItem value="overdue">Overdue</SelectItem></SelectContent></Select>
-               <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Priority" /></SelectTrigger><SelectContent><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent></Select>
-               <Select><SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger><SelectContent>{userAnchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto ml-auto">
+               <Select value={dueDateFilter} onValueChange={setDueDateFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Due Date" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Due Dates</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="this-week">This Week</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+               </Select>
+               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priorities</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                  </SelectContent>
+               </Select>
+               <Select value={anchorFilter} onValueChange={setAnchorFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Anchors</SelectItem>
+                    {userAnchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  </SelectContent>
+               </Select>
           </div>
       </div>
 
       <div className="flex-1">
-        <TaskList />
+        <TaskList 
+          dueDateFilter={dueDateFilter}
+          priorityFilter={priorityFilter}
+          anchorFilter={anchorFilter}
+        />
       </div>
     </div>
   );

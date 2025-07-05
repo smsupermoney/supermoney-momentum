@@ -4,13 +4,19 @@ import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, isToday, isThisWeek, isPast } from 'date-fns';
 import type { Task, TaskPriority } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 
-export function TaskList() {
+interface TaskListProps {
+  dueDateFilter?: string;
+  priorityFilter?: string;
+  anchorFilter?: string;
+}
+
+export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskListProps) {
   const { tasks, anchors, currentUser, users, updateTask } = useApp();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
@@ -32,7 +38,25 @@ export function TaskList() {
     }
   }
   
-  const userTasks = getVisibleTasks();
+  const filteredTasks = getVisibleTasks()
+    .filter(task => {
+        if (!dueDateFilter || dueDateFilter === 'all') return true;
+        const dueDate = new Date(task.dueDate);
+        if (dueDateFilter === 'today') return isToday(dueDate);
+        if (dueDateFilter === 'this-week') return isThisWeek(dueDate, { weekStartsOn: 1 });
+        // Show overdue tasks that are not yet completed
+        if (dueDateFilter === 'overdue') return isPast(dueDate) && !isToday(dueDate) && task.status !== 'Completed';
+        return true;
+    })
+    .filter(task => {
+        if (!priorityFilter || priorityFilter === 'all') return true;
+        return task.priority === priorityFilter;
+    })
+    .filter(task => {
+        if (!anchorFilter || anchorFilter === 'all') return true;
+        return task.associatedWith.anchorId === anchorFilter;
+    });
+
 
   const getAnchorName = (anchorId: string) => {
     return anchors.find(a => a.id === anchorId)?.name || 'Unknown';
@@ -82,7 +106,7 @@ export function TaskList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userTasks.length > 0 ? userTasks.map(task => (
+            {filteredTasks.length > 0 ? filteredTasks.map(task => (
               <TableRow key={task.id}>
                 <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
                 <TableCell className="font-medium">{task.title}</TableCell>
@@ -110,7 +134,7 @@ export function TaskList() {
 
       {/* Mobile Cards */}
       <div className="grid gap-4 md:hidden">
-        {userTasks.length > 0 ? userTasks.map(task => (
+        {filteredTasks.length > 0 ? filteredTasks.map(task => (
           <Card key={task.id}>
             <CardContent className="p-4 space-y-3">
               <div className="flex justify-between items-start gap-2">
