@@ -11,6 +11,7 @@ import {
   ListTodo,
   Shield,
   FileUp,
+  BarChart,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -35,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/dealers', label: 'Dealers', icon: Handshake },
     { href: '/suppliers', label: 'Suppliers', icon: Users },
     { href: '/tasks', label: 'Tasks', icon: ListTodo },
+    { href: '/reports', label: 'Reports', icon: BarChart },
   ];
 
   if (currentUser.role === 'Admin') {
