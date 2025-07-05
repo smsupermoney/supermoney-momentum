@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Supplier } from '@/lib/types';
 
@@ -30,6 +31,7 @@ const formSchema = z.object({
   contactNumber: z.string().min(10, { message: 'A valid contact number is required' }),
   gstin: z.string().optional(),
   location: z.string().optional(),
+  anchorId: z.string().optional(),
 });
 
 type NewLeadFormValues = z.infer<typeof formSchema>;
@@ -42,7 +44,7 @@ interface NewLeadDialogProps {
 }
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
-  const { addDealer, addSupplier, currentUser } = useApp();
+  const { addDealer, addSupplier, currentUser, anchors } = useApp();
   const { toast } = useToast();
 
   const form = useForm<NewLeadFormValues>({
@@ -52,6 +54,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       contactNumber: '',
       gstin: '',
       location: '',
+      anchorId: '',
     },
   });
   
@@ -61,12 +64,17 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   }
 
   const onSubmit = (values: NewLeadFormValues) => {
+    const finalAnchorId = anchorId || values.anchorId || null;
+    
     const commonData = {
       id: `${type.toLowerCase()}-${Date.now()}`,
-      ...values,
+      name: values.name,
+      contactNumber: values.contactNumber,
+      gstin: values.gstin,
+      location: values.location,
       assignedTo: currentUser.uid,
-      onboardingStatus: anchorId ? 'Invited' : 'Unassigned Lead',
-      anchorId: anchorId || null,
+      onboardingStatus: finalAnchorId ? 'Invited' : 'Unassigned Lead',
+      anchorId: finalAnchorId,
       createdAt: new Date().toISOString()
     }
 
@@ -120,6 +128,32 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 </FormItem>
               )}
             />
+            
+            {!anchorId && (
+                <FormField
+                control={form.control}
+                name="anchorId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Associated Anchor (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an anchor" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {anchors.map(anchor => (
+                                    <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+
              <FormField
               control={form.control}
               name="gstin"
