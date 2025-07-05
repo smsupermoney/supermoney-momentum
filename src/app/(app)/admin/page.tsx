@@ -12,10 +12,10 @@ import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle } from 'lucide-react';
 import type { User } from '@/lib/types';
 
-type LeadType = 'Anchor' | 'Dealer' | 'Supplier';
+type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
 
 export default function AdminPage() {
-  const { anchors, dealers, suppliers, users, updateAnchor, updateDealer, updateSupplier, currentUser } = useApp();
+  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
   const { toast } = useToast();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
 
@@ -32,7 +32,7 @@ export default function AdminPage() {
 
   const unassignedAnchors = anchors.filter(a => a.assignedTo === null || a.status === 'Unassigned Lead');
   const unassignedDealers = dealers.filter(d => d.assignedTo === null || d.onboardingStatus === 'Unassigned Lead');
-  const unassignedSuppliers = suppliers.filter(s => s.assignedTo === null || s.onboardingStatus === 'Unassigned Lead');
+  const unassignedVendors = vendors.filter(s => s.assignedTo === null || s.onboardingStatus === 'Unassigned Lead');
 
   const [assignments, setAssignments] = useState<Record<string, string>>({});
 
@@ -51,9 +51,9 @@ export default function AdminPage() {
     } else if (leadType === 'Dealer') {
         const dealer = dealers.find(d => d.id === leadId);
         if(dealer) updateDealer({...dealer, assignedTo: assignedToId, onboardingStatus: 'Invited'});
-    } else {
-        const supplier = suppliers.find(s => s.id === leadId);
-        if(supplier) updateSupplier({...supplier, assignedTo: assignedToId, onboardingStatus: 'Invited'});
+    } else if (leadType === 'Vendor') {
+        const vendor = vendors.find(s => s.id === leadId);
+        if(vendor) updateVendor({...vendor, assignedTo: assignedToId, onboardingStatus: 'Invited'});
     }
     
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });
@@ -122,7 +122,7 @@ export default function AdminPage() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base">{user.name}</CardTitle>
                                 <CardDescription>{user.email}</CardDescription>
-                            </CardHeader>
+                            </Header>
                             <CardContent className="space-y-1">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">Role:</span>
@@ -141,7 +141,7 @@ export default function AdminPage() {
         )}
         <LeadTable title="Unassigned Anchors" leads={unassignedAnchors} onAssign={(id) => handleAssign(id, 'Anchor')} />
         <LeadTable title="Unassigned Dealers" leads={unassignedDealers} onAssign={(id) => handleAssign(id, 'Dealer')} />
-        <LeadTable title="Unassigned Suppliers" leads={unassignedSuppliers} onAssign={(id) => handleAssign(id, 'Supplier')} />
+        <LeadTable title="Unassigned Vendors" leads={unassignedVendors} onAssign={(id) => handleAssign(id, 'Vendor')} />
       </div>
     </>
   );

@@ -16,6 +16,7 @@ import { mockUsers } from '@/lib/mock-data';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(1, { message: 'Password is required.' }),
 });
 
 type LoginFormValues = z.infer<typeof formSchema>;
@@ -28,12 +29,12 @@ export default function LoginPage() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = (values: LoginFormValues) => {
     setIsLoading(true);
-    const success = login(values.email);
+    const success = login(values.email, values.password);
 
     if (success) {
       router.replace('/dashboard');
@@ -41,7 +42,7 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'No user found with that email address. Please try another.',
+        description: 'Invalid email or password. Please try again.',
       });
       setIsLoading(false);
     }
@@ -52,11 +53,11 @@ export default function LoginPage() {
       <Card>
         <CardHeader>
           <CardTitle>Sign In</CardTitle>
-          <CardDescription>Use a mock email to sign in to your account.</CardDescription>
+          <CardDescription>Use a mock email and password to sign in.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -65,6 +66,19 @@ export default function LoginPage() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="e.g. asm@supermoney.in" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -81,7 +95,7 @@ export default function LoginPage() {
       <Card>
         <CardHeader>
             <CardTitle className="text-base">Demo Accounts</CardTitle>
-            <CardDescription className="text-xs">Use these emails for testing different roles.</CardDescription>
+            <CardDescription className="text-xs">Use password `test123` for all accounts.</CardDescription>
         </CardHeader>
         <CardContent>
             <ul className="space-y-2 text-sm">

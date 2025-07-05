@@ -9,7 +9,7 @@ interface AppContextType {
   addUser: (user: User) => void;
   currentUser: User | null;
   setCurrentUser: (user: User) => void;
-  login: (email: string) => boolean;
+  login: (email: string, password: string) => boolean;
   logout: () => void;
   isLoading: boolean;
   anchors: Anchor[];
@@ -53,9 +53,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = (email: string): boolean => {
+  const login = (email: string, password: string): boolean => {
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (user) {
+    if (user && password === 'test123') {
       setCurrentUser(user);
       sessionStorage.setItem('currentUser', JSON.stringify(user));
       return true;
