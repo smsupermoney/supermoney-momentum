@@ -1,13 +1,19 @@
 'use client';
-
+import { useState } from 'react';
 import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import type { TaskPriority } from '@/lib/types';
+import type { Task, TaskPriority } from '@/lib/types';
+import { LogOutcomeDialog } from './log-outcome-dialog';
+import { NewTaskDialog } from './new-task-dialog';
 
 export function TaskList() {
-  const { tasks, anchors, currentUser, users } = useApp();
+  const { tasks, anchors, currentUser, users, updateTask } = useApp();
+  const [completedTask, setCompletedTask] = useState<Task | null>(null);
+  const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   
   const getVisibleTasks = () => {
     switch (currentUser.role) {
@@ -41,7 +47,24 @@ export function TaskList() {
       'Low': 'default'
   }
 
+  const handleCompleteClick = (task: Task) => {
+      setCompletedTask(task);
+      setIsLogOutcomeOpen(true);
+  }
+
+  const handleLogOutcomeSubmit = (createFollowUp: boolean) => {
+      if(completedTask) {
+        updateTask({ ...completedTask, status: 'Completed' });
+        if (createFollowUp) {
+            // Slight delay to allow one modal to close before the next opens
+            setTimeout(() => setIsNewTaskOpen(true), 100);
+        }
+      }
+      setCompletedTask(null);
+  }
+
   return (
+    <>
     <div className="rounded-lg border">
       <Table>
         <TableHeader>
@@ -53,6 +76,7 @@ export function TaskList() {
             <TableHead>Task Type</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,11 +88,16 @@ export function TaskList() {
               {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableCell>{getAssignedToName(task.assignedTo)}</TableCell>}
               <TableCell>{task.type}</TableCell>
               <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
-              <TableCell><Badge variant="outline">{task.status}</Badge></TableCell>
+              <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
+              <TableCell className="text-right">
+                {task.status !== 'Completed' && (
+                    <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>Complete</Button>
+                )}
+              </TableCell>
             </TableRow>
           )) : (
              <TableRow>
-                <TableCell colSpan={(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') ? 7 : 6} className="h-24 text-center">
+                <TableCell colSpan={(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') ? 8 : 7} className="h-24 text-center">
                   No tasks found.
                 </TableCell>
               </TableRow>
@@ -76,5 +105,21 @@ export function TaskList() {
         </TableBody>
       </Table>
     </div>
+    {completedTask && (
+    <LogOutcomeDialog 
+        open={isLogOutcomeOpen} 
+        onOpenChange={setIsLogOutcomeOpen}
+        task={completedTask}
+        onSubmit={handleLogOutcomeSubmit}
+    />
+    )}
+    {completedTask && (
+    <NewTaskDialog
+        open={isNewTaskOpen}
+        onOpenChange={setIsNewTaskOpen}
+        prefilledAnchorId={completedTask.associatedWith.anchorId}
+    />
+    )}
+    </>
   );
 }

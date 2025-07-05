@@ -9,11 +9,14 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
+import type { Supplier } from '@/lib/types';
+import { SupplierDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 
 export default function SuppliersPage() {
   const { suppliers, anchors, users, currentUser } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
   if (currentUser.role === 'Onboarding Specialist') {
     return (
@@ -59,6 +62,14 @@ export default function SuppliersPage() {
       
       <NewLeadDialog type="Supplier" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
       <BulkUploadDialog type="Supplier" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
+      {selectedSupplier && (
+        <SupplierDetailsDialog
+            supplier={selectedSupplier}
+            open={!!selectedSupplier}
+            onOpenChange={(open) => { if(!open) setSelectedSupplier(null); }}
+        />
+      )}
+
 
       <div className="rounded-lg border">
         <Table>
@@ -74,7 +85,7 @@ export default function SuppliersPage() {
           </TableHeader>
           <TableBody>
             {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
-              <TableRow key={supplier.id}>
+              <TableRow key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
                 <TableCell className="font-medium">{supplier.name}</TableCell>
                 <TableCell>{supplier.contactNumber}</TableCell>
                 <TableCell>{supplier.location || 'N/A'}</TableCell>

@@ -9,11 +9,14 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload } from 'lucide-react';
+import type { Dealer } from '@/lib/types';
+import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
 
   if (currentUser.role === 'Onboarding Specialist') {
     return (
@@ -58,6 +61,14 @@ export default function DealersPage() {
       
       <NewLeadDialog type="Dealer" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
       <BulkUploadDialog type="Dealer" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
+      {selectedDealer && (
+        <DealerDetailsDialog
+            dealer={selectedDealer}
+            open={!!selectedDealer}
+            onOpenChange={(open) => { if(!open) setSelectedDealer(null); }}
+        />
+      )}
+
 
       <div className="rounded-lg border">
         <Table>
@@ -73,7 +84,7 @@ export default function DealersPage() {
           </TableHeader>
           <TableBody>
             {userDealers.length > 0 ? userDealers.map(dealer => (
-              <TableRow key={dealer.id}>
+              <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                 <TableCell className="font-medium">{dealer.name}</TableCell>
                 <TableCell>{dealer.contactNumber}</TableCell>
                 <TableCell>{dealer.location || 'N/A'}</TableCell>

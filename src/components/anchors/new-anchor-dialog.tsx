@@ -39,6 +39,7 @@ const formSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required' }),
   industry: z.string().min(2, { message: 'Industry is required' }),
   primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
+  primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
   email: z.string().email({ message: 'Invalid email address' }),
   phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
   leadSource: z.string().min(1, { message: 'Lead source is required' }),
@@ -64,6 +65,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       companyName: '',
       industry: '',
       primaryContactName: '',
+      primaryContactDesignation: '',
       email: '',
       phone: '',
       leadSource: '',
@@ -97,9 +99,14 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         id: `anchor-${Date.now()}`,
         name: values.companyName,
         industry: values.industry,
-        primaryContactName: values.primaryContactName,
-        email: values.email,
-        contactNumber: values.phone,
+        contacts: [{
+            id: `contact-${Date.now()}`,
+            name: values.primaryContactName,
+            designation: values.primaryContactDesignation,
+            email: values.email,
+            phone: values.phone,
+            isPrimary: true,
+        }],
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
@@ -183,6 +190,19 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                   <FormLabel>Primary Contact Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Ramesh Kumar" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="primaryContactDesignation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Contact Designation</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. CFO" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

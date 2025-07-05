@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType } from '@/lib/types';
+import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, Calendar, PenSquare, PlusCircle } from 'lucide-react';
+import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from 'lucide-react';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -38,7 +38,7 @@ interface AnchorProfileProps {
 }
 
 export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: initialSuppliers, activityLogs: initialLogs }: AnchorProfileProps) {
-  const { addActivityLog, currentUser } = useApp();
+  const { addActivityLog, updateAnchor, currentUser } = useApp();
   const { toast } = useToast();
   
   const [newActivity, setNewActivity] = useState('');
@@ -47,6 +47,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   const [leadType, setLeadType] = useState<'Dealer' | 'Supplier'>('Dealer');
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
+  const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
 
 
   const handleLogActivity = () => {
@@ -77,10 +78,29 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       })
   }
 
+  const handleStatusChange = (newStatus: LeadStatus) => {
+    updateAnchor({...anchor, status: newStatus});
+    toast({ title: "Anchor Status Updated", description: `${anchor.name} is now in '${newStatus}' stage.`});
+  }
+
   return (
     <>
       <PageHeader title={anchor.name} description={anchor.industry}>
           <div className="flex items-center gap-2">
+            {isSalesRole && (
+              <Select onValueChange={(v) => handleStatusChange(v as LeadStatus)} defaultValue={anchor.status}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Lead">Lead</SelectItem>
+                  <SelectItem value="Initial Contact">Initial Contact</SelectItem>
+                  <SelectItem value="Proposal">Proposal</SelectItem>
+                  <SelectItem value="Negotiation">Negotiation</SelectItem>
+                  <SelectItem value="Onboarding">Onboarding</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             {anchor.leadScore && (
                 <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm">
                     <span className="font-medium text-secondary-foreground">AI Score:</span>
@@ -119,13 +139,18 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                     <CardHeader><CardTitle>Key Contacts</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium">{anchor.primaryContactName}</p>
-                                    <p className="text-sm text-muted-foreground">{anchor.email} &bull; {anchor.contactNumber}</p>
+                           {anchor.contacts.map(contact => (
+                             <div key={contact.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</p>
+                                        <p className="text-sm text-muted-foreground">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</p>
+                                    </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => setNewActivity(`Logged interaction with ${anchor.primaryContactName}. `)}>Log Interaction</Button>
+                                <Button variant="outline" size="sm" onClick={() => setNewActivity(`Logged interaction with ${contact.name}. `)}>Log Interaction</Button>
                             </div>
+                           ))}
                         </div>
                     </CardContent>
                 </Card>

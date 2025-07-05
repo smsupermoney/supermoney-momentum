@@ -14,6 +14,15 @@ export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
 
+export interface Contact {
+    id: string;
+    name: string;
+    designation: string;
+    email: string;
+    phone: string;
+    isPrimary: boolean;
+}
+
 export interface BaseLead {
   id: string;
   name: string;
@@ -24,10 +33,9 @@ export interface BaseLead {
   createdAt: string;
 }
 
-export interface Anchor extends BaseLead {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name'> {
+  name: string; // Anchor name is company name
   industry: string;
-  primaryContactName: string;
-  email: string;
   annualTurnover?: number;
   creditRating?: string;
   address?: string;
@@ -37,6 +45,7 @@ export interface Anchor extends BaseLead {
   leadScoreReason?: string;
   dealerIds: string[];
   supplierIds: string[];
+  contacts: Contact[];
 }
 
 export interface Dealer extends BaseLead {
