@@ -144,7 +144,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                 <div className="flex items-center gap-3">
                                     <UserIcon className="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <p className="font-medium">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</p>
+                                        <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</div>
                                         <p className="text-sm text-muted-foreground">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</p>
                                     </div>
                                 </div>
