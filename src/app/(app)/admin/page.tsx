@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -72,10 +73,14 @@ export default function AdminPage() {
     return users.find(u => u.uid === managerId)?.name || 'Unknown';
   };
 
+  const handleDialogChange = (open: boolean) => {
+    setIsNewUserDialogOpen(open);
+  };
+
   return (
     <>
       <PageHeader title="Admin Panel" description="Manage unassigned leads and system users." />
-      <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
+      <NewUserDialog open={isNewUserDialogOpen} onOpenChange={handleDialogChange} />
       <div className="grid gap-4">
         {currentUser.role === 'Admin' && (
           <Card>
