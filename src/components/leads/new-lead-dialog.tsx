@@ -64,7 +64,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       location: '',
       anchorId: '',
       product: '',
-      leadType: 'New Lead',
+      leadType: 'New',
     },
   });
   
@@ -109,7 +109,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           createdAt: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
-          leadType: (values.leadType as LeadType) || 'New Lead',
+          leadType: (values.leadType as LeadType) || 'New',
         }
 
         if (type === 'Dealer') {
@@ -164,11 +164,11 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="New Lead">New Lead</SelectItem>
-                      <SelectItem value="Renewal of limits">Renewal of limits</SelectItem>
-                      <SelectItem value="Enhancement of limits">Enhancement of limits</SelectItem>
-                      <SelectItem value="Adhoc additional limits">Adhoc additional limits</SelectItem>
-                      <SelectItem value="Cross sell of another product">Cross sell of another product</SelectItem>
+                      <SelectItem value="New">New</SelectItem>
+                      <SelectItem value="Renewal">Renewal</SelectItem>
+                      <SelectItem value="Adhoc">Adhoc</SelectItem>
+                      <SelectItem value="Enhancement">Enhancement</SelectItem>
+                      <SelectItem value="Cross sell">Cross sell</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

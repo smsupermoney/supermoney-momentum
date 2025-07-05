@@ -13,7 +13,7 @@ export type OnboardingStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Ag
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
-export type LeadType = 'New Lead' | 'Renewal of limits' | 'Enhancement of limits' | 'Adhoc additional limits' | 'Cross sell of another product';
+export type LeadType = 'New' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell';
 
 
 export interface Contact {

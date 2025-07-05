@@ -55,7 +55,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                 <div><p className="text-muted-foreground">GSTIN</p><p>{vendor.gstin || 'N/A'}</p></div>
                 <div><p className="text-muted-foreground">Associated Anchor</p><p>{anchorName}</p></div>
                 <div><p className="text-muted-foreground">Product Interest</p><p>{vendor.product || 'N/A'}</p></div>
-                <div><p className="text-muted-foreground">Lead Type</p><p>{vendor.leadType || 'New Lead'}</p></div>
+                <div><p className="text-muted-foreground">Lead Type</p><p>{vendor.leadType || 'New'}</p></div>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="onboarding-status">Onboarding Status</Label>

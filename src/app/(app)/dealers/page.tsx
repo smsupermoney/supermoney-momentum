@@ -157,7 +157,7 @@ export default function DealersPage() {
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
-                <TableCell>{dealer.leadType || 'New Lead'}</TableCell>
+                <TableCell>{dealer.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
@@ -195,7 +195,7 @@ export default function DealersPage() {
                   <CardContent className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
-                        <Badge variant="outline">{dealer.leadType || 'New Lead'}</Badge>
+                        <Badge variant="outline">{dealer.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
                       <p className="text-sm text-muted-foreground">{dealer.email || 'No email'}</p>

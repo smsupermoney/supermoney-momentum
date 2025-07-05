@@ -159,7 +159,7 @@ export default function VendorsPage() {
                 <TableCell>
                   <Badge variant={getStatusVariant(vendor.onboardingStatus)}>{vendor.onboardingStatus}</Badge>
                 </TableCell>
-                <TableCell>{vendor.leadType || 'New Lead'}</TableCell>
+                <TableCell>{vendor.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(vendor.assignedTo)}</TableCell>
                 <TableCell className="text-right">
@@ -197,7 +197,7 @@ export default function VendorsPage() {
                   <CardContent className="space-y-2">
                      <div className="flex items-center gap-2">
                         <Badge variant={getStatusVariant(vendor.onboardingStatus)}>{vendor.onboardingStatus}</Badge>
-                        <Badge variant="outline">{vendor.leadType || 'New Lead'}</Badge>
+                        <Badge variant="outline">{vendor.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{vendor.contactNumber}</p>
                       <p className="text-sm text-muted-foreground">{vendor.email || 'No email'}</p>

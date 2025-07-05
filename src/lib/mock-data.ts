@@ -112,16 +112,16 @@ export const mockAnchors: Anchor[] = [
 ];
 
 export const mockDealers: Dealer[] = [
-  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New Lead' },
-  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New Lead' },
-  { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New Lead' },
-  { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New Lead' },
+  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New' },
+  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New' },
+  { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New' },
+  { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
 ];
 
 export const mockVendors: Vendor[] = [
-  { id: 'vendor-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New Lead' },
-  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New Lead' },
-  { id: 'vendor-3', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New Lead' },
+  { id: 'vendor-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New' },
+  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
+  { id: 'vendor-3', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New' },
 ];
 
 export const mockTasks: Task[] = [
