@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Supplier'>('Dealer');
+  const [activeTab, setActiveTab] = useState('details'); // For tab control
+  const activityTextareaRef = useRef<HTMLTextAreaElement>(null); // For focusing textarea
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
   const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
@@ -63,7 +65,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
     };
     addActivityLog(log);
     setNewActivity('');
-    toast({ title: 'Activity logged successfully.' });
+    toast({ title: 'Interaction logged successfully.' });
   };
   
   const openNewLeadDialog = (type: 'Dealer' | 'Supplier') => {
@@ -71,17 +73,19 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       setIsNewLeadOpen(true);
   }
 
-  const handleCreditCheck = () => {
-      toast({
-          title: 'Integration Placeholder',
-          description: 'This would trigger an API call to the credit underwriting system.'
-      })
-  }
-
   const handleStatusChange = (newStatus: LeadStatus) => {
     updateAnchor({...anchor, status: newStatus});
     toast({ title: "Anchor Status Updated", description: `${anchor.name} is now in '${newStatus}' stage.`});
   }
+
+  const handleLogInteractionClick = (contactName: string) => {
+    setNewActivity(`Logged interaction with ${contactName}. `);
+    setActiveTab('activity'); // Switch to interactions tab
+    setTimeout(() => {
+      activityTextareaRef.current?.focus();
+      activityTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100); // Timeout to allow tab to render before focus
+  };
 
   return (
     <>
@@ -107,7 +111,6 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                     <span className="font-bold text-primary">{anchor.leadScore}/100</span>
                 </div>
             )}
-            {isSalesRole && <Button variant="outline" onClick={handleCreditCheck}>Initiate Credit Check</Button>}
             <Button onClick={() => setIsNewTaskOpen(true)}>Add Task</Button>
           </div>
       </PageHeader>
@@ -115,12 +118,12 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
 
-      <Tabs defaultValue="details" className="w-full">
+      <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="dealers">Dealers ({initialDealers.length})</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers ({initialSuppliers.length})</TabsTrigger>
-          <TabsTrigger value="activity">Activity ({initialLogs.length})</TabsTrigger>
+          <TabsTrigger value="activity">Interactions ({initialLogs.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
@@ -148,7 +151,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
                                         <p className="text-sm text-muted-foreground">{contact.designation} &bull; {contact.email} &bull; {contact.phone}</p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => setNewActivity(`Logged interaction with ${contact.name}. `)}>Log Interaction</Button>
+                                <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)}>Log Interaction</Button>
                             </div>
                            ))}
                         </div>
@@ -198,12 +201,17 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
 
         <TabsContent value="activity" className="mt-4">
             <Card>
-                <CardHeader><CardTitle>Activity Log</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Interaction Log</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                           <Textarea placeholder={`Log new activity for ${anchor.name}...`} value={newActivity} onChange={(e) => setNewActivity(e.target.value)} />
-                           <Button onClick={handleLogActivity}>Log New Activity</Button>
+                           <Textarea 
+                             ref={activityTextareaRef}
+                             placeholder={`Log new interaction for ${anchor.name}...`} 
+                             value={newActivity} 
+                             onChange={(e) => setNewActivity(e.target.value)} 
+                           />
+                           <Button onClick={handleLogActivity}>Log Interaction</Button>
                         </div>
                         <Separator />
                         <div className="space-y-6">
