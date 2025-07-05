@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { User, Anchor, Dealer, Supplier, Task, ActivityLog } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockSuppliers, mockTasks, mockActivityLogs } from '@/lib/mock-data';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from '@/lib/types';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs } from '@/lib/mock-data';
 
 interface AppContextType {
   users: User[];
@@ -18,9 +18,9 @@ interface AppContextType {
   dealers: Dealer[];
   addDealer: (dealer: Dealer) => void;
   updateDealer: (dealer: Dealer) => void;
-  suppliers: Supplier[];
-  addSupplier: (supplier: Supplier) => void;
-  updateSupplier: (supplier: Supplier) => void;
+  vendors: Vendor[];
+  addVendor: (vendor: Vendor) => void;
+  updateVendor: (vendor: Vendor) => void;
   tasks: Task[];
   addTask: (task: Task) => void;
   updateTask: (task: Task) => void;
@@ -36,7 +36,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [anchors, setAnchors] = useState<Anchor[]>(mockAnchors);
   const [dealers, setDealers] = useState<Dealer[]>(mockDealers);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+  const [vendors, setVendors] = useState<Vendor[]>(mockVendors);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
 
@@ -78,9 +78,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
   };
   
-  const addSupplier = (supplier: Supplier) => setSuppliers(prev => [supplier, ...prev]);
-    const updateSupplier = (updatedSupplier: Supplier) => {
-    setSuppliers(prev => prev.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+  const addVendor = (vendor: Vendor) => setVendors(prev => [vendor, ...prev]);
+    const updateVendor = (updatedVendor: Vendor) => {
+    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
   };
 
   const addTask = (task: Task) => setTasks(prev => [task, ...prev]);
@@ -110,9 +110,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     dealers,
     addDealer,
     updateDealer,
-    suppliers,
-    addSupplier,
-    updateSupplier,
+    vendors,
+    addVendor,
+    updateVendor,
     tasks,
     addTask,
     updateTask,

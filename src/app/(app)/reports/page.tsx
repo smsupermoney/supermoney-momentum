@@ -220,7 +220,7 @@ function ZsmReports() {
 
 // Reports for Admin Role
 function AdminReports() {
-    const { anchors, users, dealers, suppliers, activityLogs } = useApp();
+    const { anchors, users, dealers, vendors, activityLogs } = useApp();
 
     // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Active'];
@@ -254,7 +254,7 @@ function AdminReports() {
 
     // Spoke Activation Rate
     const activeAnchors = anchors.filter(a => a.status === 'Active');
-    const totalSpokes = [...dealers, ...suppliers].filter(s => activeAnchors.some(a => a.id === s.anchorId));
+    const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.onboardingStatus === 'Active');
     const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 

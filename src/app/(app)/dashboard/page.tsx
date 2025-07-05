@@ -80,7 +80,7 @@ function ZsmDashboard() {
 
 // Onboarding Specialist Dashboard
 function OnboardingDashboard() {
-    const { anchors, dealers, suppliers } = useApp();
+    const { anchors, dealers, vendors } = useApp();
     const onboardingAnchors = anchors.filter(a => a.status === 'Onboarding');
 
     return (
@@ -98,7 +98,7 @@ function OnboardingDashboard() {
                                 <TableHead>Anchor Name</TableHead>
                                 <TableHead>Industry</TableHead>
                                 <TableHead>Active/Total Dealers</TableHead>
-                                <TableHead>Active/Total Suppliers</TableHead>
+                                <TableHead>Active/Total Vendors</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -106,14 +106,14 @@ function OnboardingDashboard() {
                             {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
                                 const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
                                 const activeDealers = anchorDealers.filter(d => d.onboardingStatus === 'Active').length;
-                                const anchorSuppliers = suppliers.filter(s => s.anchorId === anchor.id);
-                                const activeSuppliers = anchorSuppliers.filter(s => s.onboardingStatus === 'Active').length;
+                                const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
+                                const activeVendors = anchorVendors.filter(s => s.onboardingStatus === 'Active').length;
                                 return (
                                     <TableRow key={anchor.id}>
                                         <TableCell className="font-medium">{anchor.name}</TableCell>
                                         <TableCell>{anchor.industry}</TableCell>
                                         <TableCell><Badge variant="secondary">{activeDealers}/{anchorDealers.length}</Badge></TableCell>
-                                        <TableCell><Badge variant="secondary">{activeSuppliers}/{anchorSuppliers.length}</Badge></TableCell>
+                                        <TableCell><Badge variant="secondary">{activeVendors}/{anchorVendors.length}</Badge></TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="outline" size="sm" asChild>
                                                 <Link href={`/anchors/${anchor.id}`}>View Details</Link>
@@ -134,8 +134,8 @@ function OnboardingDashboard() {
                     {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
                         const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
                         const activeDealers = anchorDealers.filter(d => d.onboardingStatus === 'Active').length;
-                        const anchorSuppliers = suppliers.filter(s => s.anchorId === anchor.id);
-                        const activeSuppliers = anchorSuppliers.filter(s => s.onboardingStatus === 'Active').length;
+                        const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
+                        const activeVendors = anchorVendors.filter(s => s.onboardingStatus === 'Active').length;
                         return (
                              <Card key={anchor.id} className="p-0">
                                 <CardHeader className="pb-2">
@@ -148,8 +148,8 @@ function OnboardingDashboard() {
                                         <Badge variant="secondary">{activeDealers}/{anchorDealers.length} Active</Badge>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-muted-foreground">Suppliers:</span>
-                                        <Badge variant="secondary">{activeSuppliers}/{anchorSuppliers.length} Active</Badge>
+                                        <span className="text-muted-foreground">Vendors:</span>
+                                        <Badge variant="secondary">{activeVendors}/{anchorVendors.length} Active</Badge>
                                     </div>
                                     <Button variant="outline" size="sm" asChild className="w-full mt-2">
                                         <Link href={`/anchors/${anchor.id}`}>View Details</Link>

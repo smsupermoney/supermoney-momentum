@@ -13,6 +13,8 @@ export type OnboardingStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Ag
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
+export type LeadType = 'New Lead' | 'Renewal of limits' | 'Enhancement of limits' | 'Adhoc additional limits' | 'Cross sell of another product';
+
 
 export interface Contact {
     id: string;
@@ -33,9 +35,10 @@ export interface BaseLead {
   product?: string;
   assignedTo: string | null;
   createdAt: string;
+  leadType?: LeadType;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product'> {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType'> {
   name: string; // Anchor name is company name
   industry: string;
   annualTurnover?: number;
@@ -46,7 +49,7 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
   leadScore?: number;
   leadScoreReason?: string;
   dealerIds: string[];
-  supplierIds: string[];
+  vendorIds: string[];
   contacts: Contact[];
 }
 
@@ -57,7 +60,7 @@ export interface Dealer extends BaseLead {
   leadScoreReason?: string;
 }
 
-export interface Supplier extends BaseLead {
+export interface Vendor extends BaseLead {
   onboardingStatus: OnboardingStatus;
   anchorId: string | null;
   leadScore?: number;
@@ -70,7 +73,7 @@ export interface Task {
   associatedWith: {
     anchorId: string;
     dealerId?: string;
-    supplierId?: string;
+    vendorId?: string;
   };
   type: TaskType;
   dueDate: string;
@@ -85,7 +88,7 @@ export interface ActivityLog {
   id: string;
   anchorId?: string;
   dealerId?: string;
-  supplierId?: string;
+  vendorId?: string;
   taskId?: string;
   timestamp: string;
   type: TaskType;

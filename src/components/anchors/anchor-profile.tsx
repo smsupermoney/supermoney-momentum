@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import type { Anchor, Dealer, Supplier, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
+import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
-import { SupplierDetailsDialog } from '../suppliers/supplier-details-dialog';
+import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -34,20 +34,20 @@ const iconMap: Record<TaskType, React.ElementType> = {
 interface AnchorProfileProps {
   anchor: Anchor;
   dealers: Dealer[];
-  suppliers: Supplier[];
+  vendors: Vendor[];
   activityLogs: ActivityLog[];
   tasks: Task[];
   users: User[];
 }
 
-export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: initialSuppliers, activityLogs: initialLogs }: AnchorProfileProps) {
+export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs }: AnchorProfileProps) {
   const { addActivityLog, updateAnchor, currentUser } = useApp();
   const { toast } = useToast();
   
   const [newActivity, setNewActivity] = useState('');
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  const [leadType, setLeadType] = useState<'Dealer' | 'Supplier'>('Dealer');
+  const [leadType, setLeadType] = useState<'Dealer' | 'Vendor'>('Dealer');
   const [activeTab, setActiveTab] = useState('details'); 
   const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -55,7 +55,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
 
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
 
   const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
@@ -78,7 +78,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
     toast({ title: 'Interaction logged successfully.' });
   };
   
-  const openNewLeadDialog = (type: 'Dealer' | 'Supplier') => {
+  const openNewLeadDialog = (type: 'Dealer' | 'Vendor') => {
       setLeadType(type);
       setIsNewLeadOpen(true);
   }
@@ -105,11 +105,11 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
     setIsEmailDialogOpen(true);
   };
   
-  const handleViewDetails = (spoke: Dealer | Supplier, type: 'Dealer' | 'Supplier') => {
+  const handleViewDetails = (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => {
     if (type === 'Dealer') {
         setSelectedDealer(spoke as Dealer);
     } else {
-        setSelectedSupplier(spoke as Supplier);
+        setSelectedVendor(spoke as Vendor);
     }
   }
 
@@ -159,11 +159,11 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
             onOpenChange={(open) => { if(!open) setSelectedDealer(null); }}
         />
       )}
-      {selectedSupplier && (
-        <SupplierDetailsDialog
-            supplier={selectedSupplier}
-            open={!!selectedSupplier}
-            onOpenChange={(open) => { if(!open) setSelectedSupplier(null); }}
+      {selectedVendor && (
+        <VendorDetailsDialog
+            vendor={selectedVendor}
+            open={!!selectedVendor}
+            onOpenChange={(open) => { if(!open) setSelectedVendor(null); }}
         />
       )}
 
@@ -172,7 +172,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
         <TabsList className="w-full overflow-x-auto justify-start">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="dealers">Dealers ({initialDealers.length})</TabsTrigger>
-          <TabsTrigger value="suppliers">Suppliers ({initialSuppliers.length})</TabsTrigger>
+          <TabsTrigger value="vendors">Vendors ({initialVendors.length})</TabsTrigger>
           <TabsTrigger value="interactions">Interactions ({initialLogs.length})</TabsTrigger>
         </TabsList>
 
@@ -240,16 +240,16 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
           </Card>
         </TabsContent>
 
-        <TabsContent value="suppliers" className="mt-4">
+        <TabsContent value="vendors" className="mt-4">
           <Card>
              <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>Associated Suppliers</CardTitle>
-                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Supplier')}><PlusCircle className="h-4 w-4 mr-2" />Add New Supplier</Button>}
+                    <CardTitle>Associated Vendors</CardTitle>
+                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />Add New Vendor</Button>}
                 </div>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialSuppliers} type="Supplier" onViewDetails={handleViewDetails} />
+                <SpokeTable spokes={initialVendors} type="Vendor" onViewDetails={handleViewDetails} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -296,15 +296,15 @@ export function AnchorProfile({ anchor, dealers: initialDealers, suppliers: init
   );
 }
 
-function SpokeTable({ spokes, type, onViewDetails }: { spokes: Array<Dealer | Supplier>; type: 'Dealer' | 'Supplier'; onViewDetails: (spoke: Dealer | Supplier, type: 'Dealer' | 'Supplier') => void; }) {
-    const { currentUser, updateDealer, updateSupplier } = useApp();
+function SpokeTable({ spokes, type, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
+    const { currentUser, updateDealer, updateVendor } = useApp();
     const isSpecialist = currentUser?.role === 'Onboarding Specialist';
 
-    const handleStatusChange = (spoke: Dealer | Supplier, newStatus: OnboardingStatus) => {
+    const handleStatusChange = (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
         if (type === 'Dealer') {
             updateDealer({...(spoke as Dealer), onboardingStatus: newStatus});
         } else {
-            updateSupplier({...(spoke as Supplier), onboardingStatus: newStatus});
+            updateVendor({...(spoke as Vendor), onboardingStatus: newStatus});
         }
     }
 

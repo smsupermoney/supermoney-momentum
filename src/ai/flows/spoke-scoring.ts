@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview A spoke (dealer/supplier) lead scoring AI agent.
+ * @fileOverview A spoke (dealer/vendor) lead scoring AI agent.
  *
  * - spokeScoring - A function that scores the spoke lead.
  * - SpokeScoringInput - The input type for the spokeScoring function.
@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SpokeScoringInputSchema = z.object({
-  name: z.string().describe('The name of the dealer or supplier company.'),
+  name: z.string().describe('The name of the dealer or vendor company.'),
   product: z.string().optional().describe('The financial product they are interested in.'),
   location: z.string().optional().describe('The location of the company.'),
   anchorName: z.string().optional().describe('The name of the associated anchor company.'),
@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'spokeScoringPrompt',
   input: {schema: SpokeScoringInputSchema},
   output: {schema: SpokeScoringOutputSchema},
-  prompt: `You are an expert sales consultant specializing in supply chain finance. You need to score a dealer or supplier lead.
+  prompt: `You are an expert sales consultant specializing in supply chain finance. You need to score a dealer or vendor lead.
 
 Score should be from 0 to 100, where 100 is the most likely to convert.
 

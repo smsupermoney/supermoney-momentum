@@ -14,17 +14,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload } from 'lucide-react';
-import type { Dealer, Supplier } from '@/lib/types';
+import type { Dealer, Vendor } from '@/lib/types';
 
 interface BulkUploadDialogProps {
-  type: 'Dealer' | 'Supplier';
+  type: 'Dealer' | 'Vendor';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   anchorId?: string;
 }
 
 export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUploadDialogProps) {
-  const { addDealer, addSupplier, currentUser, anchors } = useApp();
+  const { addDealer, addVendor, currentUser, anchors } = useApp();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -78,13 +78,14 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               assignedTo: currentUser.uid,
               onboardingStatus: finalAnchorId ? 'Invited' : 'Unassigned Lead',
               anchorId: finalAnchorId,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
+              leadType: 'New Lead' as const,
             };
 
             if (type === 'Dealer') {
               addDealer(commonData as Dealer);
             } else {
-              addSupplier(commonData as Supplier);
+              addVendor(commonData as Vendor);
             }
             successCount++;
           } catch (err) {

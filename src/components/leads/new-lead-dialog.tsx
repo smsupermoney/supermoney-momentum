@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Dealer, Supplier } from '@/lib/types';
+import type { Dealer, Vendor, LeadType } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2 } from 'lucide-react';
 
@@ -37,19 +37,20 @@ const formSchema = z.object({
   location: z.string().optional(),
   anchorId: z.string().optional(),
   product: z.string().optional(),
+  leadType: z.string().optional(),
 });
 
 type NewLeadFormValues = z.infer<typeof formSchema>;
 
 interface NewLeadDialogProps {
-  type: 'Dealer' | 'Supplier';
+  type: 'Dealer' | 'Vendor';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   anchorId?: string;
 }
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
-  const { addDealer, addSupplier, currentUser, anchors } = useApp();
+  const { addDealer, addVendor, currentUser, anchors } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,6 +64,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       location: '',
       anchorId: '',
       product: '',
+      leadType: 'New Lead',
     },
   });
   
@@ -107,12 +109,13 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           createdAt: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
+          leadType: (values.leadType as LeadType) || 'New Lead',
         }
 
         if (type === 'Dealer') {
           addDealer(commonData as Dealer);
         } else {
-          addSupplier(commonData as Supplier);
+          addVendor(commonData as Vendor);
         }
 
         toast({
@@ -143,11 +146,35 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         <DialogHeader>
           <DialogTitle>+ New {type} Lead</DialogTitle>
           <DialogDescription>
-            Add a new {type.toLowerCase()} lead. Fill in the details below.
+            Add a new {type.toLowerCase()} lead. Can be used for new leads or new opportunities for existing clients.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+             <FormField
+              control={form.control}
+              name="leadType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lead Type</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select lead type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="New Lead">New Lead</SelectItem>
+                      <SelectItem value="Renewal of limits">Renewal of limits</SelectItem>
+                      <SelectItem value="Enhancement of limits">Enhancement of limits</SelectItem>
+                      <SelectItem value="Adhoc additional limits">Adhoc additional limits</SelectItem>
+                      <SelectItem value="Cross sell of another product">Cross sell of another product</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="name"

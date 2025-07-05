@@ -1,4 +1,4 @@
-import type { User, Anchor, Dealer, Supplier, Task, ActivityLog } from './types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -26,7 +26,7 @@ export const mockAnchors: Anchor[] = [
     assignedTo: 'user-1',
     createdAt: daysAgo(20),
     dealerIds: ['dealer-1', 'dealer-4'],
-    supplierIds: ['supplier-1', 'supplier-2'],
+    vendorIds: ['vendor-1', 'vendor-2'],
     annualTurnover: 5000000000,
     gstin: '27AACCR1234A1Z5',
     creditRating: 'AAA',
@@ -46,7 +46,7 @@ export const mockAnchors: Anchor[] = [
     assignedTo: 'user-1',
     createdAt: daysAgo(15),
     dealerIds: ['dealer-2'],
-    supplierIds: [],
+    vendorIds: [],
     leadSource: 'Conference / Event',
     annualTurnover: 8500000000,
   },
@@ -61,7 +61,7 @@ export const mockAnchors: Anchor[] = [
     assignedTo: 'user-2',
     createdAt: daysAgo(10),
     dealerIds: [],
-    supplierIds: [],
+    vendorIds: [],
     leadSource: 'LinkedIn Campaign',
     annualTurnover: 2500000000,
   },
@@ -76,7 +76,7 @@ export const mockAnchors: Anchor[] = [
     assignedTo: 'user-2',
     createdAt: daysAgo(8),
     dealerIds: [],
-    supplierIds: [],
+    vendorIds: [],
     leadSource: 'Website Inquiry',
     annualTurnover: 1000000000,
   },
@@ -91,7 +91,7 @@ export const mockAnchors: Anchor[] = [
     assignedTo: null,
     createdAt: daysAgo(2),
     dealerIds: [],
-    supplierIds: [],
+    vendorIds: [],
     leadSource: 'CA / Financial Consultant Referral',
   },
    { 
@@ -105,23 +105,23 @@ export const mockAnchors: Anchor[] = [
     assignedTo: 'user-1',
     createdAt: daysAgo(5),
     dealerIds: [],
-    supplierIds: [],
+    vendorIds: [],
     leadSource: 'Content Marketing',
     annualTurnover: 750000000,
   },
 ];
 
 export const mockDealers: Dealer[] = [
-  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub." },
-  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary' },
-  { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL' },
-  { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary' },
+  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New Lead' },
+  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New Lead' },
+  { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New Lead' },
+  { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New Lead' },
 ];
 
-export const mockSuppliers: Supplier[] = [
-  { id: 'supplier-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability." },
-  { id: 'supplier-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary' },
-  { id: 'supplier-3', name: 'Unassigned Suppliers Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other' },
+export const mockVendors: Vendor[] = [
+  { id: 'vendor-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New Lead' },
+  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New Lead' },
+  { id: 'vendor-3', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New Lead' },
 ];
 
 export const mockTasks: Task[] = [
@@ -236,7 +236,7 @@ export const mockActivityLogs: ActivityLog[] = [
         timestamp: daysAgo(5),
         type: 'Call',
         title: "Call logged with Kishore Biyani at 'Future Group'",
-        outcome: "Discussed initial requirements. Client is interested in supplier finance. Sent introductory email.",
+        outcome: "Discussed initial requirements. Client is interested in vendor finance. Sent introductory email.",
         userName: 'Priya Sharma',
     },
      {

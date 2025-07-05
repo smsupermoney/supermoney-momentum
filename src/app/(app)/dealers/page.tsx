@@ -115,6 +115,7 @@ export default function DealersPage() {
               <TableHead>Name</TableHead>
               <TableHead className="hidden lg:table-cell">Contact</TableHead>
               <TableHead>Onboarding Status</TableHead>
+              <TableHead>Lead Type</TableHead>
               <TableHead>Associated Anchor</TableHead>
               <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -131,6 +132,7 @@ export default function DealersPage() {
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
+                <TableCell>{dealer.leadType || 'New Lead'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
@@ -163,9 +165,12 @@ export default function DealersPage() {
                       <CardTitle>{dealer.name}</CardTitle>
                       <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                      <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
-                      <p className="text-sm text-muted-foreground mt-2">{dealer.contactNumber}</p>
+                  <CardContent className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
+                        <Badge variant="outline">{dealer.leadType || 'New Lead'}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
                       <p className="text-sm text-muted-foreground">{dealer.email || 'No email'}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">

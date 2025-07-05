@@ -40,7 +40,7 @@ interface ComposeEmailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipientEmail: string;
-  entity: { id: string; name: string; type: 'anchor' | 'dealer' | 'supplier' };
+  entity: { id: string; name: string; type: 'anchor' | 'dealer' | 'vendor' };
 }
 
 export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity }: ComposeEmailDialogProps) {
@@ -95,8 +95,8 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
         newLog.anchorId = entity.id;
     } else if (entity.type === 'dealer') {
         newLog.dealerId = entity.id;
-    } else if (entity.type === 'supplier') {
-        newLog.supplierId = entity.id;
+    } else if (entity.type === 'vendor') {
+        newLog.vendorId = entity.id;
     }
 
     addActivityLog(newLog as ActivityLog);
