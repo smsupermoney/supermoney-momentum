@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -80,11 +81,12 @@ export default function DealersPage() {
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
               <TableHead>Assigned To</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {userDealers.length > 0 ? userDealers.map(dealer => (
-              <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
+              <TableRow key={dealer.id}>
                 <TableCell className="font-medium">{dealer.name}</TableCell>
                 <TableCell>{dealer.contactNumber}</TableCell>
                 <TableCell>{dealer.location || 'N/A'}</TableCell>
@@ -93,10 +95,22 @@ export default function DealersPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
+                <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedDealer(dealer)}>
+                            View Details
+                        </Button>
+                        <Button size="sm" asChild>
+                            <Link href="https://supermoney.in/onboarding" target="_blank">
+                                Start Onboarding
+                            </Link>
+                        </Button>
+                    </div>
+                </TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No dealers found.
                 </TableCell>
               </TableRow>

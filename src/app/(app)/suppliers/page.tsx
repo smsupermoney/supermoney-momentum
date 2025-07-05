@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -81,11 +82,12 @@ export default function SuppliersPage() {
               <TableHead>Onboarding Status</TableHead>
               <TableHead>Associated Anchor</TableHead>
               <TableHead>Assigned To</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {userSuppliers.length > 0 ? userSuppliers.map(supplier => (
-              <TableRow key={supplier.id} onClick={() => setSelectedSupplier(supplier)} className="cursor-pointer">
+              <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.name}</TableCell>
                 <TableCell>{supplier.contactNumber}</TableCell>
                 <TableCell>{supplier.location || 'N/A'}</TableCell>
@@ -94,10 +96,22 @@ export default function SuppliersPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(supplier.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(supplier.assignedTo)}</TableCell>
+                <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedSupplier(supplier)}>
+                            View Details
+                        </Button>
+                        <Button size="sm" asChild>
+                            <Link href="https://supermoney.in/onboarding" target="_blank">
+                                Start Onboarding
+                            </Link>
+                        </Button>
+                    </div>
+                </TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No suppliers found.
                 </TableCell>
               </TableRow>
