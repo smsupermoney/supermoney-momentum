@@ -25,6 +25,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(3, 'Title is required'),
@@ -46,6 +47,7 @@ interface NewTaskDialogProps {
 export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTaskDialogProps) {
   const { anchors, addTask, currentUser } = useApp();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewTaskFormValues>({
     resolver: zodResolver(formSchema),
@@ -76,22 +78,32 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     onOpenChange(false);
   };
 
-  const onSubmit = (values: NewTaskFormValues) => {
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
-      title: values.title,
-      associatedWith: { anchorId: values.anchorId },
-      type: values.type as Task['type'],
-      dueDate: values.dueDate.toISOString(),
-      priority: values.priority as Task['priority'],
-      description: values.description || '',
-      status: 'To-Do',
-      assignedTo: currentUser.uid,
-      createdAt: new Date().toISOString(),
-    };
-    addTask(newTask);
-    toast({ title: 'Task Created', description: `Task "${values.title}" has been added.` });
-    handleClose();
+  const onSubmit = async (values: NewTaskFormValues) => {
+    if(!currentUser) {
+        toast({variant: 'destructive', title: 'Error', description: 'You must be logged in.'});
+        return;
+    }
+    setIsSubmitting(true);
+    try {
+        const newTask: Omit<Task, 'id'> = {
+          title: values.title,
+          associatedWith: { anchorId: values.anchorId },
+          type: values.type as Task['type'],
+          dueDate: values.dueDate.toISOString(),
+          priority: values.priority as Task['priority'],
+          description: values.description || '',
+          status: 'To-Do',
+          assignedTo: currentUser.uid,
+          createdAt: new Date().toISOString(),
+        };
+        await addTask(newTask);
+        toast({ title: 'Task Created', description: `Task "${values.title}" has been added.` });
+        handleClose();
+    } catch (error) {
+        toast({variant: 'destructive', title: 'Error', description: 'Failed to create task.'});
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -177,7 +189,10 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
             )}/>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button type="submit">Create Task</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Task
+              </Button>
             </DialogFooter>
           </form>
         </Form>

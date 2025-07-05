@@ -96,7 +96,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const scoreResult = await spokeScoring(scoringInput);
         
         const commonData = {
-          id: `${type.toLowerCase()}-${Date.now()}`,
           name: values.name,
           contactNumber: values.contactNumber,
           email: values.email,
@@ -113,9 +112,9 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         }
 
         if (type === 'Dealer') {
-          addDealer(commonData as Dealer);
+          await addDealer(commonData as Omit<Dealer, 'id'>);
         } else {
-          addVendor(commonData as Vendor);
+          await addVendor(commonData as Omit<Vendor, 'id'>);
         }
 
         toast({

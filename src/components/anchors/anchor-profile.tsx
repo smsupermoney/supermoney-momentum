@@ -41,7 +41,7 @@ interface AnchorProfileProps {
 }
 
 export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs }: AnchorProfileProps) {
-  const { addActivityLog, updateAnchor, currentUser } = useApp();
+  const { addActivityLog, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
   const { toast } = useToast();
   
   const [newActivity, setNewActivity] = useState('');
@@ -58,14 +58,11 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
 
-  const isSalesRole = ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
-  const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
+  const isSalesRole = currentUser && ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
 
-
-  const handleLogActivity = () => {
+  const handleLogActivity = async () => {
     if (newActivity.trim() === '' || !currentUser) return;
-    const log: ActivityLog = {
-      id: `log-${Date.now()}`,
+    const log: Omit<ActivityLog, 'id'> = {
       anchorId: anchor.id,
       timestamp: new Date().toISOString(),
       type: 'Call', // Defaulting for manual entry, could be a dropdown
@@ -73,7 +70,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       outcome: newActivity,
       userName: currentUser.name,
     };
-    addActivityLog(log);
+    await addActivityLog(log);
     setNewActivity('');
     toast({ title: 'Interaction logged successfully.' });
   };
@@ -83,8 +80,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       setIsNewLeadOpen(true);
   }
 
-  const handleStatusChange = (newStatus: LeadStatus) => {
-    updateAnchor({...anchor, status: newStatus});
+  const handleStatusChange = async (newStatus: LeadStatus) => {
+    await updateAnchor({...anchor, status: newStatus});
     toast({ title: "Anchor Status Updated", description: `${anchor.name} is now in '${newStatus}' stage.`});
   }
 
@@ -235,7 +232,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                 </div>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialDealers} type="Dealer" onViewDetails={handleViewDetails} />
+                <SpokeTable spokes={initialDealers} type="Dealer" onUpdateSpoke={updateDealer} onViewDetails={handleViewDetails} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -249,7 +246,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                 </div>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialVendors} type="Vendor" onViewDetails={handleViewDetails} />
+                <SpokeTable spokes={initialVendors} type="Vendor" onUpdateSpoke={updateVendor} onViewDetails={handleViewDetails} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -296,16 +293,12 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   );
 }
 
-function SpokeTable({ spokes, type, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
-    const { currentUser, updateDealer, updateVendor } = useApp();
+function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onUpdateSpoke: (spoke: any) => Promise<void>; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
+    const { currentUser } = useApp();
     const isSpecialist = currentUser?.role === 'Onboarding Specialist';
 
-    const handleStatusChange = (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
-        if (type === 'Dealer') {
-            updateDealer({...(spoke as Dealer), onboardingStatus: newStatus});
-        } else {
-            updateVendor({...(spoke as Vendor), onboardingStatus: newStatus});
-        }
+    const handleStatusChange = async (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
+        await onUpdateSpoke({...spoke, onboardingStatus: newStatus});
     }
 
     const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {

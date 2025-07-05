@@ -80,6 +80,10 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
   }
 
   const onSubmit = async (values: NewAnchorFormValues) => {
+    if (!currentUser) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to create an anchor.' });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const leadScoringInput: LeadScoringInput = {
@@ -97,8 +101,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       
       const isSpecialist = currentUser.role === 'Onboarding Specialist';
 
-      const newAnchor: Anchor = {
-        id: `anchor-${Date.now()}`,
+      const newAnchor: Omit<Anchor, 'id'> = {
         name: values.companyName,
         industry: values.industry,
         contacts: [{
@@ -116,12 +119,12 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         assignedTo: isSpecialist ? null : currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],
-        supplierIds: [],
+        vendorIds: [],
         leadScore: scoreResult.score,
         leadScoreReason: scoreResult.reason,
       };
 
-      addAnchor(newAnchor);
+      await addAnchor(newAnchor);
 
       toast({
         title: 'Anchor Created & Scored!',

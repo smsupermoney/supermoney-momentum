@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import type { Task, ActivityLog } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   outcome: z.string().min(10, 'Please provide a summary of the outcome.'),
@@ -36,30 +37,38 @@ interface LogOutcomeDialogProps {
 export function LogOutcomeDialog({ open, onOpenChange, task, onSubmit }: LogOutcomeDialogProps) {
   const { addActivityLog, currentUser, anchors } = useApp();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LogOutcomeFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { outcome: '', createFollowUp: true },
   });
 
-  const handleFormSubmit = (values: LogOutcomeFormValues) => {
-    const anchorName = anchors.find(a => a.id === task.associatedWith.anchorId)?.name;
-    const newLog: ActivityLog = {
-      id: `log-${Date.now()}`,
-      anchorId: task.associatedWith.anchorId,
-      taskId: task.id,
-      timestamp: new Date().toISOString(),
-      type: task.type,
-      title: `${task.type}: ${task.title} with ${anchorName}`,
-      outcome: values.outcome,
-      userName: currentUser.name,
-    };
-    addActivityLog(newLog);
+  const handleFormSubmit = async (values: LogOutcomeFormValues) => {
+    if (!currentUser) return;
+    setIsSubmitting(true);
+    try {
+        const anchorName = anchors.find(a => a.id === task.associatedWith.anchorId)?.name;
+        const newLog: Omit<ActivityLog, 'id'> = {
+          anchorId: task.associatedWith.anchorId,
+          taskId: task.id,
+          timestamp: new Date().toISOString(),
+          type: task.type,
+          title: `${task.type}: ${task.title} with ${anchorName}`,
+          outcome: values.outcome,
+          userName: currentUser.name,
+        };
+        await addActivityLog(newLog);
 
-    toast({ title: 'Task Completed & Outcome Logged' });
-    onSubmit(values.createFollowUp);
-    form.reset();
-    onOpenChange(false);
+        toast({ title: 'Task Completed & Outcome Logged' });
+        onSubmit(values.createFollowUp);
+        form.reset();
+        onOpenChange(false);
+    } catch (error) {
+        toast({variant: 'destructive', title: 'Error', description: 'Failed to log outcome.'});
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const handleClose = () => {
@@ -105,7 +114,10 @@ export function LogOutcomeDialog({ open, onOpenChange, task, onSubmit }: LogOutc
             />
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Submit
+                </Button>
             </DialogFooter>
           </form>
         </Form>

@@ -32,9 +32,9 @@ export default function LoginPage() {
     defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = (values: LoginFormValues) => {
+  const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
-    const success = login(values.email, values.password);
+    const success = await login(values.email, values.password);
 
     if (success) {
       router.replace('/dashboard');

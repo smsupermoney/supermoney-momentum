@@ -1,26 +1,43 @@
-import { AnchorProfile } from "@/components/anchors/anchor-profile";
-import { mockActivityLogs, mockAnchors, mockDealers, mockVendors, mockTasks, mockUsers } from "@/lib/mock-data";
+'use client';
 
-// This is a server component to fetch data. In a real app, this would be an async function.
+import { useApp } from "@/contexts/app-context";
+import { AnchorProfile } from "@/components/anchors/anchor-profile";
+import { Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+
 export default function AnchorProfilePage({ params }: { params: { id: string } }) {
-  const anchor = mockAnchors.find((a) => a.id === params.id);
+  const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading } = useApp();
   
-  if (!anchor) {
-    return <div className="p-8 text-center">Anchor not found.</div>;
+  const anchor = anchors.find((a) => a.id === params.id);
+  
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
-  const dealers = mockDealers.filter(d => anchor.dealerIds.includes(d.id));
-  const vendors = mockVendors.filter(s => anchor.vendorIds.includes(s.id));
-  const activityLogs = mockActivityLogs.filter(log => log.anchorId === anchor.id);
-  const tasks = mockTasks.filter(task => task.associatedWith.anchorId === anchor.id);
+  if (!anchor) {
+    return (
+        <>
+            <PageHeader title="Anchor Not Found" />
+            <div className="p-8 text-center text-muted-foreground">The requested anchor could not be found.</div>
+        </>
+    );
+  }
 
+  const anchorDealers = dealers.filter(d => anchor.dealerIds.includes(d.id));
+  const anchorVendors = vendors.filter(v => anchor.vendorIds.includes(v.id));
+  const anchorActivityLogs = activityLogs.filter(log => log.anchorId === anchor.id);
+  const anchorTasks = tasks.filter(task => task.associatedWith.anchorId === anchor.id);
 
   return <AnchorProfile 
             anchor={anchor}
-            dealers={dealers}
-            vendors={vendors}
-            activityLogs={activityLogs}
-            tasks={tasks}
-            users={mockUsers}
+            dealers={anchorDealers}
+            vendors={anchorVendors}
+            activityLogs={anchorActivityLogs}
+            tasks={anchorTasks}
+            users={users}
          />;
 }

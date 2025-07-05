@@ -67,22 +67,30 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     onOpenChange(false);
   }
 
-  const onSubmit = (values: NewUserFormValues) => {
+  const onSubmit = async (values: NewUserFormValues) => {
     setIsSubmitting(true);
-    const newUser: User = {
-      uid: `user-${Date.now()}`,
-      name: values.name,
-      email: values.email,
-      role: values.role as UserRole,
-      managerId: values.role === 'Sales' ? values.managerId : null,
-    };
-    addUser(newUser);
-    toast({
-      title: 'User Created',
-      description: `${values.name} has been added to the system.`,
-    });
-    setIsSubmitting(false);
-    handleClose();
+    try {
+      const newUser: Omit<User, 'uid' | 'id'> = {
+        name: values.name,
+        email: values.email,
+        role: values.role as UserRole,
+        managerId: values.role === 'Sales' ? values.managerId : null,
+      };
+      await addUser(newUser);
+      toast({
+        title: 'User Created',
+        description: `${values.name} has been added to the system.`,
+      });
+      handleClose();
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create new user. Please try again.',
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (

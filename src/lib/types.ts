@@ -1,6 +1,7 @@
 export type UserRole = 'Admin' | 'Sales' | 'Zonal Sales Manager' | 'Onboarding Specialist';
 
 export interface User {
+  id: string; // Document ID from Firestore
   uid: string;
   name: string;
   email: string;

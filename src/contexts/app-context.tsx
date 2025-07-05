@@ -1,44 +1,46 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs } from '@/lib/mock-data';
+import * as firestoreService from '@/services/firestore';
+import { mockUsers as demoUsers } from '@/lib/mock-data';
 
 interface AppContextType {
   users: User[];
-  addUser: (user: User) => void;
+  addUser: (user: Omit<User, 'uid' | 'id'>) => Promise<void>;
   currentUser: User | null;
-  setCurrentUser: (user: User) => void;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   anchors: Anchor[];
-  addAnchor: (anchor: Anchor) => void;
-  updateAnchor: (anchor: Anchor) => void;
+  addAnchor: (anchor: Omit<Anchor, 'id'>) => Promise<void>;
+  updateAnchor: (anchor: Anchor) => Promise<void>;
   dealers: Dealer[];
-  addDealer: (dealer: Dealer) => void;
-  updateDealer: (dealer: Dealer) => void;
+  addDealer: (dealer: Omit<Dealer, 'id'>) => Promise<void>;
+  updateDealer: (dealer: Dealer) => Promise<void>;
   vendors: Vendor[];
-  addVendor: (vendor: Vendor) => void;
-  updateVendor: (vendor: Vendor) => void;
+  addVendor: (vendor: Omit<Vendor, 'id'>) => Promise<void>;
+  updateVendor: (vendor: Vendor) => Promise<void>;
   tasks: Task[];
-  addTask: (task: Task) => void;
-  updateTask: (task: Task) => void;
+  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  updateTask: (task: Task) => Promise<void>;
   activityLogs: ActivityLog[];
-  addActivityLog: (log: ActivityLog) => void;
+  addActivityLog: (log: Omit<ActivityLog, 'id'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>(demoUsers); // Keep demo users for login page list
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [anchors, setAnchors] = useState<Anchor[]>(mockAnchors);
-  const [dealers, setDealers] = useState<Dealer[]>(mockDealers);
-  const [vendors, setVendors] = useState<Vendor[]>(mockVendors);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
+  const [isLoading, setIsLoading] = useState(true); // For initial auth check
+  const [isDataLoading, setIsDataLoading] = useState(false); // For data fetching after login
+
+  const [anchors, setAnchors] = useState<Anchor[]>([]);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
   useEffect(() => {
     try {
@@ -53,9 +55,52 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = (email: string, password: string): boolean => {
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (user && password === 'test123') {
+  const loadAllData = useCallback(async () => {
+    setIsDataLoading(true);
+    try {
+      const [
+        fetchedUsers,
+        fetchedAnchors,
+        fetchedDealers,
+        fetchedVendors,
+        fetchedTasks,
+        fetchedLogs,
+      ] = await Promise.all([
+        firestoreService.getUsers(),
+        firestoreService.getAnchors(),
+        firestoreService.getDealers(),
+        firestoreService.getVendors(),
+        firestoreService.getTasks(),
+        firestoreService.getActivityLogs(),
+      ]);
+      
+      setUsers(fetchedUsers.length > 0 ? fetchedUsers : demoUsers);
+      setAnchors(fetchedAnchors);
+      setDealers(fetchedDealers);
+      setVendors(fetchedVendors);
+      setTasks(fetchedTasks);
+      setActivityLogs(fetchedLogs);
+
+    } catch (error) {
+        console.error("Failed to load data from Firestore:", error);
+    } finally {
+        setIsDataLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+      if (currentUser && !isDataLoading) {
+          loadAllData();
+      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    if (password !== 'test123') return false;
+
+    const user = await firestoreService.getUserByEmail(email.toLowerCase());
+    
+    if (user) {
       setCurrentUser(user);
       sessionStorage.setItem('currentUser', JSON.stringify(user));
       return true;
@@ -65,45 +110,73 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setCurrentUser(null);
+    setAnchors([]);
+    setDealers([]);
+    setVendors([]);
+    setTasks([]);
+    setActivityLogs([]);
     sessionStorage.removeItem('currentUser');
   };
 
-  const addAnchor = (anchor: Anchor) => setAnchors(prev => [anchor, ...prev]);
-  const updateAnchor = (updatedAnchor: Anchor) => {
+  const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
+    const docRef = await firestoreService.addAnchor(anchorData);
+    setAnchors(prev => [{ id: docRef.id, ...anchorData }, ...prev]);
+  };
+
+  const updateAnchor = async (updatedAnchor: Anchor) => {
+    await firestoreService.updateAnchor(updatedAnchor);
     setAnchors(prev => prev.map(a => a.id === updatedAnchor.id ? updatedAnchor : a));
   };
 
-  const addDealer = (dealer: Dealer) => setDealers(prev => [dealer, ...prev]);
-    const updateDealer = (updatedDealer: Dealer) => {
+  const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
+    const docRef = await firestoreService.addDealer(dealerData);
+    setDealers(prev => [{ id: docRef.id, ...dealerData }, ...prev]);
+  };
+  
+  const updateDealer = async (updatedDealer: Dealer) => {
+    await firestoreService.updateDealer(updatedDealer);
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
   };
   
-  const addVendor = (vendor: Vendor) => setVendors(prev => [vendor, ...prev]);
-    const updateVendor = (updatedVendor: Vendor) => {
+  const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
+    const docRef = await firestoreService.addVendor(vendorData);
+    setVendors(prev => [{ id: docRef.id, ...vendorData }, ...prev]);
+  };
+
+  const updateVendor = async (updatedVendor: Vendor) => {
+    await firestoreService.updateVendor(updatedVendor);
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
   };
 
-  const addTask = (task: Task) => setTasks(prev => [task, ...prev]);
-  const updateTask = (updatedTask: Task) => {
+  const addTask = async (taskData: Omit<Task, 'id'>) => {
+    const docRef = await firestoreService.addTask(taskData);
+    setTasks(prev => [{ id: docRef.id, ...taskData }, ...prev]);
+  };
+
+  const updateTask = async (updatedTask: Task) => {
+    await firestoreService.updateTask(updatedTask);
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
   };
   
-  const addActivityLog = (log: ActivityLog) => {
-    const user = users.find(u => u.name === log.userName);
-    const logWithUser = {...log, userName: user?.name || 'Unknown User'}
-    setActivityLogs(prev => [logWithUser, ...prev]);
+  const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
+    const user = users.find(u => u.name === logData.userName);
+    const logWithUser = {...logData, userName: user?.name || 'Unknown User'}
+    const docRef = await firestoreService.addActivityLog(logWithUser);
+    setActivityLogs(prev => [{ id: docRef.id, ...logWithUser }, ...prev]);
   }
   
-  const addUser = (user: User) => setUsers(prev => [user, ...prev]);
+  const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
+    const newUser = await firestoreService.addUser(userData);
+    setUsers(prev => [newUser, ...prev]);
+  };
 
   const value = {
     users,
     addUser,
     currentUser,
-    setCurrentUser,
     login,
     logout,
-    isLoading,
+    isLoading: isLoading || (!!currentUser && isDataLoading),
     anchors,
     addAnchor,
     updateAnchor,

@@ -41,8 +41,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !currentUser) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+            <Logo className="h-12 w-12 text-primary animate-pulse" />
+            <p className="text-muted-foreground">Loading Sales Hub...</p>
+        </div>
       </div>
     );
   }

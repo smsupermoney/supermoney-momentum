@@ -25,7 +25,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { ActivityLog } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   to: z.string().email(),
@@ -46,6 +47,7 @@ interface ComposeEmailDialogProps {
 export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity }: ComposeEmailDialogProps) {
   const { addActivityLog, currentUser } = useApp();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(formSchema),
@@ -71,41 +73,48 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
     onOpenChange(false);
   };
 
-  const onSubmit = (values: EmailFormValues) => {
+  const onSubmit = async (values: EmailFormValues) => {
     if (!currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to send an email.' });
         return;
     }
-
-    let logOutcome = values.body;
-    if (values.cc) {
-        logOutcome = `CC: ${values.cc}\n\n${values.body}`;
-    }
     
-    const newLog: Partial<ActivityLog> = {
-      id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      type: 'Email',
-      title: `Email: ${values.subject} to ${entity.name}`,
-      outcome: logOutcome,
-      userName: currentUser.name,
-    };
-    
-    if (entity.type === 'anchor') {
-        newLog.anchorId = entity.id;
-    } else if (entity.type === 'dealer') {
-        newLog.dealerId = entity.id;
-    } else if (entity.type === 'vendor') {
-        newLog.vendorId = entity.id;
+    setIsSubmitting(true);
+    try {
+        let logOutcome = values.body;
+        if (values.cc) {
+            logOutcome = `CC: ${values.cc}\n\n${values.body}`;
+        }
+        
+        const newLog: Partial<Omit<ActivityLog, 'id'>> = {
+          timestamp: new Date().toISOString(),
+          type: 'Email',
+          title: `Email: ${values.subject} to ${entity.name}`,
+          outcome: logOutcome,
+          userName: currentUser.name,
+        };
+        
+        if (entity.type === 'anchor') {
+            newLog.anchorId = entity.id;
+        } else if (entity.type === 'dealer') {
+            newLog.dealerId = entity.id;
+        } else if (entity.type === 'vendor') {
+            newLog.vendorId = entity.id;
+        }
+
+        await addActivityLog(newLog as Omit<ActivityLog, 'id'>);
+
+        toast({
+          title: 'Email Sent (Simulation)',
+          description: 'The email interaction has been logged to the activity feed.',
+        });
+        handleClose();
+
+    } catch (error) {
+         toast({ variant: 'destructive', title: 'Error', description: 'Failed to log email interaction.' });
+    } finally {
+        setIsSubmitting(false);
     }
-
-    addActivityLog(newLog as ActivityLog);
-
-    toast({
-      title: 'Email Sent (Simulation)',
-      description: 'The email interaction has been logged to the activity feed.',
-    });
-    handleClose();
   };
 
   return (
@@ -175,7 +184,10 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
               <Button type="button" variant="ghost" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button type="submit">Send Email & Log</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Email & Log
+              </Button>
             </DialogFooter>
           </form>
         </Form>
