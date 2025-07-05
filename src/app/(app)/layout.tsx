@@ -10,7 +10,6 @@ import {
   Handshake,
   ListTodo,
   Shield,
-  FileUp,
   BarChart,
 } from 'lucide-react';
 import {
@@ -25,6 +24,7 @@ import {
 } from '@/components/ui/sidebar';
 import { UserSwitcher } from '@/components/user-switcher';
 import { useApp } from '@/contexts/app-context';
+import { Logo } from '@/components/logo';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar>
         <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
-                 <FileUp className="text-accent h-8 w-8" />
+                 <Logo className="text-accent h-8 w-8" />
                  <h1 className="text-xl font-headline font-bold text-sidebar-foreground">Supermoney</h1>
             </div>
         </SidebarHeader>
