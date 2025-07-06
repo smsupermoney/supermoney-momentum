@@ -1,160 +1,102 @@
+# **Nexus CRM: User Acceptance Testing (UAT) Manual**
 
-# Supermoney Sales Hub - User Manual & Demo Guide
+## **1. Introduction**
 
-## 1. Introduction
+### **1.1 Welcome to Nexus CRM**
+Welcome to Nexus CRM, a next-generation Customer Relationship Management platform designed from the ground up to streamline your sales and onboarding processes. Through intelligent automation, role-based workflows, and AI-powered insights, Nexus CRM aims to empower you and your team to work more efficiently and close deals faster.
 
-Welcome to the Supermoney Sales Hub! This powerful CRM is designed from the ground up to streamline our sales and onboarding processes for supply chain finance products. Our goal is to empower you with smart tools, AI-driven insights, and a clear, efficient workflow.
+### **1.2 Purpose of This Manual**
+This document serves as your guide for User Acceptance Testing (UAT). It is not just a feature list but a hands-on testing script. By following the real-world scenarios outlined for your specific role, you will help us evaluate if Nexus CRM meets the practical demands of your daily work. Your detailed feedback is critical to ensuring we build the best possible tool for Supermoney.
 
-**Purpose of this Guide:**
-This document is your guide for the interactive demo of the Sales Hub. As you explore its features, please think about how they fit into your daily work. Your feedback is crucial for us to refine this tool and ensure it meets your needs.
+### **1.3 How to Provide Feedback**
+As you complete each scenario, please take a moment to thoughtfully answer the questions in the "Testing & Feedback" sections. Note any bugs (e.g., error messages, unexpected behavior), suggest improvements, and highlight anything that felt confusing or inefficient. Please compile all your feedback and send it to **uat-feedback@supermoney.in**.
 
-### Logging In
-
-To get started, you can use any of the pre-configured demo accounts.
-
--   **Universal Password:** `test123`
--   **Demo Accounts:**
-    -   **Admin:** `admin@supermoney.in`
-    -   **Zonal Sales Manager:** `zsm@supermoney.in`
-    -   **Sales Executive:** `asm@supermoney.in`
-    -   **Onboarding Specialist:** `sonia@supermoney.in`
+## **2. Getting Started: First Login**
+To begin, please navigate to the Nexus CRM URL provided in your invitation email. Use your assigned credentials to log in. Upon your first login, you should be greeted by a Dashboard tailored specifically to your role, displaying the most relevant metrics for your day-to-day work.
 
 ---
 
-## 2. The Main Interface
+## **3. Role-Based Scenarios & Testing**
 
-Once you log in, you'll see the main interface, which consists of two parts:
+### **3.1 For the Sales Representative**
+*   **A Day in the Life:** Your goal is to manage your assigned leads, move them through the pipeline, and close deals.
 
--   **Sidebar (Left):** Your main navigation hub. The items you see here depend on your user role.
--   **Main Content Area (Right):** This is where you'll do most of your work, from viewing dashboards to managing leads.
+*   **Scenario 1: Managing Your Daily Pipeline**
+    1.  Log in and navigate to your Dashboard. It should show your Key Metrics (e.g., open leads, deals won this month).
+    2.  Go to the "Anchors" (or "My Leads") view. This table should *only* contain leads assigned to you.
+    3.  Find a lead with the status 'Lead'. Click on it to view its details.
+    *   **Testing & Feedback:**
+        *   Was your dashboard clear and useful? What other metric would you want to see?
+        *   Was it easy to find and navigate to your list of assigned leads?
+        *   Rate the intuitiveness of this process (1-5, where 5 is very intuitive).
 
-### User Roles
+*   **Scenario 2: Updating a Lead and Logging Activity**
+    1.  From the lead's detail page (from Scenario 1), imagine you just had a successful call.
+    2.  Update the lead's `status` from 'Lead' to 'Initial Contact'.
+    3.  Navigate to the "Interactions" tab and log a new call. Add the note: "Initial call was positive. Customer is interested in pricing."
+    4.  Save the activity. It should appear in the activity timeline.
+    *   **Testing & Feedback:**
+        *   Was updating the lead's status straightforward?
+        *   Was the process of logging a call or email intuitive?
+        *   Did you encounter any errors or confusing UI elements? How could this be improved?
 
-The CRM has four distinct roles, each with a specific set of permissions:
+### **3.2 For the Zonal Sales Manager (ZSM)**
+*   **A Day in the Life:** Your goal is to oversee your team's performance, ensure leads are being worked effectively, and unblock your reps.
 
--   **Sales:** Can only see and manage leads/tasks assigned directly to them.
--   **Zonal Sales Manager (ZSM):** Can see their own data and the data of all Sales users reporting to them. They can also assign leads.
--   **Onboarding Specialist:** A focused role for managing the onboarding of Dealers and Vendors for active Anchors.
--   **Admin:** Has full, unrestricted access to all data and features across the entire system.
+*   **Scenario 1: Reviewing Team Performance & Assigning a New Lead**
+    1.  Navigate to the "Admin Panel". You should see a list of unassigned leads.
+    2.  Find an "Unassigned Lead" of type 'Anchor'.
+    3.  Assign this lead to one of the Sales Representatives on your team. The lead should disappear from the unassigned list.
+    4.  Navigate to the "Anchors" page and filter/find to confirm the lead now appears assigned to that Sales Rep.
+    *   **Testing & Feedback:**
+        *   Was the process of finding and assigning a lead clear?
+        *   Did the CRM provide enough information for you to decide which rep to assign the lead to?
+        *   Rate the efficiency of this workflow (1-5).
 
-### Language Selection
+*   **Scenario 2: Preparing for a 1:1 Meeting with a Rep**
+    1.  Go to the **Reports Module**.
+    2.  In the natural language query box, type: **"Show me a performance summary for [Name of one of your reps] this month."**
+    3.  Analyze the generated insight and chart (likely showing deals won, activity levels, etc.).
+    4.  Now, type: **"Which of [Rep's Name]'s leads are stale or haven't been contacted in 2 weeks?"**
+    5.  Use the generated table to form an action plan for your 1:1 meeting.
+    *   **Testing & Feedback:**
+        *   Did the AI understand your questions accurately?
+        *   Was the generated insight helpful for preparing for your meeting?
+        *   How could the reporting make this process even better for you?
 
-You can switch the application's display language between **English** and **Hindi** at any time. Use the language switcher at the bottom of the sidebar.
+### **3.3 For the Onboarding Specialist**
+*   **A Day in the Life:** Your goal is to take newly won deals and guide the customer through a smooth and complete onboarding process.
 
----
+*   **Scenario 1: Managing a New Customer Onboarding**
+    1.  Navigate to your "Onboarding" view from the sidebar. You should see a list of anchors with the status 'Onboarding'.
+    2.  Find a new customer of type 'Vendor' associated with an anchor. Click the anchor to view its details, then navigate to the Vendors tab.
+    3.  The onboarding process for a 'Vendor' should include tasks like "Collect KYC Documents" and "Sign Vendor Agreement".
+    4.  Update the status of a Vendor from 'Invited' to 'KYC Pending'.
+    *   **Testing & Feedback:**
+        *   Was the onboarding pipeline view clear?
+        *   Was the interface for managing and updating the spoke's (dealer/vendor) status easy to use?
+        *   What other automated tasks or checklists would you find helpful?
 
-## 3. Core Modules & Features
+### **3.4 For the Admin / National Sales Manager (NSM)**
+*   **A Day in the Life:** Your goal is to manage the system, have a high-level strategic view of the entire business, and analyze national trends.
 
-### A. Dashboard
+*   **Scenario 1: Creating a New User**
+    1.  Navigate to the "User Management" section in the Admin Panel.
+    2.  Click "Add New User".
+    3.  Create a new user with the `role` of 'Zonal Sales Manager'. Assign them to a `manager` (an RSM or yourself) and a `region`.
+    4.  Save the user. They should now appear in the user list.
+    *   **Testing & Feedback:**
+        *   Was the user creation form clear and comprehensive?
+        *   Were there any permissions or settings you wished you could configure but couldn't?
 
-The Dashboard is your personalized landing page, showing the most important information at a glance.
+*   **Scenario 2: High-Level Strategic Reporting**
+    1.  Go to the **Reports Module**.
+    2.  Ask the AI a strategic question: **"Compare the conversion rates between the West and other regions this year."**
+    3.  Review the generated chart and insight.
+    4.  Now ask a forecasting question: **"What is our total projected deal value for next quarter based on the current qualified pipeline?"**
+    *   **Testing & Feedback:**
+        *   How accurate and insightful were the AI's responses to your strategic questions?
+        *   What is the #1 report you feel is missing that you would need to run the business?
 
--   **For Sales:** You'll see your personal sales pipeline, your recent activities, and tasks due today.
--   **For Managers (ZSM):** You'll see a consolidated view of your entire team's pipeline and tasks.
--   **For Onboarding Specialists:** You'll see a dedicated list of Anchors currently in the "Onboarding" stage.
--   **For Admins:** You get a global, company-wide view of the sales pipeline.
-
-### B. Activities
-
-This module is for logging your daily on-the-ground activities.
-
-**How to Use:**
-1.  Navigate to **Activities** from the sidebar.
-2.  Click **"Log New Activity"**.
-3.  Fill in the details of your meeting, site visit, or presentation.
-
-**Key Features & Benefits:**
--   **Voice-to-Text Notes:** Instead of typing, use the **"Record Voice Note"** button to speak your notes. The AI will transcribe your audio directly into the notes field, available in both English and Hindi.
-    -   **Benefit:** Capture detailed notes quickly and accurately, even when you're on the move.
--   **Location & Photo Capture:** Attach geotagged photos from your visits using your device's camera.
-    -   **Benefit:** Provides visual proof of site visits and a richer context for your activity logs.
-
-### C. Anchors
-
-This is where you manage your primary corporate clients.
-
-**Creating a New Anchor:**
-1.  Click **"+ New Anchor"**.
-2.  Fill in the company and contact details.
-3.  Upon creation, the AI will instantly score the lead.
-
-**Key Features & Benefits:**
--   **AI Lead Scoring:** New anchors are automatically scored from 0-100. The AI provides a clear, human-readable reason for the score.
-    -   **Benefit:** Instantly identify high-potential leads and prioritize your efforts effectively.
--   **Anchor Profile Page:** Click on any anchor card to see a 360-degree view.
-    -   **Details Tab:** Shows company information and key contacts.
-    -   **Dealers & Vendors Tabs:** Manage all associated spokes. You can add new ones directly from here.
-    -   **Interactions Tab:** A complete history of every call, email, and meeting logged for this anchor. You can also log a new manual interaction here.
--   **AI-Powered Next Best Action:** On the anchor card and profile, the AI suggests the most logical next step to move the deal forward based on its current status and interaction history.
-    -   **Benefit:** Removes guesswork and helps you take the most impactful action every time.
-
-### D. Dealers & Vendors (Suppliers)
-
-Manage the entire ecosystem of spokes associated with your Anchors.
-
-**How to Use:**
--   **Create Single Leads:** Use the **"+ New Dealer/Vendor Lead"** button for individual entries. The AI will score them based on their details and any associated Anchor.
--   **Bulk Upload:** Use the **"Bulk Upload"** feature to add multiple leads at once from a CSV file. The required format is: `Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product`.
--   **Start Onboarding:** The "Start Onboarding" button simulates the process of inviting a spoke to the onboarding platform.
-
-### E. Tasks
-
-Your central hub for managing your to-do list.
-
-**How to Use:**
-1.  Click **"New Task"** to create a new action item.
-2.  Assign it to an anchor, set a due date, and a priority.
-3.  Filter your task list by due date, priority, or anchor.
-4.  When you complete a task, click **"Complete"**. A dialog will appear for you to log the outcome. This automatically creates an entry in the anchor's interaction log.
-5.  You can also choose to automatically create a follow-up task.
-
-**Benefit:** A closed-loop system ensures that every action is tracked and no follow-ups are missed.
-
-### F. Reports
-
-Gain deep insights into individual and team performance.
-
--   **Role-Based Views:** Reports are tailored to your role. Sales users see their own performance, while managers see their team's data.
--   **Period Filtering:** Managers and Admins can filter the pipeline and activity data by **"This Month"**, **"This Quarter"**, or **"Year-to-Date"** (fiscal year April-March).
--   **Overdue Task Deviations:** This card instantly shows which team members have overdue tasks, allowing managers to provide targeted support.
--   **AI-Powered Key Highlights:** The AI analyzes the data for the selected period and generates 3-5 concise bullet points summarizing key achievements, trends, and areas for improvement.
-    -   **Benefit:** Saves you time on analysis and provides an instant executive summary.
--   **Admin "Chat with your Data":** Admins can ask questions in plain English and get immediate, structured answers from the AI.
-    -   **How to Use:** Try asking questions like:
-        -   *"What was our total deal value last month?"*
-        -   *"Show me the top 5 sales reps by activity count."*
-        -   *"What is the lead to deal ratio this quarter?"*
-    -   **Benefit:** Democratizes data analysis, allowing non-technical users to get complex answers without needing custom reports.
-
-### G. Admin Panel & Notifications
-
--   **User Management (Admin):** Admins can create new users and define their roles and reporting managers.
--   **Lead Assignment (Admin/ZSM):** Unassigned leads appear here, ready to be assigned to the appropriate sales executive.
--   **Notifications:** The bell icon in the header alerts you to key events like overdue tasks and important updates from your team.
-
----
-
-## 4. Your Feedback is Valuable!
-
-As you explore the Sales Hub, please consider the following questions. Your answers will help us make this tool even better.
-
-1.  **Dashboard & General UI:**
-    -   Is the information on your dashboard the most relevant for your daily work? What's missing?
-    -   Is the layout intuitive and easy to navigate?
-
-2.  **AI Features:**
-    -   Do the AI-generated lead scores and reasons seem accurate and helpful?
-    -   Are the "Next Best Action" suggestions logical?
-    -   For Admins: How useful is the "Chat with your Data" feature? What other questions would you want to ask?
-    -   Is the voice-to-text transcription accurate enough for your needs?
-
-3.  **Workflows:**
-    -   Does the process of creating leads, logging activities, and completing tasks feel smooth?
-    -   Are there any steps that feel repetitive or could be automated?
-    -   Is the bulk upload feature for Dealers/Vendors something you would use?
-
-4.  **Reporting:**
-    -   Are the reports providing the insights you need to manage your pipeline or team?
-    -   What other KPIs or charts would you like to see?
-
-Thank you for your time and expertise. We look forward to hearing your thoughts!
+## **4. Conclusion**
+Thank you for your valuable time and expertise in testing Nexus CRM. Your detailed feedback is instrumental in helping us refine the platform and ensure it meets the real-world needs of our team. We appreciate your partnership in making this tool a success and look forward to reviewing your insights.
