@@ -11,6 +11,56 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/language-context';
+import {
+  BookCheck,
+  Building,
+  Users,
+  Handshake,
+  ListTodo,
+  Shield,
+  BarChart,
+} from 'lucide-react';
+import type { UserRole } from '@/lib/types';
+
+
+function QuickNav() {
+  const { currentUser, t } = useApp();
+
+  if (!currentUser) return null;
+
+  const allNavLinks = [
+    { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
+    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+  ];
+
+  const visibleNavLinks = allNavLinks.filter(link => link.roles.includes(currentUser.role as UserRole));
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+      {visibleNavLinks.map(link => {
+        const Icon = link.icon;
+        let label = t(link.labelKey);
+        if (currentUser.role === 'Onboarding Specialist' && link.href === '/anchors') {
+          label = t('sidebar.onboarding');
+        }
+        return (
+          <Button asChild key={link.href} variant="outline" className="h-24 flex-col gap-2 text-center font-medium">
+            <Link href={link.href}>
+              <Icon className="h-6 w-6" />
+              <span>{label}</span>
+            </Link>
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
 
 export default function DashboardPage() {
     const { currentUser } = useApp();
@@ -52,6 +102,7 @@ export default function DashboardPage() {
                 title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
             />
+            <QuickNav />
             {renderDashboard()}
         </>
     );
