@@ -73,7 +73,7 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
     onOpenChange(false);
   };
 
-  const onSubmit = async (values: EmailFormValues) => {
+  const onSubmit = (values: EmailFormValues) => {
     if (!currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to send an email.' });
         return;
@@ -103,7 +103,7 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
             newLog.vendorId = entity.id;
         }
 
-        await addActivityLog(newLog as Omit<ActivityLog, 'id'>);
+        addActivityLog(newLog as Omit<ActivityLog, 'id'>);
 
         toast({
           title: 'Email Sent (Simulation)',

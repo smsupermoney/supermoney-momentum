@@ -44,7 +44,7 @@ export function LogOutcomeDialog({ open, onOpenChange, task, onSubmit }: LogOutc
     defaultValues: { outcome: '', createFollowUp: true },
   });
 
-  const handleFormSubmit = async (values: LogOutcomeFormValues) => {
+  const handleFormSubmit = (values: LogOutcomeFormValues) => {
     if (!currentUser) return;
     setIsSubmitting(true);
     try {
@@ -59,7 +59,7 @@ export function LogOutcomeDialog({ open, onOpenChange, task, onSubmit }: LogOutc
           userName: currentUser.name,
           userId: currentUser.uid,
         };
-        await addActivityLog(newLog);
+        addActivityLog(newLog);
 
         toast({ title: 'Task Completed & Outcome Logged' });
         onSubmit(values.createFollowUp);

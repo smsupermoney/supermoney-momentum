@@ -124,7 +124,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadScoreReason: scoreResult.reason,
       };
 
-      await addAnchor(newAnchor);
+      addAnchor(newAnchor);
 
       toast({
         title: 'Anchor Created & Scored!',

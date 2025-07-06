@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -78,7 +78,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     onOpenChange(false);
   };
 
-  const onSubmit = async (values: NewTaskFormValues) => {
+  const onSubmit = (values: NewTaskFormValues) => {
     if(!currentUser) {
         toast({variant: 'destructive', title: 'Error', description: 'You must be logged in.'});
         return;
@@ -96,7 +96,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           assignedTo: currentUser.uid,
           createdAt: new Date().toISOString(),
         };
-        await addTask(newTask);
+        addTask(newTask);
         toast({ title: 'Task Created', description: `Task "${values.title}" has been added.` });
         handleClose();
     } catch (error) {

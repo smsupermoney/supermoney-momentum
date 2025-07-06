@@ -112,9 +112,9 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         }
 
         if (type === 'Dealer') {
-          await addDealer(commonData as Omit<Dealer, 'id'>);
+          addDealer(commonData as Omit<Dealer, 'id'>);
         } else {
-          await addVendor(commonData as Omit<Vendor, 'id'>);
+          addVendor(commonData as Omit<Vendor, 'id'>);
         }
 
         toast({

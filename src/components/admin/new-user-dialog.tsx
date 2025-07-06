@@ -85,7 +85,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     onOpenChange(false);
   }
 
-  const onSubmit = async (values: NewUserFormValues) => {
+  const onSubmit = (values: NewUserFormValues) => {
     setIsSubmitting(true);
     try {
       const newUser: Omit<User, 'uid' | 'id'> = {
@@ -94,7 +94,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
         role: values.role as UserRole,
         managerId: showManagerDropdown ? values.managerId : null,
       };
-      await addUser(newUser);
+      addUser(newUser);
       toast({
         title: 'User Created',
         description: `${values.name} has been added to the system.`,

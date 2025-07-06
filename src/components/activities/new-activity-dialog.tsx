@@ -73,7 +73,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     onOpenChange(false);
   };
 
-  const onSubmit = async (values: NewActivityFormValues) => {
+  const onSubmit = (values: NewActivityFormValues) => {
     if (!currentUser) return;
     setIsSubmitting(true);
     
@@ -108,7 +108,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         updatedAt: new Date().toISOString(),
       };
 
-      await addDailyActivity(newActivity);
+      addDailyActivity(newActivity);
       toast({ title: 'Activity Logged', description: 'Your activity has been successfully logged.' });
       handleClose();
 
