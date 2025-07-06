@@ -49,10 +49,15 @@ function QuickNav() {
           label = t('sidebar.onboarding');
         }
         return (
-          <Button asChild key={link.href} variant="outline" className="h-24 flex-col gap-2 text-center font-medium">
+          <Button
+            asChild
+            key={link.href}
+            variant="ghost"
+            className="h-28 flex-col gap-2 rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:bg-accent/50 active:translate-y-0 active:shadow-sm"
+          >
             <Link href={link.href}>
-              <Icon className="h-6 w-6" />
-              <span>{label}</span>
+              <Icon className="h-7 w-7 text-primary" />
+              <span className="text-sm font-semibold">{label}</span>
             </Link>
           </Button>
         );
