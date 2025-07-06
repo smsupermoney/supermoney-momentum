@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -53,11 +54,11 @@ function QuickNav() {
             asChild
             key={link.href}
             variant="ghost"
-            className="h-28 flex-col gap-2 rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:bg-accent/50 active:translate-y-0 active:shadow-sm"
+            className="h-auto p-3 flex-col gap-1 rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:bg-accent/50 active:translate-y-0 active:shadow-sm"
           >
             <Link href={link.href}>
-              <Icon className="h-7 w-7 text-primary" />
-              <span className="text-sm font-semibold">{label}</span>
+              <Icon className="h-5 w-5 text-primary" />
+              <span className="text-sm font-semibold text-center">{label}</span>
             </Link>
           </Button>
         );
