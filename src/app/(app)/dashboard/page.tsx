@@ -19,7 +19,9 @@ export default function DashboardPage() {
             case 'Sales':
                 return <SalesDashboard />;
             case 'Zonal Sales Manager':
-                return <ZsmDashboard />;
+            case 'Regional Sales Manager':
+            case 'National Sales Manager':
+                return <ManagerDashboard />;
             case 'Onboarding Specialist':
                 return <OnboardingDashboard />;
             case 'Admin':
@@ -43,7 +45,10 @@ export default function DashboardPage() {
 const getHeaderDescription = (role: string) => {
     switch (role) {
         case 'Sales': return "Here's a snapshot of your sales activity.";
-        case 'Zonal Sales Manager': return "Here's a snapshot of your team's activity.";
+        case 'Zonal Sales Manager': 
+        case 'Regional Sales Manager':
+        case 'National Sales Manager':
+            return "Here's a snapshot of your team's activity.";
         case 'Onboarding Specialist': return "Here are the anchors currently in onboarding.";
         case 'Admin': return "Here's a global overview of the company's sales data.";
         default: return "Welcome to the dashboard.";
@@ -63,10 +68,10 @@ function SalesDashboard() {
     );
 }
 
-// Zonal Sales Manager Dashboard
-function ZsmDashboard() {
-    // For ZSM, the existing components will be filtered for their team's data
-    // This is handled within the components themselves based on currentUser role
+// Manager Dashboard (for ZSM, RSM, NSM)
+function ManagerDashboard() {
+    // For managers, the existing components are filtered for their team's data.
+    // This is handled within the components themselves based on currentUser's visibility tree.
     return (
         <div className="grid gap-4">
             <PipelineCard />
@@ -138,11 +143,11 @@ function OnboardingDashboard() {
                         const activeVendors = anchorVendors.filter(s => s.onboardingStatus === 'Active').length;
                         return (
                              <Card key={anchor.id} className="p-0">
-                                <CardHeader className="pb-2">
+                                <CardHeader className="p-4 pb-2">
                                     <CardTitle className="text-base">{anchor.name}</CardTitle>
                                     <CardDescription>{anchor.industry}</CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-2">
+                                <CardContent className="space-y-2 p-4 pt-0">
                                      <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Dealers:</span>
                                         <Badge variant="secondary">{activeDealers}/{anchorDealers.length} Active</Badge>
