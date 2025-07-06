@@ -74,9 +74,9 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   });
 
   const allEntities = [
-      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: a.name, group: 'Anchors' })),
-      ...dealers.map(d => ({ value: `dealer:${d.id}`, label: d.name, group: 'Dealers' })),
-      ...vendors.map(v => ({ value: `vendor:${v.id}`, label: v.name, group: 'Vendors' })),
+      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: `(Anchor) ${a.name}`, group: 'Anchors' })),
+      ...dealers.map(d => ({ value: `dealer:${d.id}`, label: `(Dealer) ${d.name}`, group: 'Dealers' })),
+      ...vendors.map(v => ({ value: `vendor:${v.id}`, label: `(Vendor) ${v.name}`, group: 'Vendors' })),
   ];
 
   const handleClose = () => {
@@ -262,7 +262,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                                   }}
                                                 >
                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `anchor:${anchor.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  {anchor.name}
+                                                  (Anchor) {anchor.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -277,7 +277,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                                   }}
                                                 >
                                                    <Check className={cn("mr-2 h-4 w-4", field.value === `dealer:${dealer.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  {dealer.name}
+                                                  (Dealer) {dealer.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -292,7 +292,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                                   }}
                                                 >
                                                    <Check className={cn("mr-2 h-4 w-4", field.value === `vendor:${vendor.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  {vendor.name}
+                                                  (Vendor) {vendor.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
