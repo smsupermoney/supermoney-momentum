@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -30,10 +30,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, Loader2, MapPin, Paperclip, Camera } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, MapPin, Paperclip, Camera, Mic, Square } from 'lucide-react';
 import type { DailyActivity, DailyActivityType } from '@/lib/types';
 import Image from 'next/image';
 import { CameraCaptureDialog } from './camera-capture-dialog';
+import { transcribeAudio } from '@/ai/flows/transcribe-audio';
 
 const formSchema = z.object({
   activityType: z.string().min(1, 'Activity type is required'),
@@ -62,6 +63,11 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
+  
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const form = useForm<NewActivityFormValues>({
     resolver: zodResolver(formSchema),
@@ -133,6 +139,51 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     form.setValue('images', [...(form.getValues('images') || []), imageDataUrl]);
     toast({ title: 'Photo Added', description: 'The photo has been attached to the activity.' });
   };
+  
+  const handleToggleRecording = async () => {
+    if (isRecording) {
+        mediaRecorderRef.current?.stop();
+        setIsRecording(false);
+    } else {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = async () => {
+                    const base64Audio = reader.result as string;
+                    if (base64Audio) {
+                        setIsTranscribing(true);
+                        try {
+                            const result = await transcribeAudio({ audioDataUri: base64Audio });
+                            form.setValue('notes', result.transcription);
+                            toast({ title: 'Transcription Complete', description: 'Voice note has been added to notes.' });
+                        } catch (error) {
+                            console.error('Transcription error:', error);
+                            toast({ variant: 'destructive', title: 'Transcription Failed', description: 'Could not transcribe the audio.' });
+                        } finally {
+                            setIsTranscribing(false);
+                        }
+                    }
+                };
+                 stream.getTracks().forEach(track => track.stop());
+            };
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            toast({ variant: 'destructive', title: 'Microphone Access Denied', description: 'Please enable microphone permissions.' });
+        }
+    }
+  };
 
 
   const onSubmit = (values: NewActivityFormValues) => {
@@ -140,7 +191,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     setIsSubmitting(true);
     
     try {
-      const newActivity: Omit<DailyActivity, 'id'> = {
+      const newActivity: Partial<DailyActivity> = {
         userId: currentUser.uid,
         userName: currentUser.name,
         activityType: values.activityType as DailyActivityType,
@@ -170,7 +221,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         }
       }
 
-      addDailyActivity(newActivity);
+      addDailyActivity(newActivity as Omit<DailyActivity, 'id'>);
       toast({ title: 'Activity Logged', description: 'Your activity has been successfully logged.' });
       handleClose();
 
@@ -183,6 +234,16 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   };
 
   const locationValue = form.watch('location');
+
+  const voiceButtonContent = () => {
+    if (isTranscribing) {
+      return <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Transcribing...</>;
+    }
+    if (isRecording) {
+      return <><Square className="mr-2 h-4 w-4" /> Stop Recording</>;
+    }
+    return <><Mic className="mr-2 h-4 w-4" /> Record Voice Note</>;
+  };
 
   return (
     <>
@@ -255,14 +316,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                             {anchors.map((anchor) => (
                                                 <CommandItem
                                                   key={anchor.id}
-                                                  value={`anchor:${anchor.id}`}
+                                                  value={`(Anchor) ${anchor.name}`}
                                                   onSelect={() => {
                                                     form.setValue("associatedEntity", `anchor:${anchor.id}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `anchor:${anchor.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  (Anchor) {anchor.name}
+                                                  {anchor.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -270,14 +331,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                              {dealers.map((dealer) => (
                                                 <CommandItem
                                                   key={dealer.id}
-                                                  value={`dealer:${dealer.id}`}
+                                                  value={`(Dealer) ${dealer.name}`}
                                                   onSelect={() => {
                                                     form.setValue("associatedEntity", `dealer:${dealer.id}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
                                                    <Check className={cn("mr-2 h-4 w-4", field.value === `dealer:${dealer.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  (Dealer) {dealer.name}
+                                                   {dealer.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -285,14 +346,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                              {vendors.map((vendor) => (
                                                 <CommandItem
                                                   key={vendor.id}
-                                                  value={`vendor:${vendor.id}`}
+                                                  value={`(Vendor) ${vendor.name}`}
                                                   onSelect={() => {
                                                     form.setValue("associatedEntity", `vendor:${vendor.id}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
                                                    <Check className={cn("mr-2 h-4 w-4", field.value === `vendor:${vendor.id}` ? "opacity-100" : "opacity-0")}/>
-                                                  (Vendor) {vendor.name}
+                                                   {vendor.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -315,8 +376,8 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                     <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
                         <MapPin className="mr-2 h-4 w-4"/> Capture Location & Time
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => setIsCameraOpen(true)} className="w-full">
-                        <Camera className="mr-2 h-4 w-4"/> Take Photo
+                    <Button type="button" variant="outline" onClick={handleToggleRecording} disabled={isTranscribing} className="w-full">
+                        {voiceButtonContent()}
                     </Button>
                  </div>
                  <div className="flex flex-col sm:flex-row gap-2">
@@ -325,6 +386,9 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                             <Paperclip className="mr-2 h-4 w-4" /> Attach Files
                             <Input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
                         </label>
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsCameraOpen(true)} className="w-full">
+                        <Camera className="mr-2 h-4 w-4"/> Take Photo
                     </Button>
                  </div>
                  {locationValue && (
