@@ -1,9 +1,11 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 import * as firestoreService from '@/services/firestore';
-import { mockUsers as demoUsers } from '@/lib/mock-data';
+import { firebaseEnabled } from '@/lib/firebase';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs } from '@/lib/mock-data';
 
 interface AppContextType {
   users: User[];
@@ -46,10 +48,10 @@ const getAllSubordinates = (managerId: string, users: User[]): User[] => {
 
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(demoUsers); // Keep demo users for login page list
+  const [users, setUsers] = useState<User[]>(mockUsers); // Start with mocks for login page
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // For initial auth check
-  const [isDataLoading, setIsDataLoading] = useState(false); // For data fetching after login
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
 
   const [anchors, setAnchors] = useState<Anchor[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
@@ -92,7 +94,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         firestoreService.getDailyActivities(user),
       ]);
       
-      setUsers(fetchedUsers.length > 0 ? fetchedUsers : demoUsers);
+      setUsers(fetchedUsers.length > 0 ? fetchedUsers : mockUsers);
       setAnchors(fetchedAnchors);
       setDealers(fetchedDealers);
       setVendors(fetchedVendors);
@@ -107,10 +109,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
   
+  const loadMockData = useCallback(() => {
+    setIsDataLoading(true);
+    setUsers(mockUsers);
+    setAnchors(mockAnchors);
+    setDealers(mockDealers);
+    setVendors(mockVendors);
+    setTasks(mockTasks);
+    setActivityLogs(mockActivityLogs);
+    setDailyActivities([]); // No mock daily activities yet
+    setIsDataLoading(false);
+  }, []);
+
   useEffect(() => {
-      if (currentUser && !isDataLoading) {
-          loadAllData(currentUser);
-      }
+    if (currentUser && !isDataLoading) {
+        if (firebaseEnabled) {
+            loadAllData(currentUser);
+        } else {
+            loadMockData();
+        }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
@@ -129,16 +147,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const visibleUserIds = useMemo(() => visibleUsers.map(u => u.uid), [visibleUsers]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (password !== 'test123') return false;
-
-    const user = await firestoreService.getUserByEmail(email.toLowerCase());
-    
-    if (user) {
-      setCurrentUser(user);
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
-      return true;
+    if (firebaseEnabled) {
+        const user = await firestoreService.getUserByEmail(email.toLowerCase());
+        if (user) { // In a real app, you'd verify the password here
+            setCurrentUser(user);
+            sessionStorage.setItem('currentUser', JSON.stringify(user));
+            return true;
+        }
+        return false;
+    } else {
+        // Mock login
+        if (password !== 'test123') return false;
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (user) {
+          setCurrentUser(user);
+          sessionStorage.setItem('currentUser', JSON.stringify(user));
+          return true;
+        }
+        return false;
     }
-    return false;
   };
 
   const logout = () => {
@@ -153,58 +180,101 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
-    const docRef = await firestoreService.addAnchor(anchorData);
-    setAnchors(prev => [{ id: docRef.id, ...anchorData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addAnchor(anchorData);
+        setAnchors(prev => [{ id: docRef.id, ...anchorData }, ...prev]);
+    } else {
+        const newAnchor = { id: `anchor-${Date.now()}`, ...anchorData };
+        setAnchors(prev => [newAnchor, ...prev]);
+    }
   };
 
   const updateAnchor = async (updatedAnchor: Anchor) => {
-    await firestoreService.updateAnchor(updatedAnchor);
+    if (firebaseEnabled) {
+        await firestoreService.updateAnchor(updatedAnchor);
+    }
     setAnchors(prev => prev.map(a => a.id === updatedAnchor.id ? updatedAnchor : a));
   };
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
-    const docRef = await firestoreService.addDealer(dealerData);
-    setDealers(prev => [{ id: docRef.id, ...dealerData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addDealer(dealerData);
+        setDealers(prev => [{ id: docRef.id, ...dealerData }, ...prev]);
+    } else {
+        const newDealer = { id: `dealer-${Date.now()}`, ...dealerData };
+        setDealers(prev => [newDealer, ...prev]);
+    }
   };
   
   const updateDealer = async (updatedDealer: Dealer) => {
-    await firestoreService.updateDealer(updatedDealer);
+    if (firebaseEnabled) {
+        await firestoreService.updateDealer(updatedDealer);
+    }
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
   };
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
-    const docRef = await firestoreService.addVendor(vendorData);
-    setVendors(prev => [{ id: docRef.id, ...vendorData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addVendor(vendorData);
+        setVendors(prev => [{ id: docRef.id, ...vendorData }, ...prev]);
+    } else {
+        const newVendor = { id: `vendor-${Date.now()}`, ...vendorData };
+        setVendors(prev => [newVendor, ...prev]);
+    }
   };
 
   const updateVendor = async (updatedVendor: Vendor) => {
-    await firestoreService.updateVendor(updatedVendor);
+    if (firebaseEnabled) {
+        await firestoreService.updateVendor(updatedVendor);
+    }
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
   };
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
-    const docRef = await firestoreService.addTask(taskData);
-    setTasks(prev => [{ id: docRef.id, ...taskData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addTask(taskData);
+        setTasks(prev => [{ id: docRef.id, ...taskData }, ...prev]);
+    } else {
+        const newTask = { id: `task-${Date.now()}`, ...taskData };
+        setTasks(prev => [newTask, ...prev]);
+    }
   };
 
   const updateTask = async (updatedTask: Task) => {
-    await firestoreService.updateTask(updatedTask);
+    if (firebaseEnabled) {
+        await firestoreService.updateTask(updatedTask);
+    }
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
   };
   
   const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
-    const docRef = await firestoreService.addActivityLog(logData);
-    setActivityLogs(prev => [{ id: docRef.id, ...logData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addActivityLog(logData);
+        setActivityLogs(prev => [{ id: docRef.id, ...logData }, ...prev]);
+    } else {
+        const newLog = { id: `log-${Date.now()}`, ...logData };
+        setActivityLogs(prev => [newLog, ...prev]);
+    }
   }
   
   const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
-    const docRef = await firestoreService.addDailyActivity(activityData);
-    setDailyActivities(prev => [{ id: docRef.id, ...activityData }, ...prev]);
+    if (firebaseEnabled) {
+        const docRef = await firestoreService.addDailyActivity(activityData);
+        setDailyActivities(prev => [{ id: docRef.id, ...activityData }, ...prev]);
+    } else {
+        const newActivity = { id: `daily-activity-${Date.now()}`, ...activityData };
+        setDailyActivities(prev => [newActivity, ...prev]);
+    }
   };
 
   const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
-    const newUser = await firestoreService.addUser(userData);
-    setUsers(prev => [newUser, ...prev]);
+    if (firebaseEnabled) {
+        const newUser = await firestoreService.addUser(userData);
+        setUsers(prev => [newUser, ...prev]);
+    } else {
+        const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
+        setUsers(prev => [newUser, ...prev]);
+    }
   };
 
   const value = {
@@ -244,3 +314,5 @@ export const useApp = () => {
   }
   return context;
 };
+
+    
