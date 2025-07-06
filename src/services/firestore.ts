@@ -50,8 +50,13 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 // --- Anchor Service ---
 const anchorsCollection = collection(db, 'anchors');
-export const getAnchors = async (): Promise<Anchor[]> => {
-  const q = query(anchorsCollection, orderBy('createdAt', 'desc'));
+export const getAnchors = async (user: User): Promise<Anchor[]> => {
+  let q;
+  if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+    q = query(anchorsCollection, where('assignedTo', '==', user.uid), orderBy('createdAt', 'desc'));
+  } else {
+    q = query(anchorsCollection, orderBy('createdAt', 'desc'));
+  }
   const snapshot = await getDocs(q);
   return snapshotToData<Omit<Anchor, 'id'>>(snapshot);
 };
@@ -67,8 +72,13 @@ export const updateAnchor = async (anchor: Anchor) => {
 
 // --- Dealer Service ---
 const dealersCollection = collection(db, 'dealers');
-export const getDealers = async (): Promise<Dealer[]> => {
-    const q = query(dealersCollection, orderBy('createdAt', 'desc'));
+export const getDealers = async (user: User): Promise<Dealer[]> => {
+    let q;
+    if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+        q = query(dealersCollection, where('assignedTo', '==', user.uid), orderBy('createdAt', 'desc'));
+    } else {
+        q = query(dealersCollection, orderBy('createdAt', 'desc'));
+    }
     const snapshot = await getDocs(q);
     return snapshotToData<Omit<Dealer, 'id'>>(snapshot);
 };
@@ -82,8 +92,13 @@ export const updateDealer = async (dealer: Dealer) => {
 
 // --- Vendor Service ---
 const vendorsCollection = collection(db, 'vendors');
-export const getVendors = async (): Promise<Vendor[]> => {
-    const q = query(vendorsCollection, orderBy('createdAt', 'desc'));
+export const getVendors = async (user: User): Promise<Vendor[]> => {
+    let q;
+    if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+        q = query(vendorsCollection, where('assignedTo', '==', user.uid), orderBy('createdAt', 'desc'));
+    } else {
+        q = query(vendorsCollection, orderBy('createdAt', 'desc'));
+    }
     const snapshot = await getDocs(q);
     return snapshotToData<Omit<Vendor, 'id'>>(snapshot);
 };

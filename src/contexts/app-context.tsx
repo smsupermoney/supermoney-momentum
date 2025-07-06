@@ -84,9 +84,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchedDailyActivities,
       ] = await Promise.all([
         firestoreService.getUsers(),
-        firestoreService.getAnchors(),
-        firestoreService.getDealers(),
-        firestoreService.getVendors(),
+        firestoreService.getAnchors(user),
+        firestoreService.getDealers(user),
+        firestoreService.getVendors(user),
         firestoreService.getTasks(user),
         firestoreService.getActivityLogs(user),
         firestoreService.getDailyActivities(user),
