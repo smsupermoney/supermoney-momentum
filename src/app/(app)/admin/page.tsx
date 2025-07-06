@@ -11,7 +11,6 @@ import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
-import { AdminDataChat } from '@/components/admin/admin-data-chat';
 
 // Define a union type for the different kinds of leads
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
@@ -199,9 +198,6 @@ export default function AdminPage() {
       <PageHeader title="Admin Panel" description="Manage unassigned leads and system users." />
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
       <div className="grid gap-4 mt-6">
-        {currentUser.role === 'Admin' && (
-           <AdminDataChat />
-        )}
         {currentUser.role === 'Admin' && (
           <Card>
             <CardHeader>

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, UserRole } from '@/lib/types';
+import { AdminDataChat } from '@/components/admin/admin-data-chat';
 
 
 // Main Page Component
@@ -264,6 +265,7 @@ function AdminReports() {
 
   return (
     <div className="grid gap-4">
+      <AdminDataChat />
       <Card>
           <CardHeader>
               <CardTitle>Team Pipeline Value (by Stage)</CardTitle>
