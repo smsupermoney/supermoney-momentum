@@ -112,8 +112,7 @@ export interface DailyActivity {
     notes?: string;
 
     // Timing
-    startTime: string; // timestamp
-    endTime: string; // timestamp
+    activityTimestamp: string;
     
     // Client Info
     anchorId?: string;

@@ -65,7 +65,7 @@ export function ActivityList() {
                     <CardTitle className="text-lg">{activity.title}</CardTitle>
                   </div>
                   <CardDescription className="mt-1">
-                    {format(new Date(activity.startTime), 'PPP, p')} - {format(new Date(activity.endTime), 'p')}
+                    {format(new Date(activity.activityTimestamp), 'PPP, p')}
                   </CardDescription>
                 </div>
                 <div className="flex flex-col items-end gap-2 text-right">

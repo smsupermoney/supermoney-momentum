@@ -24,14 +24,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Loader2, MapPin, Paperclip, Camera } from 'lucide-react';
-import { format } from 'date-fns';
+import { Check, ChevronsUpDown, Loader2, MapPin, Paperclip, Camera } from 'lucide-react';
 import type { DailyActivity, DailyActivityType } from '@/lib/types';
 import Image from 'next/image';
 import { CameraCaptureDialog } from './camera-capture-dialog';
@@ -39,9 +38,6 @@ import { CameraCaptureDialog } from './camera-capture-dialog';
 const formSchema = z.object({
   activityType: z.string().min(1, 'Activity type is required'),
   title: z.string().min(3, 'Title is required'),
-  date: z.date({ required_error: 'A date is required.' }),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
   associatedEntity: z.string().optional(),
   notes: z.string().optional(),
   location: z.object({
@@ -49,6 +45,7 @@ const formSchema = z.object({
     longitude: z.number(),
   }).optional(),
   images: z.array(z.string()).optional(),
+  activityTimestamp: z.string().optional(),
 });
 
 type NewActivityFormValues = z.infer<typeof formSchema>;
@@ -64,18 +61,23 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   const form = useForm<NewActivityFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       activityType: '',
       title: '',
-      startTime: format(new Date(), 'HH:mm'),
-      endTime: format(new Date(Date.now() + 60 * 60 * 1000), 'HH:mm'),
       associatedEntity: '',
       notes: '',
     },
   });
+
+  const allEntities = [
+      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: a.name, group: 'Anchors' })),
+      ...dealers.map(d => ({ value: `dealer:${d.id}`, label: d.name, group: 'Dealers' })),
+      ...vendors.map(v => ({ value: `vendor:${v.id}`, label: v.name, group: 'Vendors' })),
+  ];
 
   const handleClose = () => {
     form.reset();
@@ -91,8 +93,10 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        const timestamp = new Date().toISOString();
         form.setValue('location', { latitude, longitude });
-        toast({ title: 'Location Captured', description: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}` });
+        form.setValue('activityTimestamp', timestamp);
+        toast({ title: 'Location Captured', description: `Timestamp set to current time.` });
       },
       () => {
         toast({ variant: 'destructive', title: 'Unable to retrieve location', description: 'Please ensure location services are enabled.' });
@@ -136,28 +140,13 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     setIsSubmitting(true);
     
     try {
-      const [startHours, startMinutes] = values.startTime.split(':').map(Number);
-      const activityStartTime = new Date(values.date);
-      activityStartTime.setHours(startHours, startMinutes);
-
-      const [endHours, endMinutes] = values.endTime.split(':').map(Number);
-      const activityEndTime = new Date(values.date);
-      activityEndTime.setHours(endHours, endMinutes);
-
-      if (activityEndTime <= activityStartTime) {
-        toast({ variant: 'destructive', title: 'Invalid Time', description: 'End time must be after start time.' });
-        setIsSubmitting(false);
-        return;
-      }
-      
       const newActivity: Omit<DailyActivity, 'id'> = {
         userId: currentUser.uid,
         userName: currentUser.name,
         activityType: values.activityType as DailyActivityType,
         title: values.title,
         notes: values.notes,
-        startTime: activityStartTime.toISOString(),
-        endTime: activityEndTime.toISOString(),
+        activityTimestamp: values.activityTimestamp || new Date().toISOString(),
         location: values.location,
         images: values.images,
         createdAt: new Date().toISOString(),
@@ -235,66 +224,87 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                 control={form.control}
                 name="associatedEntity"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                         <FormLabel>Associated With (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select an entity" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {anchors.length > 0 && (
-                                    <SelectGroup>
-                                        <SelectLabel>Anchors</SelectLabel>
-                                        {anchors.map(anchor => (
-                                            <SelectItem key={anchor.id} value={`anchor:${anchor.id}`}>{anchor.name}</SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                )}
-                                 {dealers.length > 0 && (
-                                    <SelectGroup>
-                                        <SelectLabel>Dealers</SelectLabel>
-                                        {dealers.map(dealer => (
-                                            <SelectItem key={dealer.id} value={`dealer:${dealer.id}`}>{dealer.name}</SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                )}
-                                 {vendors.length > 0 && (
-                                    <SelectGroup>
-                                        <SelectLabel>Vendors</SelectLabel>
-                                        {vendors.map(vendor => (
-                                            <SelectItem key={vendor.id} value={`vendor:${vendor.id}`}>{vendor.name}</SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                )}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-                />
-            <div className="grid grid-cols-3 gap-4">
-                <FormField control={form.control} name="date" render={({ field }) => (
-                    <FormItem className="flex flex-col col-span-3 sm:col-span-1">
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild><FormControl>
-                                <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal',!field.value && 'text-muted-foreground')}>
-                                    {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl></PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value
+                                        ? allEntities.find(
+                                            (entity) => entity.value === field.value
+                                          )?.label
+                                        : "Select an entity"}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search entity..." />
+                                    <CommandEmpty>No entity found.</CommandEmpty>
+                                    <CommandList>
+                                        <CommandGroup heading="Anchors">
+                                            {anchors.map((anchor) => (
+                                                <CommandItem
+                                                  key={anchor.id}
+                                                  value={`anchor:${anchor.id}`}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `anchor:${anchor.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                  <Check className={cn("mr-2 h-4 w-4", field.value === `anchor:${anchor.id}` ? "opacity-100" : "opacity-0")}/>
+                                                  {anchor.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                        <CommandGroup heading="Dealers">
+                                             {dealers.map((dealer) => (
+                                                <CommandItem
+                                                  key={dealer.id}
+                                                  value={`dealer:${dealer.id}`}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `dealer:${dealer.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `dealer:${dealer.id}` ? "opacity-100" : "opacity-0")}/>
+                                                  {dealer.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                        <CommandGroup heading="Vendors">
+                                             {vendors.map((vendor) => (
+                                                <CommandItem
+                                                  key={vendor.id}
+                                                  value={`vendor:${vendor.id}`}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `vendor:${vendor.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `vendor:${vendor.id}` ? "opacity-100" : "opacity-0")}/>
+                                                  {vendor.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
                             </PopoverContent>
                         </Popover>
                         <FormMessage />
                     </FormItem>
-                )}/>
-                 <FormField control={form.control} name="startTime" render={({ field }) => (
-                    <FormItem className="col-span-3 sm:col-span-1"><FormLabel>Start Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField control={form.control} name="endTime" render={({ field }) => (
-                    <FormItem className="col-span-3 sm:col-span-1"><FormLabel>End Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-            </div>
+                )}
+                />
+            
              <FormField control={form.control} name="notes" render={({ field }) => (
               <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea placeholder="Add details, outcomes, or next steps..." {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
@@ -303,7 +313,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                 <h3 className="text-sm font-medium">Attachments & Location</h3>
                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
-                        <MapPin className="mr-2 h-4 w-4"/> Capture Location
+                        <MapPin className="mr-2 h-4 w-4"/> Capture Location & Time
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setIsCameraOpen(true)} className="w-full">
                         <Camera className="mr-2 h-4 w-4"/> Take Photo
@@ -319,7 +329,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                  </div>
                  {locationValue && (
                      <div className="text-xs text-muted-foreground">
-                         📍 Location captured: Lat {locationValue.latitude.toFixed(4)}, Lng {locationValue.longitude.toFixed(4)}
+                         📍 Location & Time captured.
                      </div>
                  )}
                  {imagePreviews.length > 0 && (
