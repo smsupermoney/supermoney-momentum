@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/page-header";
 export default function AnchorProfilePage({ params }: { params: { id: string } }) {
   const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading } = useApp();
   
-  const anchor = anchors.find((a) => a.id === params.id);
+  const { id } = params;
+  const anchor = anchors.find((a) => a.id === id);
   
   if (isLoading) {
     return (
