@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, UserRole } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 import * as firestoreService from '@/services/firestore';
 import { mockUsers as demoUsers } from '@/lib/mock-data';
 
@@ -26,6 +26,8 @@ interface AppContextType {
   updateTask: (task: Task) => Promise<void>;
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id'>) => Promise<void>;
+  dailyActivities: DailyActivity[];
+  addDailyActivity: (activity: Omit<DailyActivity, 'id'>) => Promise<void>;
   visibleUserIds: string[];
   visibleUsers: User[];
 }
@@ -54,6 +56,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
 
   useEffect(() => {
     try {
@@ -78,6 +81,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         fetchedVendors,
         fetchedTasks,
         fetchedLogs,
+        fetchedDailyActivities,
       ] = await Promise.all([
         firestoreService.getUsers(),
         firestoreService.getAnchors(),
@@ -85,6 +89,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         firestoreService.getVendors(),
         firestoreService.getTasks(),
         firestoreService.getActivityLogs(),
+        firestoreService.getDailyActivities(),
       ]);
       
       setUsers(fetchedUsers.length > 0 ? fetchedUsers : demoUsers);
@@ -93,6 +98,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setVendors(fetchedVendors);
       setTasks(fetchedTasks);
       setActivityLogs(fetchedLogs);
+      setDailyActivities(fetchedDailyActivities);
 
     } catch (error) {
         console.error("Failed to load data from Firestore:", error);
@@ -142,6 +148,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setVendors([]);
     setTasks([]);
     setActivityLogs([]);
+    setDailyActivities([]);
     sessionStorage.removeItem('currentUser');
   };
 
@@ -192,6 +199,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setActivityLogs(prev => [{ id: docRef.id, ...logWithUser }, ...prev]);
   }
   
+  const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
+    const docRef = await firestoreService.addDailyActivity(activityData);
+    setDailyActivities(prev => [{ id: docRef.id, ...activityData }, ...prev]);
+  };
+
   const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
     const newUser = await firestoreService.addUser(userData);
     setUsers(prev => [newUser, ...prev]);
@@ -218,6 +230,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     updateTask,
     activityLogs,
     addActivityLog,
+    dailyActivities,
+    addDailyActivity,
     visibleUsers,
     visibleUserIds,
   };

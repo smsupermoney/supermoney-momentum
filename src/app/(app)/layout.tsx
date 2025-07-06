@@ -11,6 +11,7 @@ import {
   ListTodo,
   Shield,
   BarChart,
+  BookCheck,
   Loader2
 } from 'lucide-react';
 import {
@@ -53,6 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const allNavItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/activities', label: 'Activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
     { href: '/anchors', label: 'Anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
     { href: '/dealers', label: 'Dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
     { href: '/suppliers', label: 'Vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },

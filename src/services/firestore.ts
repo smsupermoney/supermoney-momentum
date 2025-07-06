@@ -11,7 +11,7 @@ import {
   QuerySnapshot,
   orderBy,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -121,4 +121,22 @@ export const getActivityLogs = async (): Promise<ActivityLog[]> => {
 };
 export const addActivityLog = async (log: Omit<ActivityLog, 'id'>) => {
     return await addDoc(activityLogsCollection, log);
+};
+
+// --- DailyActivity Service ---
+const dailyActivitiesCollection = collection(db, 'daily_activities');
+
+export const getDailyActivities = async (): Promise<DailyActivity[]> => {
+    const q = query(dailyActivitiesCollection, orderBy('startTime', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshotToData<Omit<DailyActivity, 'id'>>(snapshot);
+};
+
+export const addDailyActivity = async (activity: Omit<DailyActivity, 'id'>) => {
+    return await addDoc(dailyActivitiesCollection, activity);
+};
+
+export const updateDailyActivity = async (activity: DailyActivity) => {
+    const { id, ...activityData } = activity;
+    await updateDoc(doc(db, 'daily_activities', id), { ...activityData });
 };

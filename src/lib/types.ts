@@ -97,3 +97,35 @@ export interface ActivityLog {
   outcome: string;
   userName: string;
 }
+
+// --- New Daily Activity Module Types ---
+
+export type DailyActivityType = 'Client Meeting' | 'Site Visit' | 'Sales Presentation' | 'Follow-up' | 'Travel Time' | 'Administrative' | 'Training' | 'Networking';
+
+export interface DailyActivity {
+    id: string; // activityId
+    userId: string;
+    userName: string; // userDisplayName
+    activityType: DailyActivityType;
+    title: string;
+    description?: string;
+
+    // Timing
+    startTime: string; // timestamp
+    endTime: string; // timestamp
+    
+    // Client Info
+    anchorId?: string; // clientId
+    anchorName?: string; // clientName
+
+    // Location (simple for now)
+    locationAddress?: string;
+
+    // Outcome
+    outcome?: string; // Simplified for now
+    nextSteps?: string;
+
+    // Metadata
+    createdAt: string;
+    updatedAt: string;
+}
