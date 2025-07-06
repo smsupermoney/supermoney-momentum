@@ -15,7 +15,9 @@ import {
   FileText,
   BookOpen,
   Users,
+  MapPin,
 } from 'lucide-react';
+import Image from 'next/image';
 
 const activityIcons: Record<DailyActivity['activityType'], React.ElementType> = {
   'Client Meeting': Briefcase,
@@ -68,9 +70,27 @@ export function ActivityList() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              {activity.anchorName && <p className="text-sm font-medium mb-2">Client: {activity.anchorName}</p>}
-              {activity.description && <p className="text-sm text-muted-foreground">{activity.description}</p>}
+            <CardContent className="space-y-3">
+              {activity.anchorName && <p className="text-sm font-medium">Client: {activity.anchorName}</p>}
+              {activity.notes && <p className="text-sm text-muted-foreground">{activity.notes}</p>}
+              {activity.location && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>Lat: {activity.location.latitude.toFixed(4)}, Lng: {activity.location.longitude.toFixed(4)}</span>
+                  </div>
+              )}
+               {activity.images && activity.images.length > 0 && (
+                <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Attachments</p>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                        {activity.images.map((src, index) => (
+                            <div key={index} className="relative aspect-square">
+                                <Image src={src} alt={`Attachment ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         );

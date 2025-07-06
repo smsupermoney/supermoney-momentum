@@ -109,7 +109,7 @@ export interface DailyActivity {
     userName: string; // userDisplayName
     activityType: DailyActivityType;
     title: string;
-    description?: string;
+    notes?: string;
 
     // Timing
     startTime: string; // timestamp
@@ -119,12 +119,12 @@ export interface DailyActivity {
     anchorId?: string; // clientId
     anchorName?: string; // clientName
 
-    // Location (simple for now)
-    locationAddress?: string;
-
-    // Outcome
-    outcome?: string; // Simplified for now
-    nextSteps?: string;
+    // Location & Media
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
+    images?: string[]; // Array of data URIs for mock data
 
     // Metadata
     createdAt: string;

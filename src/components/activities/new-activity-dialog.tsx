@@ -30,9 +30,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, MapPin, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DailyActivity, DailyActivityType } from '@/lib/types';
+import Image from 'next/image';
 
 const formSchema = z.object({
   activityType: z.string().min(1, 'Activity type is required'),
@@ -41,7 +42,12 @@ const formSchema = z.object({
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
   anchorId: z.string().optional(),
-  description: z.string().optional(),
+  notes: z.string().optional(),
+  location: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }).optional(),
+  images: z.array(z.string()).optional(),
 });
 
 type NewActivityFormValues = z.infer<typeof formSchema>;
@@ -55,6 +61,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const { currentUser, addDailyActivity, anchors } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const form = useForm<NewActivityFormValues>({
     resolver: zodResolver(formSchema),
@@ -64,14 +71,57 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       startTime: format(new Date(), 'HH:mm'),
       endTime: format(new Date(Date.now() + 60 * 60 * 1000), 'HH:mm'),
       anchorId: '',
-      description: '',
+      notes: '',
     },
   });
 
   const handleClose = () => {
     form.reset();
+    setImagePreviews([]);
     onOpenChange(false);
   };
+  
+  const handleCaptureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ variant: 'destructive', title: 'Geolocation not supported', description: 'Your browser does not support geolocation.' });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        form.setValue('location', { latitude, longitude });
+        toast({ title: 'Location Captured', description: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}` });
+      },
+      () => {
+        toast({ variant: 'destructive', title: 'Unable to retrieve location', description: 'Please ensure location services are enabled.' });
+      }
+    );
+  };
+
+  const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newPreviews: string[] = [];
+    const newImageValues: string[] = [];
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+            newPreviews.push(result);
+            newImageValues.push(result);
+            if (newPreviews.length === files.length) {
+                setImagePreviews(prev => [...prev, ...newPreviews]);
+                form.setValue('images', [...(form.getValues('images') || []), ...newImageValues]);
+            }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
 
   const onSubmit = (values: NewActivityFormValues) => {
     if (!currentUser) return;
@@ -99,11 +149,13 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         userName: currentUser.name,
         activityType: values.activityType as DailyActivityType,
         title: values.title,
-        description: values.description,
+        notes: values.notes,
         startTime: activityStartTime.toISOString(),
         endTime: activityEndTime.toISOString(),
         anchorId: values.anchorId,
         anchorName: selectedAnchor?.name,
+        location: values.location,
+        images: values.images,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -119,6 +171,8 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       setIsSubmitting(false);
     }
   };
+
+  const locationValue = form.watch('location');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -198,9 +252,39 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                     <FormItem className="col-span-3 sm:col-span-1"><FormLabel>End Time</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
             </div>
-             <FormField control={form.control} name="description" render={({ field }) => (
-              <FormItem><FormLabel>Description / Notes</FormLabel><FormControl><Textarea placeholder="Add details, outcomes, or next steps..." {...field} /></FormControl><FormMessage /></FormItem>
+             <FormField control={form.control} name="notes" render={({ field }) => (
+              <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea placeholder="Add details, outcomes, or next steps..." {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
+
+            <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="text-sm font-medium">Attachments & Location</h3>
+                 <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
+                        <MapPin className="mr-2 h-4 w-4"/> Capture Location
+                    </Button>
+                     <Button type="button" variant="outline" asChild className="w-full">
+                        <label className="cursor-pointer">
+                            <Paperclip className="mr-2 h-4 w-4" /> Attach Images
+                            <Input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
+                        </label>
+                    </Button>
+                 </div>
+                 {locationValue && (
+                     <div className="text-xs text-muted-foreground">
+                         📍 Location captured: Lat {locationValue.latitude.toFixed(4)}, Lng {locationValue.longitude.toFixed(4)}
+                     </div>
+                 )}
+                 {imagePreviews.length > 0 && (
+                     <div className="grid grid-cols-4 gap-2">
+                         {imagePreviews.map((src, index) => (
+                             <div key={index} className="relative aspect-square">
+                                 <Image src={src} alt={`Preview ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
+                             </div>
+                         ))}
+                     </div>
+                 )}
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>

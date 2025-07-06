@@ -46,7 +46,7 @@ const getAllSubordinates = (managerId: string, users: User[]): User[] => {
 
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,7 +65,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setVendors(mockVendors);
     setTasks(mockTasks);
     setActivityLogs(mockActivityLogs);
-    setDailyActivities([]); // No mock daily activities yet
+    setDailyActivities([]);
 
     // Check for a logged-in user in session storage
     try {
