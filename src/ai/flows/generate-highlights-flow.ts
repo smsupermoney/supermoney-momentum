@@ -51,14 +51,15 @@ const prompt = ai.definePrompt({
 - **Top Performers (Deals Closed):**
 {{#each topPerformersByDeals}}
   - {{this.name}}: {{this.value}} deals
-{{/each}}
-{{#if (eq topPerformersByDeals.length 0)}}
+{{else}}
   - No deals were closed this period.
-{{/if}}
+{{/each}}
 
 - **Top Performers (Activities Logged):**
 {{#each topPerformersByActivities}}
   - {{this.name}}: {{this.value}} activities
+{{else}}
+  - No activities were logged this period.
 {{/each}}
 
 # Instructions
