@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { mockUsers } from '@/lib/mock-data';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -23,7 +22,7 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useApp();
+  const { login, users } = useApp();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,7 +52,7 @@ export default function LoginPage() {
       <Card>
         <CardHeader>
           <CardTitle>Sign In</CardTitle>
-          <CardDescription>Use a mock email and password to sign in.</CardDescription>
+          <CardDescription>Use a demo account and password `test123` to sign in.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -99,7 +98,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
             <ul className="space-y-2 text-sm">
-                {mockUsers.map(user => (
+                {users.map(user => (
                     <li key={user.uid}>
                         <p className="font-medium">{user.email}</p>
                         <p className="text-muted-foreground">Role: {user.role}</p>
