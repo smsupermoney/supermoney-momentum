@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function VendorsPage() {
-  const { vendors, anchors, users, currentUser, updateVendor } = useApp();
+  const { vendors, anchors, users, currentUser, updateVendor, visibleUserIds } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -28,13 +28,8 @@ export default function VendorsPage() {
   const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
-    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
-    if (currentUser.role === 'Zonal Sales Manager') {
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return teamMemberIds.includes(s.assignedTo || '');
-    }
-    return s.assignedTo === currentUser.uid;
+    if (currentUser.role === 'Onboarding Specialist') return true;
+    return visibleUserIds.includes(s.assignedTo || '');
   });
 
 

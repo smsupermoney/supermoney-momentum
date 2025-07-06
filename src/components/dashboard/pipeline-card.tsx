@@ -5,21 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Handshake, Target, FileText, Bot } from 'lucide-react';
 
 export function PipelineCard() {
-  const { anchors, currentUser, users } = useApp();
+  const { anchors, currentUser, visibleUserIds } = useApp();
 
   const getVisibleAnchors = () => {
-    switch (currentUser.role) {
-      case 'Admin':
-        return anchors;
-      case 'Zonal Sales Manager':
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return anchors.filter(anchor => teamMemberIds.includes(anchor.assignedTo || ''));
-      case 'Sales':
-        return anchors.filter(anchor => anchor.assignedTo === currentUser.uid);
-      default:
-        return [];
-    }
+    if (!currentUser) return [];
+    // Onboarding specialists do not see a pipeline view on their dashboard
+    if (currentUser.role === 'Onboarding Specialist') return [];
+    return anchors.filter(anchor => visibleUserIds.includes(anchor.assignedTo || ''));
   }
 
   const visibleAnchors = getVisibleAnchors();
@@ -38,11 +30,19 @@ export function PipelineCard() {
     { title: 'Negotiating', value: pipeline['Negotiating'], icon: Bot },
   ];
 
+  const getTitle = () => {
+    if (!currentUser) return 'My Pipeline';
+    if (currentUser.role === 'Sales') return 'My Pipeline';
+    if (currentUser.role === 'Admin') return 'Company Pipeline';
+    // For ZSM, RSM, NSM
+    return 'Team Pipeline';
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-            {currentUser.role === 'Zonal Sales Manager' ? 'Team Pipeline' : 'My Pipeline'}
+            {getTitle()}
         </CardTitle>
       </CardHeader>
       <CardContent>

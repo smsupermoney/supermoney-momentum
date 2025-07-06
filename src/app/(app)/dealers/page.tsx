@@ -17,7 +17,7 @@ import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DealersPage() {
-  const { dealers, anchors, users, currentUser, updateDealer } = useApp();
+  const { dealers, anchors, users, currentUser, updateDealer, visibleUserIds } = useApp();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
@@ -27,13 +27,8 @@ export default function DealersPage() {
   const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
-    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
-    if (currentUser.role === 'Zonal Sales Manager') {
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return teamMemberIds.includes(d.assignedTo || '');
-    }
-    return d.assignedTo === currentUser.uid;
+    if (currentUser.role === 'Onboarding Specialist') return true;
+    return visibleUserIds.includes(d.assignedTo || '');
   });
 
   const getAnchorName = (anchorId: string | null) => {

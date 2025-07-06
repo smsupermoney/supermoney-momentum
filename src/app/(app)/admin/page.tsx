@@ -7,10 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle } from 'lucide-react';
-import type { User, Anchor, Dealer, Vendor } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
 
 // Define a union type for the different kinds of leads
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
@@ -26,7 +26,7 @@ type DisplayLead = (Partial<Anchor> & Partial<Dealer> & Partial<Vendor>) & {
 interface LeadTableProps {
   title: string;
   leads: DisplayLead[];
-  salesUsers: User[];
+  assignableUsers: User[];
   assignments: Record<string, string>;
   onAssignmentChange: (leadId: string, userId: string) => void;
   onAssign: (leadId: string) => void;
@@ -35,7 +35,7 @@ interface LeadTableProps {
 function LeadTable({
   title,
   leads,
-  salesUsers,
+  assignableUsers,
   assignments,
   onAssignmentChange,
   onAssign,
@@ -69,10 +69,10 @@ function LeadTable({
                   <TableCell>
                     <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
                       <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select sales user" />
+                        <SelectValue placeholder="Select user" />
                       </SelectTrigger>
                       <SelectContent>
-                        {salesUsers.map((user) => (
+                        {assignableUsers.map((user) => (
                           <SelectItem key={user.uid} value={user.uid}>
                             {user.name}
                           </SelectItem>
@@ -101,10 +101,10 @@ function LeadTable({
               <CardContent className="space-y-3 p-4 pt-0">
                 <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select sales user" />
+                    <SelectValue placeholder="Select user" />
                   </SelectTrigger>
                   <SelectContent>
-                    {salesUsers.map((user) => (
+                    {assignableUsers.map((user) => (
                       <SelectItem key={user.uid} value={user.uid}>
                         {user.name}
                       </SelectItem>
@@ -124,21 +124,24 @@ function LeadTable({
 }
 
 export default function AdminPage() {
-  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
+  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser, visibleUsers } = useApp();
   const { toast } = useToast();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
   const [assignments, setAssignments] = useState<Record<string, string>>({});
 
-  const salesUsers = users.filter((u) => {
-    if (!currentUser) return false;
-    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') {
-      return u.role === 'Sales' || u.role === 'Zonal Sales Manager';
+  const assignableUsers = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === 'Admin') {
+      // Admins can assign to any non-admin, non-specialist user.
+      return users.filter(u => u.role !== 'Admin' && u.role !== 'Onboarding Specialist');
     }
-    if (currentUser.role === 'Zonal Sales Manager') {
-      return u.role === 'Sales' && u.managerId === currentUser.uid;
+    if(currentUser.role === 'Onboarding Specialist') {
+      return users.filter(u => ['Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
     }
-    return false;
-  });
+    // Managers can assign to their direct or indirect subordinates.
+    // 'visibleUsers' includes the manager themselves, so filter them out.
+    return visibleUsers.filter(u => u.uid !== currentUser.uid);
+  }, [currentUser, users, visibleUsers]);
 
   const unassignedAnchors = anchors.filter((a) => a.assignedTo === null || a.status === 'Unassigned Lead');
   const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.onboardingStatus === 'Unassigned Lead');
@@ -176,7 +179,8 @@ export default function AdminPage() {
     });
   };
 
-  if (!currentUser || (currentUser.role !== 'Admin' && currentUser.role !== 'Zonal Sales Manager' && currentUser.role !== 'Onboarding Specialist')) {
+  const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  if (!currentUser || (currentUser.role !== 'Admin' && !managerialRoles.includes(currentUser.role) && currentUser.role !== 'Onboarding Specialist')) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">You do not have permission to view this page.</p>
@@ -259,7 +263,7 @@ export default function AdminPage() {
         <LeadTable
           title="Unassigned Anchors"
           leads={unassignedAnchors}
-          salesUsers={salesUsers}
+          assignableUsers={assignableUsers}
           assignments={assignments}
           onAssign={(id) => handleAssign(id, 'Anchor')}
           onAssignmentChange={handleAssignmentChange}
@@ -267,7 +271,7 @@ export default function AdminPage() {
         <LeadTable
           title="Unassigned Dealers"
           leads={unassignedDealers}
-          salesUsers={salesUsers}
+          assignableUsers={assignableUsers}
           assignments={assignments}
           onAssign={(id) => handleAssign(id, 'Dealer')}
           onAssignmentChange={handleAssignmentChange}
@@ -275,7 +279,7 @@ export default function AdminPage() {
         <LeadTable
           title="Unassigned Vendors"
           leads={unassignedVendors}
-          salesUsers={salesUsers}
+          assignableUsers={assignableUsers}
           assignments={assignments}
           onAssign={(id) => handleAssign(id, 'Vendor')}
           onAssignmentChange={handleAssignmentChange}

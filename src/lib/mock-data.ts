@@ -8,7 +8,9 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 
 export const mockUsers: User[] = [
   { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2' },
-  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager' },
+  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-rsm' },
+  { id: 'user-rsm', uid: 'user-rsm', name: 'Rajesh Singh', email: 'rsm@supermoney.in', role: 'Regional Sales Manager', managerId: 'user-nsm' },
+  { id: 'user-nsm', uid: 'user-nsm', name: 'Alok Gupta', email: 'nsm@supermoney.in', role: 'National Sales Manager', managerId: 'user-admin' },
   { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin' },
 ];

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format, isToday, isThisWeek, isPast } from 'date-fns';
-import type { Task, TaskPriority } from '@/lib/types';
+import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,25 +17,17 @@ interface TaskListProps {
 }
 
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskListProps) {
-  const { tasks, anchors, currentUser, users, updateTask } = useApp();
+  const { tasks, anchors, currentUser, users, updateTask, visibleUserIds } = useApp();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   
   const getVisibleTasks = () => {
-    switch (currentUser.role) {
-      case 'Admin':
-        return tasks;
-      case 'Zonal Sales Manager':
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return tasks.filter(task => teamMemberIds.includes(task.assignedTo));
-      case 'Onboarding Specialist':
-      case 'Sales':
-        return tasks.filter(task => task.assignedTo === currentUser.uid);
-      default:
-        return [];
+    if (!currentUser) return [];
+    if (currentUser.role === 'Onboarding Specialist') {
+      return tasks.filter(task => task.assignedTo === currentUser.uid);
     }
+    return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
   }
   
   const filteredTasks = getVisibleTasks()
@@ -87,6 +79,9 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
       }
       setCompletedTask(null);
   }
+  
+  const showAssignedTo = currentUser && currentUser.role !== 'Sales' && currentUser.role !== 'Onboarding Specialist';
+
 
   return (
     <>
@@ -98,7 +93,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               <TableHead>Priority</TableHead>
               <TableHead>Task Title</TableHead>
               <TableHead>Associated Anchor</TableHead>
-              {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableHead className="hidden lg:table-cell">Assigned To</TableHead>}
+              {showAssignedTo && <TableHead className="hidden lg:table-cell">Assigned To</TableHead>}
               <TableHead className="hidden lg:table-cell">Task Type</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Status</TableHead>
@@ -111,7 +106,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
                 <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>{getAnchorName(task.associatedWith.anchorId)}</TableCell>
-                {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <TableCell className="hidden lg:table-cell">{getAssignedToName(task.assignedTo)}</TableCell>}
+                {showAssignedTo && <TableCell className="hidden lg:table-cell">{getAssignedToName(task.assignedTo)}</TableCell>}
                 <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
                 <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
                 <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
@@ -123,7 +118,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               </TableRow>
             )) : (
               <TableRow>
-                  <TableCell colSpan={(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') ? 8 : 7} className="h-24 text-center">
+                  <TableCell colSpan={showAssignedTo ? 8 : 7} className="h-24 text-center">
                     No tasks found.
                   </TableCell>
                 </TableRow>
@@ -143,7 +138,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p><span className="font-medium">Anchor:</span> {getAnchorName(task.associatedWith.anchorId)}</p>
-                {(currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && <p><span className="font-medium">Assigned:</span> {getAssignedToName(task.assignedTo)}</p>}
+                {showAssignedTo && <p><span className="font-medium">Assigned:</span> {getAssignedToName(task.assignedTo)}</p>}
                 <p><span className="font-medium">Due:</span> {format(new Date(task.dueDate), 'PP')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

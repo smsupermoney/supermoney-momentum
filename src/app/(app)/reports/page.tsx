@@ -18,6 +18,8 @@ export default function ReportsPage() {
   const getPageTitle = (role: UserRole) => {
     switch (role) {
       case 'Admin': return 'Management Reports';
+      case 'National Sales Manager':
+      case 'Regional Sales Manager':
       case 'Zonal Sales Manager': return 'Team Performance Report';
       default: return 'My Performance Report';
     }
@@ -26,7 +28,9 @@ export default function ReportsPage() {
   const getPageDescription = (role: UserRole) => {
      switch (role) {
       case 'Admin': return 'Analytics for team performance and pipeline health.';
-      case 'Zonal Sales Manager': return 'A summary of your team\'s sales activities and pipeline.';
+       case 'National Sales Manager':
+       case 'Regional Sales Manager':
+       case 'Zonal Sales Manager': return 'A summary of your team\'s sales activities and pipeline.';
       default: return 'A summary of your sales activities and pipeline.';
     }
   }
@@ -34,7 +38,9 @@ export default function ReportsPage() {
   const renderReports = () => {
     switch(currentUser.role) {
         case 'Admin': return <AdminReports />;
-        case 'Zonal Sales Manager': return <ZsmReports />;
+        case 'National Sales Manager':
+        case 'Regional Sales Manager':
+        case 'Zonal Sales Manager': return <ManagerReports />;
         case 'Sales': return <SalesReports />;
         default: return <div className="text-center p-8">No reports available for this role.</div>
     }
@@ -133,16 +139,14 @@ function SalesReports() {
   );
 }
 
-// Reports for ZSM
-function ZsmReports() {
-    const { currentUser, users, anchors, activityLogs } = useApp();
-    const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-    teamMemberIds.push(currentUser.uid); // include ZSM
+// Reports for Managers (ZSM, RSM, NSM)
+function ManagerReports() {
+    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers } = useApp();
     
-    const teamMemberNames = users.filter(u => teamMemberIds.includes(u.uid)).map(u => u.name);
-
-    const teamAnchors = anchors.filter(a => teamMemberIds.includes(a.assignedTo || ''));
-    const teamLogs = activityLogs.filter(l => teamMemberNames.includes(l.userName));
+    const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.assignedTo || ''));
+    
+    const visibleUserNames = visibleUsers.map(u => u.name);
+    const teamLogs = activityLogs.filter(l => visibleUserNames.includes(l.userName));
 
     // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
@@ -154,8 +158,8 @@ function ZsmReports() {
     }));
 
      // Activity Leaderboard
-    const activityCounts = users
-        .filter(u => teamMemberIds.includes(u.uid))
+    const activityCounts = visibleUsers
+        .filter(u => u.uid !== currentUser.uid) // Exclude the manager from their own leaderboard
         .map(user => ({
             name: user.name,
             activities: teamLogs.filter(log => log.userName === user.name).length

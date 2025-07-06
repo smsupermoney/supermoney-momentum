@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -48,6 +48,13 @@ interface NewUserDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const managerRolesHierarchy: Record<string, UserRole[]> = {
+    'Sales': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
+    'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
+    'Regional Sales Manager': ['National Sales Manager', 'Admin'],
+    'National Sales Manager': ['Admin']
+};
+
 export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
   const { addUser, users } = useApp();
   const { toast } = useToast();
@@ -58,9 +65,20 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     defaultValues: { name: '', email: '', role: '', managerId: '' },
   });
 
-  const selectedRole = form.watch('role');
+  const selectedRole = form.watch('role') as UserRole;
 
-  const managers = users.filter(u => u.role === 'Zonal Sales Manager' || u.role === 'Admin');
+  const possibleManagerRoles = useMemo(() => {
+    return selectedRole ? managerRolesHierarchy[selectedRole] || [] : [];
+  }, [selectedRole]);
+
+  const managers = useMemo(() => {
+    return users.filter(u => possibleManagerRoles.includes(u.role));
+  }, [possibleManagerRoles, users]);
+
+  const showManagerDropdown = useMemo(() => {
+    if (!selectedRole) return false;
+    return possibleManagerRoles.length > 0;
+  }, [possibleManagerRoles]);
 
   const handleClose = () => {
     form.reset();
@@ -74,7 +92,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
         name: values.name,
         email: values.email,
         role: values.role as UserRole,
-        managerId: values.role === 'Sales' ? values.managerId : null,
+        managerId: showManagerDropdown ? values.managerId : null,
       };
       await addUser(newUser);
       toast({
@@ -135,6 +153,8 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                     <SelectContent>
                       <SelectItem value="Sales">Sales</SelectItem>
                       <SelectItem value="Zonal Sales Manager">Zonal Sales Manager</SelectItem>
+                      <SelectItem value="Regional Sales Manager">Regional Sales Manager</SelectItem>
+                      <SelectItem value="National Sales Manager">National Sales Manager</SelectItem>
                       <SelectItem value="Onboarding Specialist">Onboarding Specialist</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
@@ -143,7 +163,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                 </FormItem>
               )}
             />
-            {selectedRole === 'Sales' && (
+            {showManagerDropdown && (
               <FormField
                 control={form.control}
                 name="managerId"
@@ -154,7 +174,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                       <FormControl><SelectTrigger><SelectValue placeholder="Select a manager" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {managers.map(manager => (
-                          <SelectItem key={manager.uid} value={manager.uid}>{manager.name}</SelectItem>
+                          <SelectItem key={manager.uid} value={manager.uid}>{manager.name} ({manager.role})</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

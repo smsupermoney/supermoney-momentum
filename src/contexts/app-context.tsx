@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, UserRole } from '@/lib/types';
 import * as firestoreService from '@/services/firestore';
 import { mockUsers as demoUsers } from '@/lib/mock-data';
 
@@ -26,9 +26,22 @@ interface AppContextType {
   updateTask: (task: Task) => Promise<void>;
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id'>) => Promise<void>;
+  visibleUserIds: string[];
+  visibleUsers: User[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const getAllSubordinates = (managerId: string, users: User[]): User[] => {
+    const subordinates: User[] = [];
+    const directReports = users.filter(u => u.managerId === managerId);
+    subordinates.push(...directReports);
+    directReports.forEach(report => {
+        subordinates.push(...getAllSubordinates(report.uid, users));
+    });
+    return subordinates;
+};
+
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(demoUsers); // Keep demo users for login page list
@@ -94,6 +107,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
+
+  const visibleUsers = useMemo(() => {
+      if (!currentUser || users.length === 0) return [];
+      if (currentUser.role === 'Admin') return users;
+      if (currentUser.role === 'Sales' || currentUser.role === 'Onboarding Specialist') {
+          return users.filter(u => u.uid === currentUser.uid);
+      }
+      // For managers (ZSM, RSM, NSM)
+      const subordinates = getAllSubordinates(currentUser.uid, users);
+      const self = users.find(u => u.uid === currentUser.uid);
+      return self ? [self, ...subordinates] : subordinates;
+  }, [currentUser, users]);
+
+  const visibleUserIds = useMemo(() => visibleUsers.map(u => u.uid), [visibleUsers]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     if (password !== 'test123') return false;
@@ -190,7 +217,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     addTask,
     updateTask,
     activityLogs,
-    addActivityLog
+    addActivityLog,
+    visibleUsers,
+    visibleUserIds,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

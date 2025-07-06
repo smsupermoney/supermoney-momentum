@@ -12,7 +12,7 @@ import { PlusCircle, Mail } from 'lucide-react';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 
 export default function AnchorsPage() {
-  const { anchors, currentUser, users } = useApp();
+  const { anchors, currentUser, visibleUserIds } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
@@ -20,15 +20,8 @@ export default function AnchorsPage() {
   const pageTitle = currentUser.role === 'Onboarding Specialist' ? 'Onboarding Anchors' : 'Anchors';
 
   const userAnchors = anchors.filter(anchor => {
-    if (currentUser.role === 'Admin' || currentUser.role === 'Onboarding Specialist') return true;
-    
-    if (currentUser.role === 'Zonal Sales Manager') {
-      const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-      teamMemberIds.push(currentUser.uid); // Include ZSM's own leads
-      return teamMemberIds.includes(anchor.assignedTo || '');
-    }
-    // Default for 'Sales' role
-    return anchor.assignedTo === currentUser.uid;
+    if (currentUser.role === 'Onboarding Specialist') return true;
+    return visibleUserIds.includes(anchor.assignedTo || '');
   });
 
   const getStatusVariant = (status: LeadStatus): "default" | "secondary" | "outline" | "destructive" => {

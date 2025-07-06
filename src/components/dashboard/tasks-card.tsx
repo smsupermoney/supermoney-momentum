@@ -5,28 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import type { TaskPriority } from '@/lib/types';
+import type { TaskPriority, UserRole } from '@/lib/types';
 
 export function TasksCard() {
-  const { tasks, anchors, currentUser, users } = useApp();
+  const { tasks, anchors, currentUser, users, visibleUserIds } = useApp();
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const getVisibleTasks = () => {
-    switch (currentUser.role) {
-      case 'Admin':
-        return tasks;
-      case 'Zonal Sales Manager':
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return tasks.filter(task => teamMemberIds.includes(task.assignedTo));
-      case 'Onboarding Specialist':
-      case 'Sales':
-        return tasks.filter(task => task.assignedTo === currentUser.uid);
-      default:
-        return [];
+    if (!currentUser) return [];
+    if (currentUser.role === 'Onboarding Specialist') {
+      return tasks.filter(task => task.assignedTo === currentUser.uid);
     }
+    return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
   }
 
   const todaysTasks = getVisibleTasks().filter(task => {
@@ -49,11 +41,20 @@ export function TasksCard() {
       'Low': 'default'
   }
 
+  const getTitle = () => {
+    if (!currentUser) return "My Tasks for Today";
+    const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'];
+    if (managerialRoles.includes(currentUser.role)) {
+      return "Team's Tasks for Today";
+    }
+    return "My Tasks for Today";
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-            {currentUser.role === 'Zonal Sales Manager' ? "Team's Tasks for Today" : "My Tasks for Today"}
+            {getTitle()}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -69,7 +70,7 @@ export function TasksCard() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">{getAnchorName(task.associatedWith.anchorId)}</p>
                     <Badge variant={priorityVariant[task.priority]} className="capitalize">{task.priority}</Badge>
-                     { (currentUser.role === 'Admin' || currentUser.role === 'Zonal Sales Manager') && (
+                     { (currentUser.role !== 'Sales' && currentUser.role !== 'Onboarding Specialist') && (
                         <Badge variant="outline">{getAssignedToName(task.assignedTo)}</Badge>
                      )}
                   </div>
