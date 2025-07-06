@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -42,6 +42,7 @@ export default function ReportsPage() {
   }
 
   const renderReports = () => {
+    if (!currentUser) return null;
     switch(currentUser.role) {
         case 'Admin': return <AdminReports />;
         case 'National Sales Manager':
@@ -64,9 +65,9 @@ export default function ReportsPage() {
 // Reports for Sales Role
 function SalesReports() {
   const { currentUser, tasks, anchors, activityLogs } = useApp();
-  const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid);
-  const userAnchors = anchors.filter(a => a.assignedTo === currentUser.uid);
-  const userLogs = activityLogs.filter(l => l.userName === currentUser.name);
+  const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
+  const userAnchors = anchors.filter(a => a.assignedTo === currentUser?.uid);
+  const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
 
   // Task Summary Calculation
   const today = new Date();
@@ -153,57 +154,73 @@ function ManagerReports() {
     const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.assignedTo || ''));
     const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
     const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
-    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser.uid);
+    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser?.uid);
 
-    const periodAnchors = useMemo(() => {
+    const getFiscalYearStart = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        // Fiscal year starts in April (month index 3)
+        return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
+    }
+
+    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
+        let label = "This Month";
+
         switch (period) {
             case 'this_quarter':
                 interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
+                label = 'This Quarter';
                 break;
             case 'ytd':
-                interval = { start: startOfYear(now), end: now };
+                interval = { start: getFiscalYearStart(now), end: now };
+                label = 'Year-to-Date';
                 break;
             case 'this_month':
             default:
                 interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
-        return teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
-    }, [period, teamAnchors]);
+        return {
+            periodAnchors: teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+            periodLogs: teamLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+            periodLabel: label
+        };
+    }, [period, teamAnchors, teamLogs]);
 
-    // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodAnchors.filter(a => a.status === stage).length
     }));
 
-     // Activity Leaderboard
     const activityCounts = teamUsers
         .map(user => ({
             name: user.name,
-            activities: teamLogs.filter(log => log.userName === user.name).length
+            activities: periodLogs.filter(log => log.userName === user.name).length
         }))
         .sort((a, b) => b.activities - a.activities);
 
     return (
         <div className="grid gap-4">
-            <Tabs value={period} onValueChange={setPeriod} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-                    <TabsTrigger value="this_month">This Month</TabsTrigger>
-                    <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
-                    <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
-                </TabsList>
-            </Tabs>
-            
             <div className="grid lg:grid-cols-5 gap-4">
                 <div className="lg:col-span-3 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
-                            <CardDescription>Number of new leads in each stage for the selected period.</CardDescription>
+                           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
+                                    <CardDescription>New leads in each stage for the selected period.</CardDescription>
+                                </div>
+                                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="this_month">Month</TabsTrigger>
+                                        <TabsTrigger value="this_quarter">Quarter</TabsTrigger>
+                                        <TabsTrigger value="ytd">YTD</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                           </div>
                         </CardHeader>
                         <CardContent>
                             <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
@@ -223,9 +240,9 @@ function ManagerReports() {
                     <OverdueTasksByExecutive tasks={teamTasks} users={teamUsers} />
                 </div>
                 <div className="lg:col-span-2 space-y-4">
-                    <KeyHighlights period={period} anchors={periodAnchors} activityLogs={teamLogs} users={teamUsers} />
+                    <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={teamUsers} />
                     <Card>
-                        <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>Activity Leaderboard ({periodLabel})</CardTitle></CardHeader>
                         <CardContent>
                             <Table>
                                 <TableBody>
@@ -243,6 +260,7 @@ function ManagerReports() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+                                    {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -262,51 +280,55 @@ function AdminReports() {
 
     const salesUsers = users.filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager');
     
-    const periodData = useMemo(() => {
+    const getFiscalYearStart = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
+    }
+    
+    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
-        let periodLabel = 'This Month';
+        let label = 'This Month';
         switch (period) {
             case 'this_quarter':
                 interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
-                periodLabel = 'This Quarter';
+                label = 'This Quarter';
                 break;
             case 'ytd':
-                interval = { start: startOfYear(now), end: now };
-                periodLabel = 'Year-to-Date';
+                interval = { start: getFiscalYearStart(now), end: now };
+                label = 'Year-to-Date';
                 break;
             case 'this_month':
             default:
                 interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
-        const periodAnchors = anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
-        const periodLogs = activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval));
-        
-        return { anchors: periodAnchors, logs: periodLogs, label: periodLabel };
+        return {
+          anchors: anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+          logs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+          label: label
+        };
     }, [period, anchors, activityLogs]);
     
-    // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: periodData.anchors
+        value: periodAnchors
             .filter(a => a.status === stage && a.annualTurnover)
             .reduce((sum, a) => sum + (a.annualTurnover || 0), 0) / 10000000, // in Cr
     }));
     
-    // Activity Leaderboard
     const activityCounts = salesUsers
         .map(user => ({
             name: user.name,
-            activities: periodData.logs.filter(log => log.userName === user.name).length
+            activities: periodLogs.filter(log => log.userName === user.name).length
         }))
         .sort((a, b) => b.activities - a.activities)
         .slice(0, 5); // show top 5
         
-    // Conversion Rates
-    const getCount = (status: string) => periodData.anchors.filter(a => a.status === status).length;
-    const allLeadsCount = periodData.anchors.length;
+    const getCount = (status: string) => periodAnchors.filter(a => a.status === status).length;
+    const allLeadsCount = periodAnchors.length;
     const allContactsCount = getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     const allProposalsCount = getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     
@@ -314,8 +336,6 @@ function AdminReports() {
     const contactToProposal = allContactsCount > 0 ? (allProposalsCount / allContactsCount) * 100 : 0;
     const proposalToWon = allProposalsCount > 0 ? (getCount('Active') / allProposalsCount) * 100 : 0;
 
-
-    // Spoke Activation Rate
     const activeAnchors = anchors.filter(a => a.status === 'Active');
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.onboardingStatus === 'Active');
@@ -324,18 +344,22 @@ function AdminReports() {
   return (
     <div className="grid gap-4">
       <AdminDataChat />
-      <Tabs value={period} onValueChange={setPeriod} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="this_month">This Month</TabsTrigger>
-            <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
-            <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <KeyHighlights period={periodData.label} anchors={periodData.anchors} activityLogs={periodData.logs} users={salesUsers} />
+      <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={salesUsers} />
       <Card>
           <CardHeader>
-              <CardTitle>Pipeline Value ({periodData.label})</CardTitle>
-              <CardDescription>Estimated total value of new deals (in ₹ Cr) in each stage.</CardDescription>
+             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle>Pipeline Value ({periodLabel})</CardTitle>
+                  <CardDescription>Estimated total value of new deals (in ₹ Cr) in each stage.</CardDescription>
+                </div>
+                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="this_month">Month</TabsTrigger>
+                        <TabsTrigger value="this_quarter">Quarter</TabsTrigger>
+                        <TabsTrigger value="ytd">YTD</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+             </div>
           </CardHeader>
           <CardContent>
               <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
@@ -356,7 +380,7 @@ function AdminReports() {
         <Card className="lg:col-span-1">
           <CardHeader>
               <CardTitle>Activity Leaderboard</CardTitle>
-              <CardDescription>Top performers for {periodData.label}</CardDescription>
+              <CardDescription>Top performers for {periodLabel}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -385,7 +409,7 @@ function AdminReports() {
              <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>Stage Conversion Rates</CardTitle>
-                    <CardDescription>For new leads in {periodData.label}</CardDescription>
+                    <CardDescription>For new leads in {periodLabel}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
                     <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
