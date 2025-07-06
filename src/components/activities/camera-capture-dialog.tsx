@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, VideoOff, Check } from 'lucide-react';
+import { Camera, VideoOff, Check, SwitchCamera } from 'lucide-react';
 
 interface CameraCaptureDialogProps {
   open: boolean;
@@ -28,43 +27,63 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [currentDeviceIndex, setCurrentDeviceIndex] = useState(0);
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      if (open) {
-        setCapturedImage(null); // Reset on open
-        try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-          setStream(mediaStream);
-          setHasCameraPermission(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
-          }
-        } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
-          toast({
+  const stopStream = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  }, [stream]);
+  
+  const getStream = useCallback(async () => {
+      // Stop any previous stream before starting a new one
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(device => device.kind === 'videoinput');
+        
+        setVideoDevices(videoInputs);
+        const deviceId = videoInputs.length > 0 ? videoInputs[currentDeviceIndex].deviceId : undefined;
+
+        const constraints: MediaStreamConstraints = {
+          video: deviceId 
+            ? { deviceId: { exact: deviceId } } 
+            : { facingMode: { ideal: "environment" } } // Prefer back camera if available
+        };
+
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        setStream(mediaStream);
+        setHasCameraPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
             variant: 'destructive',
             title: 'Camera Access Denied',
-            description: 'Please enable camera permissions in your browser settings.',
-          });
-        }
-      } else {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          setStream(null);
-        }
+            description: 'Please enable camera permissions.',
+        });
       }
-    };
+  }, [currentDeviceIndex, stream, toast]);
 
-    getCameraPermission();
-
-    return () => {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
+  useEffect(() => {
+    if (open && !capturedImage) {
+        getStream();
     }
-  }, [open, stream, toast]);
+    if (!open) {
+        stopStream();
+    }
+  }, [open, capturedImage, getStream, stopStream]);
+
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -77,7 +96,14 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataUrl = canvas.toDataURL('image/jpeg');
         setCapturedImage(imageDataUrl);
+        stopStream();
       }
+    }
+  };
+  
+  const handleSwitchCamera = () => {
+    if (videoDevices.length > 1) {
+      setCurrentDeviceIndex((prevIndex) => (prevIndex + 1) % videoDevices.length);
     }
   };
 
@@ -90,9 +116,12 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
 
   const handleRetake = () => {
     setCapturedImage(null);
+    // The useEffect will call getStream() since capturedImage is now null
   };
   
   const handleClose = () => {
+    stopStream();
+    setCurrentDeviceIndex(0);
     onOpenChange(false);
   };
 
@@ -104,9 +133,22 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
         </DialogHeader>
         <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
           {capturedImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={capturedImage} alt="Captured" className="h-full w-full object-cover" />
           ) : (
             <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
+          )}
+
+          {!capturedImage && videoDevices.length > 1 && (
+            <Button
+                size="icon"
+                variant="outline"
+                className="absolute bottom-2 right-2 rounded-full bg-background/50 hover:bg-background/80"
+                onClick={handleSwitchCamera}
+            >
+                <SwitchCamera className="h-5 w-5" />
+                <span className="sr-only">Switch Camera</span>
+            </Button>
           )}
           
           {!hasCameraPermission && !capturedImage && (
