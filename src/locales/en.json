@@ -1,0 +1,22 @@
+
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "activities": "Activities",
+    "anchors": "Anchors",
+    "dealers": "Dealers",
+    "vendors": "Vendors",
+    "tasks": "Tasks",
+    "reports": "Reports",
+    "admin": "Admin Panel",
+    "onboarding": "Onboarding"
+  },
+  "userSwitcher": {
+    "logout": "Log out"
+  },
+  "settings": {
+    "language": "Language",
+    "english": "English",
+    "hindi": "Hindi"
+  }
+}

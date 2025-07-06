@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -24,15 +25,19 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarTrigger,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { UserSwitcher } from '@/components/user-switcher';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { useApp } from '@/contexts/app-context';
+import { useLanguage } from '@/contexts/language-context';
 import { Logo } from '@/components/logo';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, isLoading } = useApp();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -53,22 +58,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
   const allNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/activities', label: 'Activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/anchors', label: 'Anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/dealers', label: 'Dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/suppliers', label: 'Vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/tasks', label: 'Tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/reports', label: 'Reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/admin', label: 'Admin Panel', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
+    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
   ];
-
-  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
-
-  if (currentUser.role === 'Onboarding Specialist') {
-      const anchorItem = navItems.find(i => i.href === '/anchors');
-      if (anchorItem) anchorItem.label = 'Onboarding';
-  }
+  
+  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role)).map(item => {
+      let label = t(item.labelKey);
+      if (currentUser.role === 'Onboarding Specialist' && item.href === '/anchors') {
+          label = t('sidebar.onboarding');
+      }
+      return { ...item, label };
+  });
 
   return (
     <SidebarProvider>
@@ -98,6 +104,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
+            <LanguageSwitcher />
+            <SidebarSeparator />
             <UserSwitcher />
         </SidebarFooter>
       </Sidebar>

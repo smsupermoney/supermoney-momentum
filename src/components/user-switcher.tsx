@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
+import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,6 +18,7 @@ import { useRouter } from 'next/navigation';
 
 export function UserSwitcher() {
   const { currentUser, logout } = useApp();
+  const { t } = useLanguage();
   const router = useRouter();
 
   if (!currentUser) return null;
@@ -57,7 +60,7 @@ export function UserSwitcher() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>{t('userSwitcher.logout')}</span>
             </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>

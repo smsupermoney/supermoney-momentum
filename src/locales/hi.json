@@ -1,0 +1,22 @@
+
+{
+  "sidebar": {
+    "dashboard": "डैशबोर्ड",
+    "activities": "गतिविधियाँ",
+    "anchors": "एंकर्स",
+    "dealers": "डीलर्स",
+    "vendors": "वेंडर्स",
+    "tasks": "कार्य",
+    "reports": "रिपोर्ट्स",
+    "admin": "एडमिन पैनल",
+    "onboarding": "ऑनबोर्डिंग"
+  },
+  "userSwitcher": {
+    "logout": "लॉग आउट करें"
+  },
+  "settings": {
+    "language": "भाषा",
+    "english": "English",
+    "hindi": "हिंदी"
+  }
+}

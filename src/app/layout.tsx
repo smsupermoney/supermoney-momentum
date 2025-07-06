@@ -1,6 +1,8 @@
+
 import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import { AppProvider } from '@/contexts/app-context';
+import { LanguageProvider } from '@/contexts/language-context';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -22,8 +24,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AppProvider>
-          {children}
-          <Toaster />
+          <LanguageProvider>
+            {children}
+            <Toaster />
+          </LanguageProvider>
         </AppProvider>
       </body>
     </html>
