@@ -1,4 +1,4 @@
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog } from './types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -8,9 +8,7 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 
 export const mockUsers: User[] = [
   { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2' },
-  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-rsm' },
-  { id: 'user-rsm', uid: 'user-rsm', name: 'Rajesh Singh', email: 'rsm@supermoney.in', role: 'Regional Sales Manager', managerId: 'user-nsm' },
-  { id: 'user-nsm', uid: 'user-nsm', name: 'Alok Gupta', email: 'nsm@supermoney.in', role: 'National Sales Manager', managerId: 'user-admin' },
+  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin' },
   { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin' },
 ];
@@ -117,15 +115,15 @@ export const mockAnchors: Anchor[] = [
 ];
 
 export const mockDealers: Dealer[] = [
-  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New' },
-  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New' },
+  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New', nextBestAction: { recommendedAction: 'Nurture (Wait)', justification: 'This dealer is already active and requires no immediate action.' } },
+  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New', nextBestAction: { recommendedAction: 'Send Follow-up Email', justification: 'The invitation was just sent, a follow-up in a few days would be appropriate.' } },
   { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New' },
   { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
 ];
 
 export const mockVendors: Vendor[] = [
   { id: 'vendor-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New' },
-  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
+  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New', nextBestAction: { recommendedAction: 'Address a Specific Question', justification: 'KYC is pending, follow up to see if they have any questions holding them back.' } },
   { id: 'vendor-3', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New' },
 ];
 
@@ -269,3 +267,5 @@ export const mockActivityLogs: ActivityLog[] = [
         userId: 'user-3'
       },
 ];
+
+export const mockDailyActivities: DailyActivity[] = [];

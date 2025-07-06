@@ -67,6 +67,7 @@ export interface Dealer extends BaseLead {
   anchorId: string | null;
   leadScore?: number;
   leadScoreReason?: string;
+  nextBestAction?: NextBestAction;
 }
 
 export interface Vendor extends BaseLead {
@@ -74,6 +75,7 @@ export interface Vendor extends BaseLead {
   anchorId: string | null;
   leadScore?: number;
   leadScoreReason?: string;
+  nextBestAction?: NextBestAction;
 }
 
 export interface Task {

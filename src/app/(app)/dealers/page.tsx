@@ -9,7 +9,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Mail } from 'lucide-react';
+import { PlusCircle, Upload, Mail, Sparkles } from 'lucide-react';
 import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,7 +144,15 @@ export default function DealersPage() {
           <TableBody>
             {userDealers.length > 0 ? userDealers.map(dealer => (
               <TableRow key={dealer.id} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
-                <TableCell className="font-medium">{dealer.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div>{dealer.name}</div>
+                  {dealer.nextBestAction && (
+                      <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
+                          <Sparkles className="mr-1.5 h-3 w-3 text-primary shrink-0" />
+                          <span className="text-xs">{dealer.nextBestAction.recommendedAction}</span>
+                      </Badge>
+                  )}
+                </TableCell>
                 <TableCell className="hidden lg:table-cell">
                     <div>{dealer.contactNumber}</div>
                     <div className="text-xs text-muted-foreground">{dealer.email || 'No email'}</div>
@@ -188,6 +196,17 @@ export default function DealersPage() {
                       <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
+                      {dealer.nextBestAction && (
+                        <div className="mb-2">
+                          <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
+                            <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-xs text-primary">Next Best Action</span>
+                                <span className="text-sm">{dealer.nextBestAction.recommendedAction}</span>
+                            </div>
+                          </Badge>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                         <Badge variant="outline">{dealer.leadType || 'New'}</Badge>
