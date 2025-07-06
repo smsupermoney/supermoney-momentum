@@ -12,21 +12,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all required config values are present
-export const firebaseEnabled =
-  firebaseConfig.apiKey !== undefined &&
-  firebaseConfig.projectId !== undefined;
+// Check if all required config values are present and not just empty strings
+export const firebaseEnabled = !!(
+  firebaseConfig.apiKey &&
+  firebaseConfig.projectId
+);
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 
 if (firebaseEnabled) {
+  try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
     auth = getAuth(app);
+  } catch (e) {
+    console.error("Failed to initialize Firebase. Please check your .env file.", e);
+  }
 }
 
 export { db, auth };
-
-    

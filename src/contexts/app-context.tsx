@@ -111,6 +111,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const loadMockData = useCallback(() => {
     setIsDataLoading(true);
+    console.log("Loading mock data...");
     setUsers(mockUsers);
     setAnchors(mockAnchors);
     setDealers(mockDealers);
@@ -129,6 +130,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             loadMockData();
         }
     }
+  // The dependency array with just currentUser ensures this effect runs once after login or on initial load from session storage.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
@@ -314,5 +316,3 @@ export const useApp = () => {
   }
   return context;
 };
-
-    
