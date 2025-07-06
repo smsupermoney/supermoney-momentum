@@ -19,7 +19,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 // Helper function to get nested keys
 const getNestedValue = (obj: any, key: string): string => {
-  return key.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+  return key.split('.').reduce((o, i) => (o ? o[i] : undefined), obj) || key;
 };
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
@@ -46,8 +46,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const t = useCallback((key: string): string => {
-    const translation = getNestedValue(translations[language], key);
-    return translation || key;
+    return getNestedValue(translations[language], key);
   }, [language]);
 
   const value = {

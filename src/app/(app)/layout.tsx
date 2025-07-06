@@ -13,7 +13,7 @@ import {
   Shield,
   BarChart,
   BookCheck,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -32,6 +32,7 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 import { useApp } from '@/contexts/app-context';
 import { useLanguage } from '@/contexts/language-context';
 import { Logo } from '@/components/logo';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -80,9 +81,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-            <div className="flex items-center gap-2 p-2">
-                 <Logo className="text-sidebar-foreground h-8 w-8" />
-                 <h1 className="text-xl font-headline font-bold text-sidebar-foreground">Supermoney</h1>
+            <div className="flex items-center justify-between p-2">
+                 <div className="flex items-center gap-2">
+                    <Logo className="text-sidebar-foreground h-8 w-8" />
+                    <h1 className="text-xl font-headline font-bold text-sidebar-foreground group-data-[state=collapsed]:hidden">Supermoney</h1>
+                 </div>
+                 <div className="group-data-[state=collapsed]:hidden">
+                    <NotificationBell />
+                 </div>
             </div>
         </SidebarHeader>
         <SidebarContent>
@@ -110,12 +116,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-background px-4 md:hidden">
-          <SidebarTrigger />
-          <div className="flex items-center gap-2 font-headline text-xl font-bold text-primary">
-            <Logo className="h-8 w-8 text-primary" />
-            Supermoney
-          </div>
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-4 md:hidden">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <div className="flex items-center gap-2 font-headline text-xl font-bold text-primary">
+                <Logo className="h-8 w-8 text-primary" />
+                Supermoney
+              </div>
+            </div>
+            <NotificationBell />
         </header>
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}

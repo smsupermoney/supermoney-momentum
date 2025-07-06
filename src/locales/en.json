@@ -257,6 +257,11 @@
       "queryPlan": "Generated Query Plan"
     }
   },
+  "notifications": {
+      "title": "Notifications",
+      "noNotifications": "You're all caught up!",
+      "markAllAsRead": "Mark all as read"
+  },
   "dialogs": {
     "cancel": "Cancel",
     "close": "Close",

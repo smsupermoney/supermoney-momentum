@@ -257,6 +257,11 @@
       "queryPlan": "उत्पन्न क्वेरी योजना"
     }
   },
+  "notifications": {
+    "title": "सूचनाएं",
+    "noNotifications": "आप पूरी तरह से अपडेट हैं!",
+    "markAllAsRead": "सभी को पढ़ा हुआ चिह्नित करें"
+  },
   "dialogs": {
     "cancel": "रद्द करें",
     "close": "बंद करें",

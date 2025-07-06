@@ -1,3 +1,4 @@
+
 export type UserRole = 'Admin' | 'Sales' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Onboarding Specialist';
 
 export interface User {
@@ -44,6 +45,7 @@ export interface BaseLead {
   product?: string;
   assignedTo: string | null;
   createdAt: string;
+  updatedAt?: string;
   leadType?: LeadType;
 }
 
@@ -110,37 +112,38 @@ export interface ActivityLog {
   userId: string;
 }
 
-// --- New Daily Activity Module Types ---
-
 export type DailyActivityType = 'Client Meeting' | 'Site Visit' | 'Sales Presentation' | 'Follow-up' | 'Travel Time' | 'Administrative' | 'Training' | 'Networking';
 
 export interface DailyActivity {
-    id: string; // activityId
+    id: string;
     userId: string;
-    userName: string; // userDisplayName
+    userName: string;
     activityType: DailyActivityType;
     title: string;
     notes?: string;
-
-    // Timing
     activityTimestamp: string;
-    
-    // Client Info
     anchorId?: string;
     anchorName?: string;
     dealerId?: string;
     dealerName?: string;
     vendorId?: string;
     vendorName?: string;
-
-    // Location & Media
     location?: {
         latitude: number;
         longitude: number;
     };
-    images?: string[]; // Array of data URIs for mock data
-
-    // Metadata
+    images?: string[];
     createdAt: string;
     updatedAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  href: string;
+  timestamp: string;
+  isRead: boolean;
+  icon: string;
 }
