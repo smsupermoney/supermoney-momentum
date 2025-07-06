@@ -51,6 +51,7 @@ export const mockAnchors: Anchor[] = [
     vendorIds: [],
     leadSource: 'Conference / Event',
     annualTurnover: 8500000000,
+    nextBestAction: { recommendedAction: 'Schedule a Demo Call', justification: 'The client is in the onboarding phase, a demo call can help align expectations.' }
   },
   { 
     id: 'anchor-3', 
@@ -66,6 +67,7 @@ export const mockAnchors: Anchor[] = [
     vendorIds: [],
     leadSource: 'LinkedIn Campaign',
     annualTurnover: 2500000000,
+    nextBestAction: { recommendedAction: 'Send Industry Case Study', justification: 'They are in negotiation, a case study can help build confidence.' }
   },
   { 
     id: 'anchor-4', 
@@ -81,6 +83,7 @@ export const mockAnchors: Anchor[] = [
     vendorIds: [],
     leadSource: 'Website Inquiry',
     annualTurnover: 1000000000,
+    nextBestAction: { recommendedAction: 'Send Follow-up Email', justification: 'It has been a while since initial contact, a follow-up email is appropriate.' }
   },
   { 
     id: 'anchor-5', 
@@ -222,6 +225,7 @@ export const mockActivityLogs: ActivityLog[] = [
         title: "Proposal sent to 'Tata Motors'",
         outcome: "Proposal V2 sent to Sunita Rao. Acknowledged receipt.",
         userName: 'Ramesh Kumar',
+        userId: 'user-1'
     },
     {
         id: 'log-2',
@@ -231,6 +235,7 @@ export const mockActivityLogs: ActivityLog[] = [
         title: "Onboarding call with 'Reliance Retail'",
         outcome: "Successful onboarding call. Discussed next steps for dealer integration.",
         userName: 'Ramesh Kumar',
+        userId: 'user-1'
     },
     {
         id: 'log-3',
@@ -240,6 +245,7 @@ export const mockActivityLogs: ActivityLog[] = [
         title: "Call logged with Kishore Biyani at 'Future Group'",
         outcome: "Discussed initial requirements. Client is interested in vendor finance. Sent introductory email.",
         userName: 'Priya Sharma',
+        userId: 'user-2'
     },
      {
         id: 'log-4',
@@ -249,6 +255,7 @@ export const mockActivityLogs: ActivityLog[] = [
         title: "Negotiation call with 'Apollo Tyres'",
         outcome: "Client has some objections on the pricing. Scheduled a follow-up meeting.",
         userName: 'Priya Sharma',
+        userId: 'user-2'
     },
     {
         id: 'log-5',
@@ -259,5 +266,6 @@ export const mockActivityLogs: ActivityLog[] = [
         title: 'Sent KYC document list to Pune Auto',
         outcome: 'Emailed the list of required documents to the primary contact at Pune Auto.',
         userName: 'Sonia Singh',
+        userId: 'user-3'
       },
 ];

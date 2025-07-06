@@ -26,6 +26,13 @@ export interface Contact {
     isPrimary: boolean;
 }
 
+export type NextBestActionType = 'Send Follow-up Email' | 'Schedule a Demo Call' | 'Send Industry Case Study' | 'Address a Specific Question' | 'Nurture (Wait)' | 'Mark as Unqualified';
+
+export interface NextBestAction {
+    recommendedAction: NextBestActionType;
+    justification: string;
+}
+
 export interface BaseLead {
   id: string;
   name: string;
@@ -52,6 +59,7 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
   dealerIds: string[];
   vendorIds: string[];
   contacts: Contact[];
+  nextBestAction?: NextBestAction;
 }
 
 export interface Dealer extends BaseLead {

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { NewAnchorDialog } from '@/components/anchors/new-anchor-dialog';
 import type { Anchor, Contact, LeadStatus } from '@/lib/types';
-import { PlusCircle, Mail } from 'lucide-react';
+import { PlusCircle, Mail, Sparkles } from 'lucide-react';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 
 export default function AnchorsPage() {
@@ -83,8 +83,19 @@ export default function AnchorsPage() {
                   <CardDescription>{anchor.industry}</CardDescription>
               </CardHeader>
               <CardContent>
+                  {anchor.nextBestAction && (
+                    <div className="mb-2">
+                      <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
+                        <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="font-semibold text-xs text-primary">Next Best Action</span>
+                            <span className="text-sm">{anchor.nextBestAction.recommendedAction}</span>
+                        </div>
+                      </Badge>
+                    </div>
+                  )}
                   {primaryContact && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground mt-2">
                       <p className="font-medium">{primaryContact.name}</p>
                       <div className="flex items-center justify-between">
                         <p>{primaryContact.email}</p>
