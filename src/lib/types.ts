@@ -96,6 +96,7 @@ export interface ActivityLog {
   title: string;
   outcome: string;
   userName: string;
+  userId: string;
 }
 
 // --- New Daily Activity Module Types ---

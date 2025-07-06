@@ -69,6 +69,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       title: 'Manual Log Entry',
       outcome: newActivity,
       userName: currentUser.name,
+      userId: currentUser.uid,
     };
     await addActivityLog(log);
     setNewActivity('');

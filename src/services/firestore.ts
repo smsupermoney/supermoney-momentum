@@ -98,9 +98,15 @@ export const updateVendor = async (vendor: Vendor) => {
 
 // --- Task Service ---
 const tasksCollection = collection(db, 'tasks');
-export const getTasks = async (): Promise<Task[]> => {
-    const q = query(tasksCollection, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
+export const getTasks = async (user: User): Promise<Task[]> => {
+    let queryToRun;
+    if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+        queryToRun = query(tasksCollection, where('assignedTo', '==', user.uid), orderBy('createdAt', 'desc'));
+    } else {
+        // Admins and Managers can see all tasks. The UI will filter for teams.
+        queryToRun = query(tasksCollection, orderBy('createdAt', 'desc'));
+    }
+    const snapshot = await getDocs(queryToRun);
     return snapshotToData<Omit<Task, 'id'>>(snapshot);
 };
 export const addTask = async (task: Omit<Task, 'id'>) => {
@@ -114,9 +120,15 @@ export const updateTask = async (task: Task) => {
 
 // --- ActivityLog Service ---
 const activityLogsCollection = collection(db, 'activityLogs');
-export const getActivityLogs = async (): Promise<ActivityLog[]> => {
-    const q = query(activityLogsCollection, orderBy('timestamp', 'desc'));
-    const snapshot = await getDocs(q);
+export const getActivityLogs = async (user: User): Promise<ActivityLog[]> => {
+    let queryToRun;
+    if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+        queryToRun = query(activityLogsCollection, where('userId', '==', user.uid), orderBy('timestamp', 'desc'));
+    } else {
+        // Admins and Managers can see all logs. The UI will filter for teams.
+        queryToRun = query(activityLogsCollection, orderBy('timestamp', 'desc'));
+    }
+    const snapshot = await getDocs(queryToRun);
     return snapshotToData<Omit<ActivityLog, 'id'>>(snapshot);
 };
 export const addActivityLog = async (log: Omit<ActivityLog, 'id'>) => {
@@ -131,7 +143,7 @@ export const getDailyActivities = async (user: User): Promise<DailyActivity[]> =
     
     // For roles other than Sales, the security rules are assumed to allow full reads.
     // For the Sales role, we must filter by their user ID to comply with security rules.
-    if (user.role === 'Sales') {
+    if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
         activitiesQuery = query(collection(db, 'daily_activities'), where('userId', '==', user.uid), orderBy('startTime', 'desc'));
     } else {
         activitiesQuery = query(collection(db, 'daily_activities'), orderBy('startTime', 'desc'));

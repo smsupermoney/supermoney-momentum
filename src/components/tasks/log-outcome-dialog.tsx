@@ -57,6 +57,7 @@ export function LogOutcomeDialog({ open, onOpenChange, task, onSubmit }: LogOutc
           title: `${task.type}: ${task.title} with ${anchorName}`,
           outcome: values.outcome,
           userName: currentUser.name,
+          userId: currentUser.uid,
         };
         await addActivityLog(newLog);
 

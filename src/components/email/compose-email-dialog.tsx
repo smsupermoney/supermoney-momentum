@@ -92,6 +92,7 @@ export function ComposeEmailDialog({ open, onOpenChange, recipientEmail, entity 
           title: `Email: ${values.subject} to ${entity.name}`,
           outcome: logOutcome,
           userName: currentUser.name,
+          userId: currentUser.uid,
         };
         
         if (entity.type === 'anchor') {

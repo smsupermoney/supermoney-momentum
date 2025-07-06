@@ -87,8 +87,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         firestoreService.getAnchors(),
         firestoreService.getDealers(),
         firestoreService.getVendors(),
-        firestoreService.getTasks(),
-        firestoreService.getActivityLogs(),
+        firestoreService.getTasks(user),
+        firestoreService.getActivityLogs(user),
         firestoreService.getDailyActivities(user),
       ]);
       
@@ -193,10 +193,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
-    const user = users.find(u => u.name === logData.userName);
-    const logWithUser = {...logData, userName: user?.name || 'Unknown User'}
-    const docRef = await firestoreService.addActivityLog(logWithUser);
-    setActivityLogs(prev => [{ id: docRef.id, ...logWithUser }, ...prev]);
+    const docRef = await firestoreService.addActivityLog(logData);
+    setActivityLogs(prev => [{ id: docRef.id, ...logData }, ...prev]);
   }
   
   const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
