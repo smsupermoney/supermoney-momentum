@@ -30,10 +30,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Loader2, MapPin, Paperclip } from 'lucide-react';
+import { CalendarIcon, Loader2, MapPin, Paperclip, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import type { DailyActivity, DailyActivityType } from '@/lib/types';
 import Image from 'next/image';
+import { CameraCaptureDialog } from './camera-capture-dialog';
 
 const formSchema = z.object({
   activityType: z.string().min(1, 'Activity type is required'),
@@ -62,6 +63,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const form = useForm<NewActivityFormValues>({
     resolver: zodResolver(formSchema),
@@ -121,6 +123,12 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       reader.readAsDataURL(file);
     });
   };
+  
+  const handlePhotoCapture = (imageDataUrl: string) => {
+    setImagePreviews(prev => [...prev, imageDataUrl]);
+    form.setValue('images', [...(form.getValues('images') || []), imageDataUrl]);
+    toast({ title: 'Photo Added', description: 'The photo has been attached to the activity.' });
+  };
 
 
   const onSubmit = (values: NewActivityFormValues) => {
@@ -175,6 +183,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const locationValue = form.watch('location');
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -262,9 +271,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                     <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
                         <MapPin className="mr-2 h-4 w-4"/> Capture Location
                     </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsCameraOpen(true)} className="w-full">
+                        <Camera className="mr-2 h-4 w-4"/> Take Photo
+                    </Button>
+                 </div>
+                 <div className="flex flex-col sm:flex-row gap-2">
                      <Button type="button" variant="outline" asChild className="w-full">
                         <label className="cursor-pointer">
-                            <Paperclip className="mr-2 h-4 w-4" /> Attach Images
+                            <Paperclip className="mr-2 h-4 w-4" /> Attach Files
                             <Input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
                         </label>
                     </Button>
@@ -296,5 +310,11 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         </Form>
       </DialogContent>
     </Dialog>
+    <CameraCaptureDialog 
+        open={isCameraOpen} 
+        onOpenChange={setIsCameraOpen} 
+        onCapture={handlePhotoCapture}
+    />
+    </>
   );
 }
