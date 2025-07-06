@@ -6,10 +6,15 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users } from 'lucide-react';
-import type { Anchor, Task, ActivityLog, UserRole } from '@/lib/types';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, isWithinInterval, isPast, format } from 'date-fns';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText } from 'lucide-react';
+import type { Anchor, Task, ActivityLog, User as UserType, UserRole } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
+import { useState, useMemo, useEffect } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
 
 
 // Main Page Component
@@ -142,25 +147,41 @@ function SalesReports() {
 
 // Reports for Managers (ZSM, RSM, NSM)
 function ManagerReports() {
-    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers } = useApp();
+    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers, tasks } = useApp();
+    const [period, setPeriod] = useState('this_month');
     
     const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.assignedTo || ''));
-    
-    const visibleUserNames = visibleUsers.map(u => u.name);
-    const teamLogs = activityLogs.filter(l => visibleUserNames.includes(l.userName));
+    const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
+    const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
+    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser.uid);
+
+    const periodAnchors = useMemo(() => {
+        const now = new Date();
+        let interval: Interval;
+        switch (period) {
+            case 'this_quarter':
+                interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
+                break;
+            case 'ytd':
+                interval = { start: startOfYear(now), end: now };
+                break;
+            case 'this_month':
+            default:
+                interval = { start: startOfMonth(now), end: endOfMonth(now) };
+                break;
+        }
+        return teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
+    }, [period, teamAnchors]);
 
     // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: teamAnchors
-            .filter(a => a.status === stage)
-            .length
+        value: periodAnchors.filter(a => a.status === stage).length
     }));
 
      // Activity Leaderboard
-    const activityCounts = visibleUsers
-        .filter(u => u.uid !== currentUser.uid) // Exclude the manager from their own leaderboard
+    const activityCounts = teamUsers
         .map(user => ({
             name: user.name,
             activities: teamLogs.filter(log => log.userName === user.name).length
@@ -169,53 +190,64 @@ function ManagerReports() {
 
     return (
         <div className="grid gap-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
-                    <CardDescription>Number of leads in each stage for your team.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
-                        <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                            <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                            <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" leads" allowDecimals={false}/>
-                            <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
-                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                {pipelineValueData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-            <div className="grid md:grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableBody>
-                                {activityCounts.map((user, index) => (
-                                    <TableRow key={user.name}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
-                                                <div><p className="font-medium">{user.name}</p></div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <span className="text-lg font-bold">{user.activities}</span>
-                                            <span className="text-sm text-muted-foreground"> activities</span>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                <div className="space-y-4">
+            <Tabs value={period} onValueChange={setPeriod} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+                    <TabsTrigger value="this_month">This Month</TabsTrigger>
+                    <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
+                    <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            
+            <div className="grid lg:grid-cols-5 gap-4">
+                <div className="lg:col-span-3 space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
+                            <CardDescription>Number of new leads in each stage for the selected period.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
+                                <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                                    <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" leads" allowDecimals={false}/>
+                                    <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                        {pipelineValueData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ChartContainer>
+                        </CardContent>
+                    </Card>
+                    <OverdueTasksByExecutive tasks={teamTasks} users={teamUsers} />
+                </div>
+                <div className="lg:col-span-2 space-y-4">
+                    <KeyHighlights period={period} anchors={periodAnchors} activityLogs={teamLogs} users={teamUsers} />
+                    <Card>
+                        <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableBody>
+                                    {activityCounts.map((user, index) => (
+                                        <TableRow key={user.name}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                                    <div><p className="font-medium">{user.name}</p></div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <span className="text-lg font-bold">{user.activities}</span>
+                                                <span className="text-sm text-muted-foreground"> activities</span>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
                     <StatCard title="Total Team Leads" value={teamAnchors.length} description="All leads assigned to your team members." icon={Users} />
-                    <StatCard title="Lead Velocity" value="18 Days" description="Avg. time from Lead to Proposal for the team." icon={ArrowRight} isPlaceholder/>
                 </div>
             </div>
         </div>
@@ -225,30 +257,56 @@ function ManagerReports() {
 
 // Reports for Admin Role
 function AdminReports() {
-    const { anchors, users, dealers, vendors, activityLogs } = useApp();
+    const { anchors, users, dealers, vendors, activityLogs, tasks } = useApp();
+    const [period, setPeriod] = useState('this_month');
 
+    const salesUsers = users.filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager');
+    
+    const periodData = useMemo(() => {
+        const now = new Date();
+        let interval: Interval;
+        let periodLabel = 'This Month';
+        switch (period) {
+            case 'this_quarter':
+                interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
+                periodLabel = 'This Quarter';
+                break;
+            case 'ytd':
+                interval = { start: startOfYear(now), end: now };
+                periodLabel = 'Year-to-Date';
+                break;
+            case 'this_month':
+            default:
+                interval = { start: startOfMonth(now), end: endOfMonth(now) };
+                break;
+        }
+        const periodAnchors = anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
+        const periodLogs = activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval));
+        
+        return { anchors: periodAnchors, logs: periodLogs, label: periodLabel };
+    }, [period, anchors, activityLogs]);
+    
     // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: anchors
+        value: periodData.anchors
             .filter(a => a.status === stage && a.annualTurnover)
             .reduce((sum, a) => sum + (a.annualTurnover || 0), 0) / 10000000, // in Cr
     }));
     
     // Activity Leaderboard
-    const activityCounts = users
-        .filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager')
+    const activityCounts = salesUsers
         .map(user => ({
             name: user.name,
-            activities: activityLogs.filter(log => log.userName === user.name).length
+            activities: periodData.logs.filter(log => log.userName === user.name).length
         }))
         .sort((a, b) => b.activities - a.activities)
         .slice(0, 5); // show top 5
         
     // Conversion Rates
-    const getCount = (status: string) => anchors.filter(a => a.status === status).length;
-    const allLeadsCount = getCount('Lead') + getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
+    const getCount = (status: string) => periodData.anchors.filter(a => a.status === status).length;
+    const allLeadsCount = periodData.anchors.length;
     const allContactsCount = getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     const allProposalsCount = getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     
@@ -266,10 +324,18 @@ function AdminReports() {
   return (
     <div className="grid gap-4">
       <AdminDataChat />
+      <Tabs value={period} onValueChange={setPeriod} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+            <TabsTrigger value="this_month">This Month</TabsTrigger>
+            <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
+            <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <KeyHighlights period={periodData.label} anchors={periodData.anchors} activityLogs={periodData.logs} users={salesUsers} />
       <Card>
           <CardHeader>
-              <CardTitle>Team Pipeline Value (by Stage)</CardTitle>
-              <CardDescription>Estimated total value of deals (in ₹ Cr) in each stage.</CardDescription>
+              <CardTitle>Pipeline Value ({periodData.label})</CardTitle>
+              <CardDescription>Estimated total value of new deals (in ₹ Cr) in each stage.</CardDescription>
           </CardHeader>
           <CardContent>
               <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
@@ -290,7 +356,7 @@ function AdminReports() {
         <Card className="lg:col-span-1">
           <CardHeader>
               <CardTitle>Activity Leaderboard</CardTitle>
-              <CardDescription>Top performers this week</CardDescription>
+              <CardDescription>Top performers for {periodData.label}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -309,28 +375,184 @@ function AdminReports() {
                             </TableCell>
                         </TableRow>
                     ))}
+                     {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
                 </TableBody>
             </Table>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-1">
-            <CardHeader>
-                <CardTitle>Stage Conversion Rates</CardTitle>
-                <CardDescription>From one stage to the next</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-                <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
-                <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
-                <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
-            </CardContent>
-        </Card>
+        <OverdueTasksByExecutive tasks={tasks} users={users.filter(u => u.role !== 'Admin')} />
         <div className="lg:col-span-1 space-y-4">
+             <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Stage Conversion Rates</CardTitle>
+                    <CardDescription>For new leads in {periodData.label}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                    <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
+                    <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
+                    <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
+                </CardContent>
+            </Card>
             <StatCard title="Spoke Activation Rate" value={`${spokeActivationRate.toFixed(1)}%`} description="Of invited spokes on active anchors." icon={CheckCircle}/>
-            <StatCard title="Lead Velocity" value="12 Days" description="Avg. time from Lead to Proposal." icon={ArrowRight} isPlaceholder/>
         </div>
       </div>
     </div>
   );
+}
+
+
+// New Helper Components
+function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserType[] }) {
+    const overdueTasks = tasks.filter(t => 
+        isPast(new Date(t.dueDate)) && 
+        !isToday(new Date(t.dueDate)) && 
+        t.status !== 'Completed'
+    );
+
+    const tasksByUser = useMemo(() => {
+        return overdueTasks.reduce((acc, task) => {
+            const userName = users.find(u => u.uid === task.assignedTo)?.name || 'Unknown User';
+            if (!acc[userName]) {
+                acc[userName] = [];
+            }
+            acc[userName].push(task);
+            return acc;
+        }, {} as Record<string, Task[]>);
+    }, [overdueTasks, users]);
+
+    const userEntries = Object.entries(tasksByUser);
+
+    return (
+        <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>Overdue Task Deviations</CardTitle>
+                <CardDescription>All tasks currently past their due date.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {userEntries.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-40 text-center">
+                        <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
+                        <p className="font-medium">No Overdue Tasks</p>
+                        <p className="text-sm text-muted-foreground">The team is all caught up!</p>
+                    </div>
+                ) : (
+                    <Accordion type="multiple" className="w-full">
+                        {userEntries.map(([userName, userTasks]) => (
+                            <AccordionItem value={userName} key={userName}>
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        <span>{userName}</span>
+                                        <Badge variant="destructive">{userTasks.length} overdue</Badge>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <ul className="space-y-2 pl-4">
+                                        {userTasks.map(task => (
+                                            <li key={task.id} className="text-sm flex items-center gap-2">
+                                                <FileText className="h-3 w-3 shrink-0" />
+                                                <span>{task.title} (Due: {format(new Date(task.dueDate), 'MMM d')})</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function KeyHighlights({ period, anchors, activityLogs, users }: { period: string, anchors: Anchor[], activityLogs: ActivityLog[], users: UserType[]}) {
+    const [highlights, setHighlights] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHighlights = async () => {
+            setIsLoading(true);
+            setHighlights([]);
+
+            try {
+                const wonDeals = anchors.filter(a => a.status === 'Active');
+                const totalDealValue = wonDeals.reduce((sum, a) => sum + (a.annualTurnover || 0), 0);
+                const totalLeads = anchors.length;
+                const totalActivities = activityLogs.length;
+
+                const performerDeals = wonDeals.reduce((acc, deal) => {
+                    const userName = users.find(u => u.uid === deal.assignedTo)?.name || 'Unknown';
+                    acc[userName] = (acc[userName] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+
+                const topPerformersByDeals = Object.entries(performerDeals)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a,b) => b.value - a.value)
+                    .slice(0,3);
+
+                const performerActivities = activityLogs.reduce((acc, log) => {
+                    acc[log.userName] = (acc[log.userName] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+
+                const topPerformersByActivities = Object.entries(performerActivities)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a,b) => b.value - a.value)
+                    .slice(0,3);
+
+                const conversionRate = totalLeads > 0 ? (wonDeals.length / totalLeads) * 100 : 0;
+                
+                const input = {
+                    period,
+                    totalDealValue,
+                    totalLeads,
+                    totalActivities,
+                    topPerformersByDeals,
+                    topPerformersByActivities,
+                    conversionRate,
+                };
+                
+                const response = await generateHighlights(input);
+                setHighlights(response.highlights);
+
+            } catch (error) {
+                console.error("Failed to generate highlights:", error);
+                setHighlights(["AI analysis could not be completed for this period."]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchHighlights();
+    }, [period, anchors, activityLogs, users]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>AI-Powered Key Highlights</CardTitle>
+                <CardDescription>Generated summary for {period}.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-3">
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
+                ) : (
+                    <ul className="space-y-3">
+                        {highlights.map((highlight, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                                <Lightbulb className="h-4 w-4 mt-0.5 text-yellow-500 shrink-0" />
+                                <span className="text-sm">{highlight}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </CardContent>
+        </Card>
+    )
 }
 
 
