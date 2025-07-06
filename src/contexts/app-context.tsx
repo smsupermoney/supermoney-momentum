@@ -71,7 +71,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (user: User) => {
     setIsDataLoading(true);
     try {
       const [
@@ -89,7 +89,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         firestoreService.getVendors(),
         firestoreService.getTasks(),
         firestoreService.getActivityLogs(),
-        firestoreService.getDailyActivities(),
+        firestoreService.getDailyActivities(user),
       ]);
       
       setUsers(fetchedUsers.length > 0 ? fetchedUsers : demoUsers);
@@ -109,7 +109,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
       if (currentUser && !isDataLoading) {
-          loadAllData();
+          loadAllData(currentUser);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);

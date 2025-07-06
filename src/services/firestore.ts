@@ -126,9 +126,18 @@ export const addActivityLog = async (log: Omit<ActivityLog, 'id'>) => {
 // --- DailyActivity Service ---
 const dailyActivitiesCollection = collection(db, 'daily_activities');
 
-export const getDailyActivities = async (): Promise<DailyActivity[]> => {
-    const q = query(dailyActivitiesCollection, orderBy('startTime', 'desc'));
-    const snapshot = await getDocs(q);
+export const getDailyActivities = async (user: User): Promise<DailyActivity[]> => {
+    let activitiesQuery;
+    
+    // For roles other than Sales, the security rules are assumed to allow full reads.
+    // For the Sales role, we must filter by their user ID to comply with security rules.
+    if (user.role === 'Sales') {
+        activitiesQuery = query(collection(db, 'daily_activities'), where('userId', '==', user.uid), orderBy('startTime', 'desc'));
+    } else {
+        activitiesQuery = query(collection(db, 'daily_activities'), orderBy('startTime', 'desc'));
+    }
+    
+    const snapshot = await getDocs(activitiesQuery);
     return snapshotToData<Omit<DailyActivity, 'id'>>(snapshot);
 };
 
