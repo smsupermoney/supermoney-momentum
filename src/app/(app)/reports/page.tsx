@@ -310,9 +310,9 @@ function AdminReports() {
                 break;
         }
         return {
-          anchors: anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
-          logs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
-          label: label
+          periodAnchors: anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+          periodLogs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+          periodLabel: label
         };
     }, [period, anchors, activityLogs, t]);
     
