@@ -9,6 +9,7 @@ import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/language-context';
 
 interface TaskListProps {
   dueDateFilter?: string;
@@ -18,6 +19,7 @@ interface TaskListProps {
 
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskListProps) {
   const { tasks, anchors, currentUser, users, updateTask, visibleUserIds } = useApp();
+  const { t } = useLanguage();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
@@ -90,14 +92,14 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Priority</TableHead>
-              <TableHead>Task Title</TableHead>
-              <TableHead>Associated Anchor</TableHead>
-              {showAssignedTo && <TableHead className="hidden lg:table-cell">Assigned To</TableHead>}
-              <TableHead className="hidden lg:table-cell">Task Type</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('tasks.list.priority')}</TableHead>
+              <TableHead>{t('tasks.list.title')}</TableHead>
+              <TableHead>{t('tasks.list.anchor')}</TableHead>
+              {showAssignedTo && <TableHead className="hidden lg:table-cell">{t('tasks.list.assignedTo')}</TableHead>}
+              <TableHead className="hidden lg:table-cell">{t('tasks.list.type')}</TableHead>
+              <TableHead>{t('tasks.list.dueDate')}</TableHead>
+              <TableHead>{t('tasks.list.status')}</TableHead>
+              <TableHead className="text-right">{t('tasks.list.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,14 +114,14 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
                 <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
                 <TableCell className="text-right">
                   {task.status !== 'Completed' && (
-                      <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>Complete</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>{t('tasks.list.complete')}</Button>
                   )}
                 </TableCell>
               </TableRow>
             )) : (
               <TableRow>
                   <TableCell colSpan={showAssignedTo ? 8 : 7} className="h-24 text-center">
-                    No tasks found.
+                    {t('tasks.list.noTasks')}
                   </TableCell>
                 </TableRow>
             )}
@@ -137,22 +139,22 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
                 <Badge variant={priorityVariant[task.priority]} className="flex-shrink-0">{task.priority}</Badge>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p><span className="font-medium">Anchor:</span> {getAnchorName(task.associatedWith.anchorId)}</p>
-                {showAssignedTo && <p><span className="font-medium">Assigned:</span> {getAssignedToName(task.assignedTo)}</p>}
-                <p><span className="font-medium">Due:</span> {format(new Date(task.dueDate), 'PP')}</p>
+                <p><span className="font-medium">{t('tasks.list.anchor')}:</span> {getAnchorName(task.associatedWith.anchorId)}</p>
+                {showAssignedTo && <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>}
+                <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {format(new Date(task.dueDate), 'PP')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{task.type}</Badge>
                 <Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge>
               </div>
               {task.status !== 'Completed' && (
-                  <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)} className="w-full">Complete Task</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)} className="w-full">{t('tasks.list.complete')} Task</Button>
               )}
             </CardContent>
           </Card>
         )) : (
           <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
-            No tasks found.
+            {t('tasks.list.noTasks')}
           </div>
         )}
       </div>

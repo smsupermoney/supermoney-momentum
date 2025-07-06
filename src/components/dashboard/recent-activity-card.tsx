@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, Calendar, PenSquare } from 'lucide-react';
 import type { TaskType } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 
 const iconMap: Record<TaskType, React.ElementType> = {
@@ -23,6 +24,7 @@ const iconMap: Record<TaskType, React.ElementType> = {
 
 export function RecentActivityCard({ className }: { className?: string }) {
   const { activityLogs, currentUser, visibleUsers } = useApp();
+  const { t } = useLanguage();
 
   const getVisibleLogs = () => {
     if (!currentUser) return [];
@@ -42,7 +44,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
   return (
     <Card className={cn(className)}>
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-72">
@@ -68,7 +70,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
             })}
              {userLogs.length === 0 && (
               <div className="text-center text-muted-foreground py-10">
-                No recent activity to display.
+                {t('dashboard.noRecentActivity')}
               </div>
             )}
           </div>

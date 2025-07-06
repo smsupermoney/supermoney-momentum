@@ -10,14 +10,16 @@ import { NewAnchorDialog } from '@/components/anchors/new-anchor-dialog';
 import type { Anchor, Contact, LeadStatus } from '@/lib/types';
 import { PlusCircle, Mail, Sparkles } from 'lucide-react';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function AnchorsPage() {
   const { anchors, currentUser, visibleUserIds } = useApp();
+  const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
 
-  const pageTitle = currentUser.role === 'Onboarding Specialist' ? 'Onboarding Anchors' : 'Anchors';
+  const pageTitle = currentUser.role === 'Onboarding Specialist' ? t('anchors.onboardingTitle') : t('anchors.title');
 
   const userAnchors = anchors.filter(anchor => {
     if (currentUser.role === 'Onboarding Specialist') return true;
@@ -52,10 +54,10 @@ export default function AnchorsPage() {
 
   return (
     <>
-      <PageHeader title={pageTitle} description="Manage your anchor clients from lead to active.">
+      <PageHeader title={pageTitle} description={t('anchors.description')}>
         <Button onClick={() => setIsDialogOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            New Anchor
+            {t('anchors.new')}
         </Button>
       </PageHeader>
       
@@ -88,7 +90,7 @@ export default function AnchorsPage() {
                       <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
                         <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
                         <div className="flex flex-col">
-                            <span className="font-semibold text-xs text-primary">Next Best Action</span>
+                            <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
                             <span className="text-sm">{anchor.nextBestAction.recommendedAction}</span>
                         </div>
                       </Badge>
@@ -113,8 +115,8 @@ export default function AnchorsPage() {
       </div>
       {userAnchors.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
-              <p>No anchors found.</p>
-              <p className="text-sm">Click "+ New Anchor" to create one.</p>
+              <p>{t('anchors.noAnchors')}</p>
+              <p className="text-sm">{t('anchors.noAnchorsDescription')}</p>
           </div>
       )}
     </>

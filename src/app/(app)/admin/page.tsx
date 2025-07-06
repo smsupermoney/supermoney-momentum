@@ -11,6 +11,7 @@ import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 // Define a union type for the different kinds of leads
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
@@ -40,6 +41,7 @@ function LeadTable({
   onAssignmentChange,
   onAssign,
 }: LeadTableProps) {
+  const { t } = useLanguage();
   if (leads.length === 0) {
     return null;
   }
@@ -55,10 +57,10 @@ function LeadTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact / Industry</TableHead>
-                <TableHead>Assign To</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>{t('admin.table.name')}</TableHead>
+                <TableHead>{t('admin.table.contactIndustry')}</TableHead>
+                <TableHead>{t('admin.table.assignTo')}</TableHead>
+                <TableHead className="text-right">{t('admin.table.action')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -69,7 +71,7 @@ function LeadTable({
                   <TableCell>
                     <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
                       <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select user" />
+                        <SelectValue placeholder={t('admin.selectUser')} />
                       </SelectTrigger>
                       <SelectContent>
                         {assignableUsers.map((user) => (
@@ -82,7 +84,7 @@ function LeadTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]}>
-                      Assign
+                      {t('admin.assign')}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -101,7 +103,7 @@ function LeadTable({
               <CardContent className="space-y-3 p-4 pt-0">
                 <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select user" />
+                    <SelectValue placeholder={t('admin.selectUser')} />
                   </SelectTrigger>
                   <SelectContent>
                     {assignableUsers.map((user) => (
@@ -112,7 +114,7 @@ function LeadTable({
                   </SelectContent>
                 </Select>
                 <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">
-                  Assign
+                  {t('admin.assign')}
                 </Button>
               </CardContent>
             </Card>
@@ -126,6 +128,7 @@ function LeadTable({
 export default function AdminPage() {
   const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser, visibleUsers } = useApp();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
   const [assignments, setAssignments] = useState<Record<string, string>>({});
 
@@ -195,7 +198,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <PageHeader title="Admin Panel" description="Manage unassigned leads and system users." />
+      <PageHeader title={t('admin.title')} description={t('admin.description')} />
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
       <div className="grid gap-4 mt-6">
         {currentUser.role === 'Admin' && (
@@ -203,12 +206,12 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>Add new users and manage existing ones.</CardDescription>
+                  <CardTitle>{t('admin.userManagement')}</CardTitle>
+                  <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
                 </div>
                 <Button onClick={() => setIsNewUserDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add New User
+                  {t('admin.addNewUser')}
                 </Button>
               </div>
             </CardHeader>
@@ -218,11 +221,11 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Manager</TableHead>
-                      <TableHead>Region</TableHead>
+                      <TableHead>{t('admin.table.name')}</TableHead>
+                      <TableHead>{t('admin.table.email')}</TableHead>
+                      <TableHead>{t('admin.table.role')}</TableHead>
+                      <TableHead>{t('admin.table.manager')}</TableHead>
+                      <TableHead>{t('admin.table.region')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -248,15 +251,15 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent className="space-y-1 p-4 pt-0">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Role:</span>
+                        <span className="text-muted-foreground">{t('admin.table.role')}:</span>
                         <span className="font-medium">{user.role}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Manager:</span>
+                        <span className="text-muted-foreground">{t('admin.table.manager')}:</span>
                         <span className="font-medium">{getManagerName(user.managerId)}</span>
                       </div>
                        <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Region:</span>
+                        <span className="text-muted-foreground">{t('admin.table.region')}:</span>
                         <span className="font-medium">{user.region || 'N/A'}</span>
                       </div>
                     </CardContent>
@@ -267,7 +270,7 @@ export default function AdminPage() {
           </Card>
         )}
         <LeadTable
-          title="Unassigned Anchors"
+          title={t('admin.unassignedAnchors')}
           leads={unassignedAnchors}
           assignableUsers={assignableUsers}
           assignments={assignments}
@@ -275,7 +278,7 @@ export default function AdminPage() {
           onAssignmentChange={handleAssignmentChange}
         />
         <LeadTable
-          title="Unassigned Dealers"
+          title={t('admin.unassignedDealers')}
           leads={unassignedDealers}
           assignableUsers={assignableUsers}
           assignments={assignments}
@@ -283,7 +286,7 @@ export default function AdminPage() {
           onAssignmentChange={handleAssignmentChange}
         />
         <LeadTable
-          title="Unassigned Vendors"
+          title={t('admin.unassignedVendors')}
           leads={unassignedVendors}
           assignableUsers={assignableUsers}
           assignments={assignments}

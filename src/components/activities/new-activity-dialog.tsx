@@ -35,6 +35,7 @@ import type { DailyActivity, DailyActivityType } from '@/lib/types';
 import Image from 'next/image';
 import { CameraCaptureDialog } from './camera-capture-dialog';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
+import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
   activityType: z.string().min(1, 'Activity type is required'),
@@ -59,6 +60,7 @@ interface NewActivityDialogProps {
 export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps) {
   const { currentUser, addDailyActivity, anchors, dealers, vendors } = useApp();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -163,8 +165,10 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                     if (base64Audio) {
                         setIsTranscribing(true);
                         try {
-                            const result = await transcribeAudio({ audioDataUri: base64Audio });
-                            form.setValue('notes', result.transcription);
+                            const langCode = language === 'hi' ? 'hi-IN' : 'en-US';
+                            const result = await transcribeAudio({ audioDataUri: base64Audio, language: langCode });
+                            const currentNotes = form.getValues('notes');
+                            form.setValue('notes', currentNotes ? `${currentNotes}\n${result.transcription}` : result.transcription);
                             toast({ title: 'Transcription Complete', description: 'Voice note has been added to notes.' });
                         } catch (error) {
                             console.error('Transcription error:', error);
@@ -237,12 +241,12 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
 
   const voiceButtonContent = () => {
     if (isTranscribing) {
-      return <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Transcribing...</>;
+      return <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('activities.form.transcribing')}</>;
     }
     if (isRecording) {
-      return <><Square className="mr-2 h-4 w-4" /> Stop Recording</>;
+      return <><Square className="mr-2 h-4 w-4" />{t('activities.form.stopRecording')}</>;
     }
-    return <><Mic className="mr-2 h-4 w-4" /> Record Voice Note</>;
+    return <><Mic className="mr-2 h-4 w-4" />{t('activities.form.recordVoiceNote')}</>;
   };
 
   return (
@@ -250,8 +254,8 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Log a New Activity</DialogTitle>
-          <DialogDescription>Fill in the details of your sales activity.</DialogDescription>
+          <DialogTitle>{t('activities.newDialogTitle')}</DialogTitle>
+          <DialogDescription>{t('activities.newDialogDescription')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
@@ -260,9 +264,9 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
               name="activityType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Activity Type</FormLabel>
+                  <FormLabel>{t('activities.form.activityType')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select an activity type" /></SelectTrigger></FormControl>
+                    <FormControl><SelectTrigger><SelectValue placeholder={t('activities.form.selectActivityType')} /></SelectTrigger></FormControl>
                     <SelectContent>
                         <SelectItem value="Client Meeting">Client Meeting</SelectItem>
                         <SelectItem value="Site Visit">Site Visit</SelectItem>
@@ -279,14 +283,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
               )}
             />
             <FormField name="title" control={form.control} render={({ field }) => (
-              <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="e.g. Q3 Proposal with Reliance" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>{t('activities.form.title')}</FormLabel><FormControl><Input placeholder="e.g. Q3 Proposal with Reliance" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
              <FormField
                 control={form.control}
                 name="associatedEntity"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
-                        <FormLabel>Associated With (Optional)</FormLabel>
+                        <FormLabel>{t('activities.form.associatedWith')}</FormLabel>
                         <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
                             <PopoverTrigger asChild>
                                 <FormControl>
@@ -302,7 +306,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                         ? allEntities.find(
                                             (entity) => entity.value === field.value
                                           )?.label
-                                        : "Select an entity"}
+                                        : t('activities.form.selectEntity')}
                                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </FormControl>
@@ -367,14 +371,14 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                 />
             
              <FormField control={form.control} name="notes" render={({ field }) => (
-              <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea placeholder="Add details, outcomes, or next steps..." {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>{t('activities.form.notes')}</FormLabel><FormControl><Textarea placeholder="Add details, outcomes, or next steps..." {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
 
             <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="text-sm font-medium">Attachments & Location</h3>
+                <h3 className="text-sm font-medium">{t('activities.form.attachmentsAndLocation')}</h3>
                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
-                        <MapPin className="mr-2 h-4 w-4"/> Capture Location & Time
+                        <MapPin className="mr-2 h-4 w-4"/> {t('activities.form.captureLocation')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleToggleRecording} disabled={isTranscribing} className="w-full">
                         {voiceButtonContent()}
@@ -383,17 +387,17 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                  <div className="flex flex-col sm:flex-row gap-2">
                      <Button type="button" variant="outline" asChild className="w-full">
                         <label className="cursor-pointer">
-                            <Paperclip className="mr-2 h-4 w-4" /> Attach Files
+                            <Paperclip className="mr-2 h-4 w-4" /> {t('activities.form.attachFiles')}
                             <Input type="file" multiple accept="image/*" className="hidden" onChange={handleImageSelection} />
                         </label>
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setIsCameraOpen(true)} className="w-full">
-                        <Camera className="mr-2 h-4 w-4"/> Take Photo
+                        <Camera className="mr-2 h-4 w-4"/> {t('activities.form.takePhoto')}
                     </Button>
                  </div>
                  {locationValue && (
                      <div className="text-xs text-muted-foreground">
-                         📍 Location & Time captured.
+                         {t('activities.form.locationCaptured')}
                      </div>
                  )}
                  {imagePreviews.length > 0 && (
@@ -408,10 +412,10 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Log Activity
+                {t('activities.logNew')}
               </Button>
             </DialogFooter>
           </form>

@@ -15,10 +15,12 @@ import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dia
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/language-context';
 
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUserIds } = useApp();
+  const { t } = useLanguage();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
@@ -99,14 +101,14 @@ export default function VendorsPage() {
 
   return (
     <>
-      <PageHeader title="Vendors" description="Manage all vendor relationships.">
+      <PageHeader title={t('vendors.title')} description={t('vendors.description')}>
         <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
           <Upload className="mr-2 h-4 w-4" />
-          Bulk Upload
+          {t('vendors.bulkUpload')}
         </Button>
         <Button onClick={() => setIsNewLeadOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New Vendor Lead
+          {t('vendors.newLead')}
         </Button>
       </PageHeader>
       
@@ -134,13 +136,13 @@ export default function VendorsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="hidden lg:table-cell">Contact</TableHead>
-              <TableHead>Onboarding Status</TableHead>
-              <TableHead>Lead Type</TableHead>
-              <TableHead>Associated Anchor</TableHead>
-              <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('dealers.table.name')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('dealers.table.contact')}</TableHead>
+              <TableHead>{t('dealers.table.status')}</TableHead>
+              <TableHead>{t('dealers.table.leadType')}</TableHead>
+              <TableHead>{t('dealers.table.anchor')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('dealers.table.assignedTo')}</TableHead>
+              <TableHead className="text-right">{t('dealers.table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,7 +174,7 @@ export default function VendorsPage() {
                     </Button>
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
-                            Start Onboarding
+                            {t('vendors.startOnboarding')}
                         </Link>
                     </Button>
                   </div>
@@ -181,7 +183,7 @@ export default function VendorsPage() {
             )) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  No vendors found.
+                  {t('vendors.noVendors')}
                 </TableCell>
               </TableRow>
             )}
@@ -203,7 +205,7 @@ export default function VendorsPage() {
                         <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
                           <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
                           <div className="flex flex-col">
-                              <span className="font-semibold text-xs text-primary">Next Best Action</span>
+                              <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
                               <span className="text-sm">{vendor.nextBestAction.recommendedAction}</span>
                           </div>
                         </Badge>
@@ -222,14 +224,14 @@ export default function VendorsPage() {
                        </Button>
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
-                                Start Onboarding
+                                {t('vendors.startOnboarding')}
                             </Link>
                         </Button>
                   </CardFooter>
               </Card>
           )) : (
               <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
-                  No vendors found.
+                  {t('vendors.noVendors')}
               </div>
           )}
       </div>

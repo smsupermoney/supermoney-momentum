@@ -5,11 +5,13 @@ import { useParams } from "next/navigation";
 import { AnchorProfile } from "@/components/anchors/anchor-profile";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function AnchorProfilePage() {
   const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading } = useApp();
   const params = useParams();
   const id = params.id as string;
+  const { t } = useLanguage();
   
   const anchor = anchors.find((a) => a.id === id);
   
@@ -24,8 +26,8 @@ export default function AnchorProfilePage() {
   if (!anchor) {
     return (
         <>
-            <PageHeader title="Anchor Not Found" />
-            <div className="p-8 text-center text-muted-foreground">The requested anchor could not be found.</div>
+            <PageHeader title={t('anchors.notFound')} />
+            <div className="p-8 text-center text-muted-foreground">{t('anchors.notFoundDescription')}</div>
         </>
     );
   }

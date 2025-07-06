@@ -10,9 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function DashboardPage() {
     const { currentUser } = useApp();
+    const { t } = useLanguage();
 
     const renderDashboard = () => {
         switch (currentUser.role) {
@@ -31,28 +33,28 @@ export default function DashboardPage() {
         }
     };
 
+    const getHeaderDescription = (role: string) => {
+      switch (role) {
+          case 'Sales': return t('dashboard.salesDescription');
+          case 'Zonal Sales Manager': 
+          case 'Regional Sales Manager':
+          case 'National Sales Manager':
+              return t('dashboard.managerDescription');
+          case 'Onboarding Specialist': return t('dashboard.specialistDescription');
+          case 'Admin': return t('dashboard.adminDescription');
+          default: return "";
+      }
+    }
+
     return (
         <>
             <PageHeader 
-                title={`Welcome back, ${currentUser.name.split(' ')[0]}!`} 
+                title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
             />
             {renderDashboard()}
         </>
     );
-}
-
-const getHeaderDescription = (role: string) => {
-    switch (role) {
-        case 'Sales': return "Here's a snapshot of your sales activity.";
-        case 'Zonal Sales Manager': 
-        case 'Regional Sales Manager':
-        case 'National Sales Manager':
-            return "Here's a snapshot of your team's activity.";
-        case 'Onboarding Specialist': return "Here are the anchors currently in onboarding.";
-        case 'Admin': return "Here's a global overview of the company's sales data.";
-        default: return "Welcome to the dashboard.";
-    }
 }
 
 // Sales Dashboard
@@ -86,13 +88,14 @@ function ManagerDashboard() {
 // Onboarding Specialist Dashboard
 function OnboardingDashboard() {
     const { anchors, dealers, vendors } = useApp();
+    const { t } = useLanguage();
     const onboardingAnchors = anchors.filter(a => a.status === 'Onboarding');
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Anchors in Onboarding</CardTitle>
-                <CardDescription>Manage the onboarding process for these anchors and their spokes.</CardDescription>
+                <CardTitle>{t('dashboard.onboardingAnchors')}</CardTitle>
+                <CardDescription>{t('dashboard.onboardingDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
                 {/* Desktop Table */}

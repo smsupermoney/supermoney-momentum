@@ -18,6 +18,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/language-context';
 
 const activityIcons: Record<DailyActivity['activityType'], React.ElementType> = {
   'Client Meeting': Briefcase,
@@ -32,6 +33,7 @@ const activityIcons: Record<DailyActivity['activityType'], React.ElementType> = 
 
 export function ActivityList() {
   const { dailyActivities, currentUser, visibleUserIds } = useApp();
+  const { t } = useLanguage();
 
   const userActivities = dailyActivities.filter(activity => visibleUserIds.includes(activity.userId));
 
@@ -41,8 +43,8 @@ export function ActivityList() {
         <div className="mb-4 text-muted-foreground">
           <BookOpen className="h-12 w-12" />
         </div>
-        <h3 className="text-xl font-bold tracking-tight">No activities logged yet.</h3>
-        <p className="text-sm text-muted-foreground">Click "Log New Activity" to get started.</p>
+        <h3 className="text-xl font-bold tracking-tight">{t('activities.noActivities')}</h3>
+        <p className="text-sm text-muted-foreground">{t('activities.noActivitiesDescription')}</p>
       </div>
     );
   }

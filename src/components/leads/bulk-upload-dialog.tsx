@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload } from 'lucide-react';
 import type { Dealer, Vendor } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -26,6 +27,7 @@ interface BulkUploadDialogProps {
 export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUploadDialogProps) {
   const { addDealer, addVendor, currentUser, anchors } = useApp();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -126,7 +128,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
           <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+          <Button variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
           <Button onClick={processCSV} disabled={!selectedFile || isProcessing}>
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
             Process File

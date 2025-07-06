@@ -7,19 +7,21 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { NewActivityDialog } from '@/components/activities/new-activity-dialog';
 import { ActivityList } from '@/components/activities/activity-list';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ActivitiesPage() {
   const [isNewActivityOpen, setIsNewActivityOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <>
       <PageHeader
-        title="Daily Activity Log"
-        description="Log and review your daily sales activities."
+        title={t('activities.title')}
+        description={t('activities.description')}
       >
         <Button onClick={() => setIsNewActivityOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Log New Activity
+          {t('activities.logNew')}
         </Button>
       </PageHeader>
 

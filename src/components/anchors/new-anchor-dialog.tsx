@@ -34,6 +34,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Anchor } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required' }),
@@ -57,6 +58,7 @@ interface NewAnchorDialogProps {
 export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
   const { addAnchor, currentUser } = useApp();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewAnchorFormValues>({
@@ -154,9 +156,9 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>+ New Anchor</DialogTitle>
+          <DialogTitle>{t('anchors.newDialog.title')}</DialogTitle>
           <DialogDescription>
-            Add a new anchor lead to your pipeline. The lead will be automatically scored by AI.
+            {t('anchors.newDialog.description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -166,7 +168,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Name</FormLabel>
+                  <FormLabel>{t('anchors.newDialog.companyName')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Tata Motors" {...field} />
                   </FormControl>
@@ -179,7 +181,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               name="industry"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Industry</FormLabel>
+                  <FormLabel>{t('anchors.newDialog.industry')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Automotive" {...field} />
                   </FormControl>
@@ -192,7 +194,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               name="primaryContactName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Contact Name</FormLabel>
+                  <FormLabel>{t('anchors.newDialog.contactName')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Ramesh Kumar" {...field} />
                   </FormControl>
@@ -205,7 +207,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               name="primaryContactDesignation"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Contact Designation</FormLabel>
+                  <FormLabel>{t('anchors.newDialog.contactDesignation')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. CFO" {...field} />
                   </FormControl>
@@ -219,7 +221,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('anchors.newDialog.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="contact@company.com" {...field} />
                     </FormControl>
@@ -232,7 +234,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>{t('anchors.newDialog.phone')}</FormLabel>
                     <FormControl>
                       <Input placeholder="9876543210" {...field} />
                     </FormControl>
@@ -247,7 +249,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                   name="gstin"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GSTIN (Optional)</FormLabel>
+                      <FormLabel>{t('anchors.newDialog.gstin')}</FormLabel>
                       <FormControl>
                         <Input placeholder="27AACCR1234A1Z5" {...field} />
                       </FormControl>
@@ -260,7 +262,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location (Optional)</FormLabel>
+                      <FormLabel>{t('anchors.newDialog.location')}</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. Mumbai" {...field} />
                       </FormControl>
@@ -274,11 +276,11 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               name="leadSource"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lead Source</FormLabel>
+                  <FormLabel>{t('anchors.newDialog.leadSource')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a lead source" />
+                        <SelectValue placeholder={t('anchors.newDialog.selectLeadSource')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -297,10 +299,10 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create & Score Lead
+                {t('anchors.newDialog.createButton')}
               </Button>
             </DialogFooter>
           </form>

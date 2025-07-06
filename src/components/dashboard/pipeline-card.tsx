@@ -3,9 +3,11 @@
 import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Handshake, Target, FileText, Bot } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 export function PipelineCard() {
   const { anchors, currentUser, visibleUserIds } = useApp();
+  const { t } = useLanguage();
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
@@ -24,18 +26,18 @@ export function PipelineCard() {
   };
 
   const pipelineItems = [
-    { title: 'New Leads', value: pipeline['New Leads'], icon: Target },
-    { title: 'Contact Made', value: pipeline['Contact Made'], icon: Handshake },
-    { title: 'Proposal Sent', value: pipeline['Proposal Sent'], icon: FileText },
-    { title: 'Negotiating', value: pipeline['Negotiating'], icon: Bot },
+    { title: t('dashboard.newLeads'), value: pipeline['New Leads'], icon: Target },
+    { title: t('dashboard.contactMade'), value: pipeline['Contact Made'], icon: Handshake },
+    { title: t('dashboard.proposalSent'), value: pipeline['Proposal Sent'], icon: FileText },
+    { title: t('dashboard.negotiating'), value: pipeline['Negotiating'], icon: Bot },
   ];
 
   const getTitle = () => {
-    if (!currentUser) return 'My Pipeline';
-    if (currentUser.role === 'Sales') return 'My Pipeline';
-    if (currentUser.role === 'Admin') return 'Company Pipeline';
+    if (!currentUser) return t('dashboard.myPipeline');
+    if (currentUser.role === 'Sales') return t('dashboard.myPipeline');
+    if (currentUser.role === 'Admin') return t('dashboard.companyPipeline');
     // For ZSM, RSM, NSM
-    return 'Team Pipeline';
+    return t('dashboard.teamPipeline');
   }
 
   return (

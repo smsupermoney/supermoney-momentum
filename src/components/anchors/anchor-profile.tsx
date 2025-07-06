@@ -20,6 +20,7 @@ import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from '
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
+import { useLanguage } from '@/contexts/language-context';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -42,6 +43,7 @@ interface AnchorProfileProps {
 
 export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs }: AnchorProfileProps) {
   const { addActivityLog, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
+  const { t } = useLanguage();
   const { toast } = useToast();
   
   const [newActivity, setNewActivity] = useState('');
@@ -132,11 +134,11 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
             )}
             {anchor.leadScore && (
                 <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm">
-                    <span className="font-medium text-secondary-foreground">AI Score:</span>
+                    <span className="font-medium text-secondary-foreground">{t('anchors.profile.aiScore')}:</span>
                     <span className="font-bold text-primary">{anchor.leadScore}/100</span>
                 </div>
             )}
-            <Button onClick={() => setIsNewTaskOpen(true)}>Add Task</Button>
+            <Button onClick={() => setIsNewTaskOpen(true)}>{t('anchors.profile.addTask')}</Button>
           </div>
       </PageHeader>
       
@@ -168,26 +170,26 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full overflow-x-auto justify-start">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="dealers">Dealers ({initialDealers.length})</TabsTrigger>
-          <TabsTrigger value="vendors">Vendors ({initialVendors.length})</TabsTrigger>
-          <TabsTrigger value="interactions">Interactions ({initialLogs.length})</TabsTrigger>
+          <TabsTrigger value="details">{t('anchors.profile.detailsTab')}</TabsTrigger>
+          <TabsTrigger value="dealers">{t('anchors.profile.dealersTab', { count: initialDealers.length })}</TabsTrigger>
+          <TabsTrigger value="vendors">{t('anchors.profile.vendorsTab', { count: initialVendors.length })}</TabsTrigger>
+          <TabsTrigger value="interactions">{t('anchors.profile.interactionsTab', { count: initialLogs.length })}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
           <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-2 space-y-4">
                 <Card>
-                    <CardHeader><CardTitle>Company Information</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t('anchors.profile.companyInfo')}</CardTitle></CardHeader>
                     <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
-                        <div><div className="text-muted-foreground">GSTIN</div><div>{anchor.gstin || 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">Credit Rating</div><div>{anchor.creditRating || 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">Annual Turnover</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">Address</div><div>{anchor.address || 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">{t('anchors.profile.gstin')}</div><div>{anchor.gstin || 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">{t('anchors.profile.creditRating')}</div><div>{anchor.creditRating || 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">{t('anchors.profile.annualTurnover')}</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</div></div>
+                        <div><div className="text-muted-foreground">{t('anchors.profile.address')}</div><div>{anchor.address || 'N/A'}</div></div>
                     </CardContent>
                 </Card>
                  <Card>
-                    <CardHeader><CardTitle>Key Contacts</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t('anchors.profile.keyContacts')}</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                            {anchor.contacts.map(contact => (
@@ -195,7 +197,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                                 <div className="flex items-center gap-3">
                                     <UserIcon className="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">Primary</Badge>}</div>
+                                        <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">{t('anchors.profile.primary')}</Badge>}</div>
                                         <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2">{contact.designation} <span className="hidden sm:inline">&bull;</span> {contact.email} <span className="hidden sm:inline">&bull;</span> {contact.phone}</div>
                                     </div>
                                 </div>
@@ -203,7 +205,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
                                         <Mail className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">Log Interaction</Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">{t('anchors.profile.logInteraction')}</Button>
                                 </div>
                             </div>
                            ))}
@@ -214,7 +216,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
             {anchor.leadScoreReason && 
                 <Card className="bg-secondary">
                     <CardHeader>
-                        <CardTitle>AI Scoring Analysis</CardTitle>
+                        <CardTitle>{t('anchors.profile.aiAnalysis')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-secondary-foreground italic">"{anchor.leadScoreReason}"</p>
@@ -228,8 +230,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
           <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>Associated Dealers</CardTitle>
-                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />Add New Dealer</Button>}
+                    <CardTitle>{t('anchors.profile.associatedDealers')}</CardTitle>
+                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addDealer')}</Button>}
                 </div>
             </CardHeader>
             <CardContent>
@@ -242,8 +244,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
           <Card>
              <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>Associated Vendors</CardTitle>
-                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />Add New Vendor</Button>}
+                    <CardTitle>{t('anchors.profile.associatedVendors')}</CardTitle>
+                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addVendor')}</Button>}
                 </div>
             </CardHeader>
             <CardContent>
@@ -254,17 +256,17 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 
         <TabsContent value="interactions" className="mt-4">
             <Card>
-                <CardHeader><CardTitle>Interaction Log</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{t('anchors.profile.interactionLog')}</CardTitle></CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         <div className="space-y-2">
                            <Textarea 
                              ref={activityTextareaRef}
-                             placeholder={`Log new interaction for ${anchor.name}...`} 
+                             placeholder={t('anchors.profile.logNewInteractionPlaceholder', { name: anchor.name })}
                              value={newActivity} 
                              onChange={(e) => setNewActivity(e.target.value)} 
                            />
-                           <Button onClick={handleLogActivity}>Log Interaction</Button>
+                           <Button onClick={handleLogActivity}>{t('anchors.profile.logInteraction')}</Button>
                         </div>
                         <Separator />
                         <div className="space-y-6">
@@ -296,6 +298,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 
 function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onUpdateSpoke: (spoke: any) => void; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
     const { currentUser } = useApp();
+    const { t } = useLanguage();
     const isSpecialist = currentUser?.role === 'Onboarding Specialist';
 
     const handleStatusChange = (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
@@ -329,10 +332,10 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{type} Name</TableHead>
-                            <TableHead>Contact Number</TableHead>
-                            <TableHead>Onboarding Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>{t('anchors.profile.spokeTable.name', { type })}</TableHead>
+                            <TableHead>{t('anchors.profile.spokeTable.contact')}</TableHead>
+                            <TableHead>{t('anchors.profile.spokeTable.status')}</TableHead>
+                            <TableHead className="text-right">{t('anchors.profile.spokeTable.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -362,12 +365,12 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                 )}
                             </TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(spoke, type)}>View Details</Button>
+                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>
                             </TableCell>
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">No {type.toLowerCase()}s associated yet.</TableCell>
+                                <TableCell colSpan={4} className="h-24 text-center">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -403,11 +406,11 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                     <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
                                 )}
                             </div>
-                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(spoke, type)}>View Details</Button>
+                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>
                         </CardContent>
                     </Card>
                 )) : (
-                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No {type.toLowerCase()}s associated yet.</div>
+                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</div>
                 )}
             </div>
         </div>

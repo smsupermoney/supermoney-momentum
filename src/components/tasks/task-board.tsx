@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useLanguage } from '@/contexts/language-context';
 
 const taskTypeIcons = {
   'Call': Phone,
@@ -35,6 +36,7 @@ const priorityColors: Record<TaskPriority, string> = {
 
 export function TaskBoard() {
   const { tasks, anchors, updateTask, currentUser, users } = useApp();
+  const { t } = useLanguage();
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
@@ -57,6 +59,13 @@ export function TaskBoard() {
   }
 
   const userTasks = getVisibleTasks();
+  
+  const columnMap: Record<TaskStatus, string> = {
+    'To-Do': t('tasks.board.todo'),
+    'In Progress': t('tasks.board.inProgress'),
+    'Completed': t('tasks.board.completed')
+  }
+
   const columns: TaskStatus[] = ['To-Do', 'In Progress', 'Completed'];
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
@@ -105,7 +114,7 @@ export function TaskBoard() {
       {columns.map(status => (
         <Card key={status} className="h-full flex flex-col bg-secondary" onDrop={(e) => handleDrop(e, status)} onDragOver={handleDragOver}>
           <CardHeader>
-            <CardTitle>{status}</CardTitle>
+            <CardTitle>{columnMap[status]}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 space-y-4 overflow-y-auto">
             {userTasks
@@ -130,7 +139,7 @@ export function TaskBoard() {
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 {columns.filter(c => c !== status).map(col => (
-                                    <DropdownMenuItem key={col} onClick={() => handleMoveTask(task, col)}>Move to {col}</DropdownMenuItem>
+                                    <DropdownMenuItem key={col} onClick={() => handleMoveTask(task, col)}>{t('tasks.board.moveTo', { status: columnMap[col] })}</DropdownMenuItem>
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>

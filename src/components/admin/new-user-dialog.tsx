@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import type { User, UserRole } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -58,6 +59,7 @@ const managerRolesHierarchy: Record<string, UserRole[]> = {
 export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
   const { addUser, users } = useApp();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewUserFormValues>({
@@ -115,8 +117,8 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New User</DialogTitle>
-          <DialogDescription>Create a new user account and assign their role and reporting manager.</DialogDescription>
+          <DialogTitle>{t('admin.addNewUser')}</DialogTitle>
+          <DialogDescription>{t('admin.userManagementDescription')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
@@ -125,7 +127,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t('admin.table.name')}</FormLabel>
                   <FormControl><Input placeholder="e.g. John Doe" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -136,7 +138,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('admin.table.email')}</FormLabel>
                   <FormControl><Input type="email" placeholder="e.g. john.doe@supermoney.in" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +149,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>{t('admin.table.role')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -169,7 +171,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                 name="managerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reporting Manager</FormLabel>
+                    <FormLabel>{t('admin.table.manager')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} required>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select a manager" /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -184,10 +186,10 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               />
             )}
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create User
+                {t('dialogs.create')} User
               </Button>
             </DialogFooter>
           </form>

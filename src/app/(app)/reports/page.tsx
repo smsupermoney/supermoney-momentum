@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -15,40 +15,43 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
+import { useLanguage } from '@/contexts/language-context';
 
 
 // Main Page Component
 export default function ReportsPage() {
   const { currentUser } = useApp();
+  const { t } = useLanguage();
 
   const getPageTitle = (role: UserRole) => {
     switch (role) {
-      case 'Admin': return 'Management Reports';
+      case 'Admin': return t('reports.adminTitle');
       case 'National Sales Manager':
       case 'Regional Sales Manager':
-      case 'Zonal Sales Manager': return 'Team Performance Report';
-      default: return 'My Performance Report';
+      case 'Zonal Sales Manager': return t('reports.managerTitle');
+      default: return t('reports.salesTitle');
     }
   }
 
   const getPageDescription = (role: UserRole) => {
      switch (role) {
-      case 'Admin': return 'Analytics for team performance and pipeline health.';
+      case 'Admin': return t('reports.adminDescription');
        case 'National Sales Manager':
        case 'Regional Sales Manager':
-       case 'Zonal Sales Manager': return 'A summary of your team\'s sales activities and pipeline.';
-      default: return 'A summary of your sales activities and pipeline.';
+       case 'Zonal Sales Manager': return t('reports.managerDescription');
+      default: return t('reports.salesDescription');
     }
   }
 
   const renderReports = () => {
+    if (!currentUser) return null;
     switch(currentUser.role) {
         case 'Admin': return <AdminReports />;
         case 'National Sales Manager':
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager': return <ManagerReports />;
         case 'Sales': return <SalesReports />;
-        default: return <div className="text-center p-8">No reports available for this role.</div>
+        default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
   }
 
@@ -64,9 +67,10 @@ export default function ReportsPage() {
 // Reports for Sales Role
 function SalesReports() {
   const { currentUser, tasks, anchors, activityLogs } = useApp();
-  const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid);
-  const userAnchors = anchors.filter(a => a.assignedTo === currentUser.uid);
-  const userLogs = activityLogs.filter(l => l.userName === currentUser.name);
+  const { t } = useLanguage();
+  const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
+  const userAnchors = anchors.filter(a => a.assignedTo === currentUser?.uid);
+  const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
 
   // Task Summary Calculation
   const today = new Date();
@@ -101,15 +105,15 @@ function SalesReports() {
   return (
     <div className="grid gap-4">
       <div className="grid md:grid-cols-3 gap-4">
-        <StatCard title="Overdue Tasks" value={overdueTasks} icon={Target} />
-        <StatCard title="Tasks For Today" value={todayTasks} icon={Target} />
-        <StatCard title="Tasks This Week" value={thisWeekTasks} icon={Target} />
+        <StatCard title={t('tasks.overdue')} value={overdueTasks} icon={Target} />
+        <StatCard title={t('tasks.today')} value={todayTasks} icon={Target} />
+        <StatCard title={t('tasks.thisWeek')} value={thisWeekTasks} icon={Target} />
       </div>
       <div className="grid md:grid-cols-5 gap-4">
         <Card className="md:col-span-3">
           <CardHeader>
-            <CardTitle>My Pipeline</CardTitle>
-            <CardDescription>A funnel view of your assigned leads.</CardDescription>
+            <CardTitle>{t('reports.myPipeline')}</CardTitle>
+            <CardDescription>{t('reports.myPipelineDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={{}} className="aspect-video h-[350px] w-full">
@@ -130,15 +134,15 @@ function SalesReports() {
         <div className="md:col-span-2 space-y-4">
              <Card>
                 <CardHeader>
-                    <CardTitle>Activities Logged (Last 7 Days)</CardTitle>
+                    <CardTitle>{t('reports.activities7Days')}</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
-                    <ActivityStat icon={Phone} label="Calls" value={weeklyActivities.Call} />
-                    <ActivityStat icon={Mail} label="Emails" value={weeklyActivities.Email} />
-                    <ActivityStat icon={Calendar} label="Meetings" value={weeklyActivities.Meeting} />
+                    <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
+                    <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
+                    <ActivityStat icon={Calendar} label={t('reports.meetings')} value={weeklyActivities.Meeting} />
                 </CardContent>
              </Card>
-             <StatCard title="Follow-up Ratio" value={`${followUpRatio}%`} description="Of completed tasks resulting in a follow-up." icon={Percent} />
+             <StatCard title={t('reports.followUpRatio')} value={`${followUpRatio}%`} description={t('reports.followUpRatioDescription')} icon={Percent} />
         </div>
       </div>
     </div>
@@ -148,62 +152,79 @@ function SalesReports() {
 // Reports for Managers (ZSM, RSM, NSM)
 function ManagerReports() {
     const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers, tasks } = useApp();
+    const { t } = useLanguage();
     const [period, setPeriod] = useState('this_month');
     
     const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.assignedTo || ''));
     const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
     const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
-    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser.uid);
+    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser?.uid);
 
-    const periodAnchors = useMemo(() => {
+    const getFiscalYearStart = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        // Fiscal year starts in April (month index 3)
+        return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
+    }
+
+    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
+        let label = t('reports.month');
+
         switch (period) {
             case 'this_quarter':
                 interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
+                label = t('reports.quarter');
                 break;
             case 'ytd':
-                interval = { start: startOfYear(now), end: now };
+                interval = { start: getFiscalYearStart(now), end: now };
+                label = t('reports.ytd');
                 break;
             case 'this_month':
             default:
                 interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
-        return teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
-    }, [period, teamAnchors]);
+        return {
+            periodAnchors: teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+            periodLogs: teamLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+            periodLabel: label
+        };
+    }, [period, teamAnchors, teamLogs, t]);
 
-    // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodAnchors.filter(a => a.status === stage).length
     }));
 
-     // Activity Leaderboard
     const activityCounts = teamUsers
         .map(user => ({
             name: user.name,
-            activities: teamLogs.filter(log => log.userName === user.name).length
+            activities: periodLogs.filter(log => log.userName === user.name).length
         }))
         .sort((a, b) => b.activities - a.activities);
 
     return (
         <div className="grid gap-4">
-            <Tabs value={period} onValueChange={setPeriod} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-                    <TabsTrigger value="this_month">This Month</TabsTrigger>
-                    <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
-                    <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
-                </TabsList>
-            </Tabs>
-            
             <div className="grid lg:grid-cols-5 gap-4">
                 <div className="lg:col-span-3 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Team Pipeline (by Lead Count)</CardTitle>
-                            <CardDescription>Number of new leads in each stage for the selected period.</CardDescription>
+                           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <CardTitle>{t('reports.teamPipeline')}</CardTitle>
+                                    <CardDescription>{t('reports.teamPipelineDescription')}</CardDescription>
+                                </div>
+                                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
+                                        <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
+                                        <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                           </div>
                         </CardHeader>
                         <CardContent>
                             <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
@@ -223,9 +244,9 @@ function ManagerReports() {
                     <OverdueTasksByExecutive tasks={teamTasks} users={teamUsers} />
                 </div>
                 <div className="lg:col-span-2 space-y-4">
-                    <KeyHighlights period={period} anchors={periodAnchors} activityLogs={teamLogs} users={teamUsers} />
+                    <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={teamUsers} />
                     <Card>
-                        <CardHeader><CardTitle>Activity Leaderboard</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>{t('reports.activityLeaderboard', { period: periodLabel })}</CardTitle></CardHeader>
                         <CardContent>
                             <Table>
                                 <TableBody>
@@ -243,11 +264,12 @@ function ManagerReports() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+                                    {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
                                 </TableBody>
                             </Table>
                         </CardContent>
                     </Card>
-                    <StatCard title="Total Team Leads" value={teamAnchors.length} description="All leads assigned to your team members." icon={Users} />
+                    <StatCard title={t('reports.totalTeamLeads')} value={teamAnchors.length} description={t('reports.totalTeamLeadsDescription')} icon={Users} />
                 </div>
             </div>
         </div>
@@ -258,55 +280,60 @@ function ManagerReports() {
 // Reports for Admin Role
 function AdminReports() {
     const { anchors, users, dealers, vendors, activityLogs, tasks } = useApp();
+    const { t } = useLanguage();
     const [period, setPeriod] = useState('this_month');
 
     const salesUsers = users.filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager');
     
-    const periodData = useMemo(() => {
+    const getFiscalYearStart = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
+    }
+    
+    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
-        let periodLabel = 'This Month';
+        let label = t('reports.month');
         switch (period) {
             case 'this_quarter':
                 interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
-                periodLabel = 'This Quarter';
+                label = t('reports.quarter');
                 break;
             case 'ytd':
-                interval = { start: startOfYear(now), end: now };
-                periodLabel = 'Year-to-Date';
+                interval = { start: getFiscalYearStart(now), end: now };
+                label = t('reports.ytd');
                 break;
             case 'this_month':
             default:
                 interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
-        const periodAnchors = anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval));
-        const periodLogs = activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval));
-        
-        return { anchors: periodAnchors, logs: periodLogs, label: periodLabel };
-    }, [period, anchors, activityLogs]);
+        return {
+          anchors: anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+          logs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+          label: label
+        };
+    }, [period, anchors, activityLogs, t]);
     
-    // Team Pipeline Value
     const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: periodData.anchors
+        value: periodAnchors
             .filter(a => a.status === stage && a.annualTurnover)
             .reduce((sum, a) => sum + (a.annualTurnover || 0), 0) / 10000000, // in Cr
     }));
     
-    // Activity Leaderboard
     const activityCounts = salesUsers
         .map(user => ({
             name: user.name,
-            activities: periodData.logs.filter(log => log.userName === user.name).length
+            activities: periodLogs.filter(log => log.userName === user.name).length
         }))
         .sort((a, b) => b.activities - a.activities)
         .slice(0, 5); // show top 5
         
-    // Conversion Rates
-    const getCount = (status: string) => periodData.anchors.filter(a => a.status === status).length;
-    const allLeadsCount = periodData.anchors.length;
+    const getCount = (status: string) => periodAnchors.filter(a => a.status === status).length;
+    const allLeadsCount = periodAnchors.length;
     const allContactsCount = getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     const allProposalsCount = getCount('Proposal') + getCount('Negotiation') + getCount('Active');
     
@@ -314,8 +341,6 @@ function AdminReports() {
     const contactToProposal = allContactsCount > 0 ? (allProposalsCount / allContactsCount) * 100 : 0;
     const proposalToWon = allProposalsCount > 0 ? (getCount('Active') / allProposalsCount) * 100 : 0;
 
-
-    // Spoke Activation Rate
     const activeAnchors = anchors.filter(a => a.status === 'Active');
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.onboardingStatus === 'Active');
@@ -324,18 +349,22 @@ function AdminReports() {
   return (
     <div className="grid gap-4">
       <AdminDataChat />
-      <Tabs value={period} onValueChange={setPeriod} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="this_month">This Month</TabsTrigger>
-            <TabsTrigger value="this_quarter">This Quarter</TabsTrigger>
-            <TabsTrigger value="ytd">Year-to-Date</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <KeyHighlights period={periodData.label} anchors={periodData.anchors} activityLogs={periodData.logs} users={salesUsers} />
+      <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={salesUsers} />
       <Card>
           <CardHeader>
-              <CardTitle>Pipeline Value ({periodData.label})</CardTitle>
-              <CardDescription>Estimated total value of new deals (in ₹ Cr) in each stage.</CardDescription>
+             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
+                  <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
+                </div>
+                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
+                        <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
+                        <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+             </div>
           </CardHeader>
           <CardContent>
               <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
@@ -355,8 +384,8 @@ function AdminReports() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader>
-              <CardTitle>Activity Leaderboard</CardTitle>
-              <CardDescription>Top performers for {periodData.label}</CardDescription>
+              <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
+              <CardDescription>Top performers for {periodLabel}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -384,8 +413,8 @@ function AdminReports() {
         <div className="lg:col-span-1 space-y-4">
              <Card className="lg:col-span-1">
                 <CardHeader>
-                    <CardTitle>Stage Conversion Rates</CardTitle>
-                    <CardDescription>For new leads in {periodData.label}</CardDescription>
+                    <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
+                    <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
                     <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
@@ -393,7 +422,7 @@ function AdminReports() {
                     <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
                 </CardContent>
             </Card>
-            <StatCard title="Spoke Activation Rate" value={`${spokeActivationRate.toFixed(1)}%`} description="Of invited spokes on active anchors." icon={CheckCircle}/>
+            <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>
         </div>
       </div>
     </div>
@@ -403,6 +432,7 @@ function AdminReports() {
 
 // New Helper Components
 function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserType[] }) {
+    const { t } = useLanguage();
     const overdueTasks = tasks.filter(t => 
         isPast(new Date(t.dueDate)) && 
         !isToday(new Date(t.dueDate)) && 
@@ -425,15 +455,15 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
     return (
         <Card className="lg:col-span-1">
             <CardHeader>
-                <CardTitle>Overdue Task Deviations</CardTitle>
-                <CardDescription>All tasks currently past their due date.</CardDescription>
+                <CardTitle>{t('reports.overdueTasks')}</CardTitle>
+                <CardDescription>{t('reports.overdueTasksDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
                 {userEntries.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center">
                         <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
-                        <p className="font-medium">No Overdue Tasks</p>
-                        <p className="text-sm text-muted-foreground">The team is all caught up!</p>
+                        <p className="font-medium">{t('reports.noOverdueTasks')}</p>
+                        <p className="text-sm text-muted-foreground">{t('reports.noOverdueTasksDescription')}</p>
                     </div>
                 ) : (
                     <Accordion type="multiple" className="w-full">
@@ -466,6 +496,7 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
 }
 
 function KeyHighlights({ period, anchors, activityLogs, users }: { period: string, anchors: Anchor[], activityLogs: ActivityLog[], users: UserType[]}) {
+    const { t } = useLanguage();
     const [highlights, setHighlights] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -530,8 +561,8 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
     return (
         <Card>
             <CardHeader>
-                <CardTitle>AI-Powered Key Highlights</CardTitle>
-                <CardDescription>Generated summary for {period}.</CardDescription>
+                <CardTitle>{t('reports.aiHighlights')}</CardTitle>
+                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (

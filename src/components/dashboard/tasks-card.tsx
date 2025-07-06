@@ -6,9 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import type { TaskPriority, UserRole } from '@/lib/types';
+import { useLanguage } from '@/contexts/language-context';
 
 export function TasksCard() {
   const { tasks, anchors, currentUser, users, visibleUserIds } = useApp();
+  const { t } = useLanguage();
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -42,12 +44,12 @@ export function TasksCard() {
   }
 
   const getTitle = () => {
-    if (!currentUser) return "My Tasks for Today";
+    if (!currentUser) return t('dashboard.myTasksToday');
     const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'];
     if (managerialRoles.includes(currentUser.role)) {
-      return "Team's Tasks for Today";
+      return t('dashboard.teamTasksToday');
     }
-    return "My Tasks for Today";
+    return t('dashboard.myTasksToday');
   }
 
   return (
@@ -79,7 +81,7 @@ export function TasksCard() {
             ))}
             {todaysTasks.length === 0 && (
               <div className="text-center text-muted-foreground py-10">
-                No tasks due today.
+                {t('dashboard.noTasksToday')}
               </div>
             )}
           </div>

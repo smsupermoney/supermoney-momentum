@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, users } = useApp();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -51,8 +53,8 @@ export default function LoginPage() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>Use a demo account and password `test123` to sign in.</CardDescription>
+          <CardTitle>{t('login.title')}</CardTitle>
+          <CardDescription>{t('login.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -62,7 +64,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('login.emailLabel')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="e.g. asm@supermoney.in" {...field} />
                     </FormControl>
@@ -75,7 +77,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('login.passwordLabel')}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -85,7 +87,7 @@ export default function LoginPage() {
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign In
+                {t('login.button')}
               </Button>
             </form>
           </Form>
@@ -93,8 +95,8 @@ export default function LoginPage() {
       </Card>
       <Card>
         <CardHeader>
-            <CardTitle className="text-base">Demo Accounts</CardTitle>
-            <CardDescription className="text-xs">Use password `test123` for all accounts.</CardDescription>
+            <CardTitle className="text-base">{t('login.demoAccounts')}</CardTitle>
+            <CardDescription className="text-xs">{t('login.demoDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
             <ul className="space-y-2 text-sm">
