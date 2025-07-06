@@ -51,6 +51,10 @@ export function ActivityList() {
     <div className="space-y-4">
       {userActivities.map(activity => {
         const Icon = activityIcons[activity.activityType] || Briefcase;
+        
+        const entityName = activity.anchorName || activity.dealerName || activity.vendorName;
+        const entityType = activity.anchorName ? 'Client' : activity.dealerName ? 'Dealer' : activity.vendorName ? 'Vendor' : null;
+
         return (
           <Card key={activity.id}>
             <CardHeader>
@@ -71,7 +75,7 @@ export function ActivityList() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {activity.anchorName && <p className="text-sm font-medium">Client: {activity.anchorName}</p>}
+              {entityName && <p className="text-sm font-medium">{entityType}: {entityName}</p>}
               {activity.notes && <p className="text-sm text-muted-foreground">{activity.notes}</p>}
               {activity.location && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">

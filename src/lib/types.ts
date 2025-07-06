@@ -116,8 +116,12 @@ export interface DailyActivity {
     endTime: string; // timestamp
     
     // Client Info
-    anchorId?: string; // clientId
-    anchorName?: string; // clientName
+    anchorId?: string;
+    anchorName?: string;
+    dealerId?: string;
+    dealerName?: string;
+    vendorId?: string;
+    vendorName?: string;
 
     // Location & Media
     location?: {

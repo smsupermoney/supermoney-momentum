@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,7 +42,7 @@ const formSchema = z.object({
   date: z.date({ required_error: 'A date is required.' }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
-  anchorId: z.string().optional(),
+  associatedEntity: z.string().optional(),
   notes: z.string().optional(),
   location: z.object({
     latitude: z.number(),
@@ -59,7 +59,7 @@ interface NewActivityDialogProps {
 }
 
 export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps) {
-  const { currentUser, addDailyActivity, anchors } = useApp();
+  const { currentUser, addDailyActivity, anchors, dealers, vendors } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -72,7 +72,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       title: '',
       startTime: format(new Date(), 'HH:mm'),
       endTime: format(new Date(Date.now() + 60 * 60 * 1000), 'HH:mm'),
-      anchorId: '',
+      associatedEntity: '',
       notes: '',
     },
   });
@@ -149,9 +149,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         setIsSubmitting(false);
         return;
       }
-
-      const selectedAnchor = anchors.find(a => a.id === values.anchorId);
-
+      
       const newActivity: Omit<DailyActivity, 'id'> = {
         userId: currentUser.uid,
         userName: currentUser.name,
@@ -160,13 +158,28 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         notes: values.notes,
         startTime: activityStartTime.toISOString(),
         endTime: activityEndTime.toISOString(),
-        anchorId: values.anchorId,
-        anchorName: selectedAnchor?.name,
         location: values.location,
         images: values.images,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
+      if (values.associatedEntity) {
+        const [type, id] = values.associatedEntity.split(':');
+        if (type === 'anchor') {
+            const selected = anchors.find(a => a.id === id);
+            newActivity.anchorId = id;
+            newActivity.anchorName = selected?.name;
+        } else if (type === 'dealer') {
+            const selected = dealers.find(d => d.id === id);
+            newActivity.dealerId = id;
+            newActivity.dealerName = selected?.name;
+        } else if (type === 'vendor') {
+            const selected = vendors.find(v => v.id === id);
+            newActivity.vendorId = id;
+            newActivity.vendorName = selected?.name;
+        }
+      }
 
       addDailyActivity(newActivity);
       toast({ title: 'Activity Logged', description: 'Your activity has been successfully logged.' });
@@ -220,16 +233,37 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
             )}/>
              <FormField
                 control={form.control}
-                name="anchorId"
+                name="associatedEntity"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Associated Client (Anchor)</FormLabel>
+                        <FormLabel>Associated With (Optional)</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select a client (optional)" /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select an entity" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {anchors.map(anchor => (
-                                    <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
-                                ))}
+                                {anchors.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>Anchors</SelectLabel>
+                                        {anchors.map(anchor => (
+                                            <SelectItem key={anchor.id} value={`anchor:${anchor.id}`}>{anchor.name}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
+                                 {dealers.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>Dealers</SelectLabel>
+                                        {dealers.map(dealer => (
+                                            <SelectItem key={dealer.id} value={`dealer:${dealer.id}`}>{dealer.name}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
+                                 {vendors.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>Vendors</SelectLabel>
+                                        {vendors.map(vendor => (
+                                            <SelectItem key={vendor.id} value={`vendor:${vendor.id}`}>{vendor.name}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
                             </SelectContent>
                         </Select>
                         <FormMessage />
