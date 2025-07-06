@@ -7,10 +7,10 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 
 
 export const mockUsers: User[] = [
-  { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2' },
-  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin' },
-  { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist' },
-  { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin' },
+  { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2', region: 'West' },
+  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
+  { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist', region: 'National' },
+  { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
 ];
 
 export const mockAnchors: Anchor[] = [

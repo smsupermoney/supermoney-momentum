@@ -9,3 +9,4 @@ import '@/ai/flows/transcribe-audio.ts';
 import '@/ai/flows/qualify-lead-flow.ts';
 import '@/ai/flows/suggest-next-action-flow.ts';
 import '@/ai/flows/generate-onboarding-plan-flow.ts';
+import '@/ai/flows/generate-report-flow.ts';

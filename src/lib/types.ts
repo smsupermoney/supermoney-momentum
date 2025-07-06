@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role: UserRole;
   managerId?: string | null;
+  region?: string;
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted';

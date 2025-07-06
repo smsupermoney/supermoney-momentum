@@ -11,6 +11,7 @@ import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
+import { AdminDataChat } from '@/components/admin/admin-data-chat';
 
 // Define a union type for the different kinds of leads
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
@@ -199,6 +200,9 @@ export default function AdminPage() {
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
       <div className="grid gap-4 mt-6">
         {currentUser.role === 'Admin' && (
+           <AdminDataChat />
+        )}
+        {currentUser.role === 'Admin' && (
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -222,6 +226,7 @@ export default function AdminPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Manager</TableHead>
+                      <TableHead>Region</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -231,6 +236,7 @@ export default function AdminPage() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.role}</TableCell>
                         <TableCell>{getManagerName(user.managerId)}</TableCell>
+                        <TableCell>{user.region || 'N/A'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -252,6 +258,10 @@ export default function AdminPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Manager:</span>
                         <span className="font-medium">{getManagerName(user.managerId)}</span>
+                      </div>
+                       <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Region:</span>
+                        <span className="font-medium">{user.region || 'N/A'}</span>
                       </div>
                     </CardContent>
                   </Card>
