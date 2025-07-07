@@ -154,18 +154,18 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email. Download our sample file to ensure the format is correct.
+            Upload a CSV file with columns: <span className="font-semibold">Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email</span>. Download our sample file to ensure the format is correct.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
-          <div>
-            <Label htmlFor="csv-file">CSV File</Label>
-            <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
-          </div>
           <Button variant="outline" className="w-full" onClick={handleDownloadSample}>
             <Download className="mr-2 h-4 w-4" />
             Download Sample CSV
           </Button>
+          <div>
+            <Label htmlFor="csv-file">CSV File</Label>
+            <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
