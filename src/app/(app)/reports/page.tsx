@@ -7,8 +7,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText } from 'lucide-react';
-import type { Anchor, Task, ActivityLog, User as UserType, UserRole } from '@/lib/types';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
+import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +16,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
 import { useLanguage } from '@/contexts/language-context';
+import { Button } from '@/components/ui/button';
+import * as XLSX from 'xlsx';
 
 
 // Main Page Component
@@ -279,9 +281,124 @@ function ManagerReports() {
 
 // Reports for Admin Role
 function AdminReports() {
-    const { anchors, users, dealers, vendors, activityLogs, tasks } = useApp();
+    const { anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities } = useApp();
     const { t } = useLanguage();
     const [period, setPeriod] = useState('this_month');
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleDownload = () => {
+        setIsDownloading(true);
+
+        // 1. Prepare data
+        const processedUsers = users.map(u => ({
+            Name: u.name,
+            Email: u.email,
+            Role: u.role,
+            Region: u.region || 'N/A',
+            Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A'
+        }));
+
+        const processedAnchors = anchors.map(a => {
+            const primaryContact = a.contacts.find(c => c.isPrimary) || a.contacts[0];
+            return {
+                Name: a.name,
+                Industry: a.industry,
+                Status: a.status,
+                'Annual Turnover (INR)': a.annualTurnover,
+                'Credit Rating': a.creditRating || 'N/A',
+                Address: a.address || 'N/A',
+                'Lead Source': a.leadSource || 'N/A',
+                'Lead Score': a.leadScore,
+                'Lead Score Reason': a.leadScoreReason,
+                'Primary Contact Name': primaryContact?.name || 'N/A',
+                'Primary Contact Email': primaryContact?.email || 'N/A',
+                'Primary Contact Phone': primaryContact?.phone || 'N/A',
+                'Created By': users.find(u => u.uid === a.createdBy)?.name || 'N/A',
+                'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'),
+            }
+        });
+        
+        const getSpokeData = (spoke: Dealer | Vendor) => ({
+            Name: spoke.name,
+            'Contact Number': spoke.contactNumber,
+            Email: spoke.email || 'N/A',
+            'Onboarding Status': spoke.onboardingStatus,
+            'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
+            'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
+            'Product Interest': spoke.product || 'N/A',
+            'Lead Type': spoke.leadType || 'N/A',
+            'Lead Score': spoke.leadScore,
+            'Lead Score Reason': spoke.leadScoreReason,
+            'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
+        });
+        
+        const processedDealers = dealers.map(getSpokeData);
+        const processedVendors = vendors.map(getSpokeData);
+
+        const processedTasks = tasks.map(t => {
+            let associatedWith = 'N/A';
+            if (t.associatedWith.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === t.associatedWith.anchorId)?.name}`;
+            else if (t.associatedWith.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === t.associatedWith.dealerId)?.name}`;
+            else if (t.associatedWith.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === t.associatedWith.vendorId)?.name}`;
+            
+            return {
+                Title: t.title,
+                'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A',
+                'Associated With': associatedWith,
+                Type: t.type,
+                Status: t.status,
+                Priority: t.priority,
+                'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'),
+                Description: t.description,
+                'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'),
+            }
+        });
+        
+        const processedActivityLogs = activityLogs.map(log => {
+             let associatedWith = 'N/A';
+            if (log.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === log.anchorId)?.name}`;
+            else if (log.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === log.dealerId)?.name}`;
+            else if (log.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === log.vendorId)?.name}`;
+
+            return {
+                'User': log.userName,
+                'Timestamp': format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'),
+                'Type': log.type,
+                'Title': log.title,
+                'Outcome': log.outcome,
+                'Associated With': associatedWith,
+                'Related Task ID': log.taskId || 'N/A'
+            }
+        });
+
+        const processedDailyActivities = dailyActivities.map(activity => ({
+            'User': activity.userName,
+            'Timestamp': format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'),
+            'Type': activity.activityType,
+            'Title': activity.title,
+            'Notes': activity.notes,
+            'Location': activity.location ? `${activity.location.latitude}, ${activity.location.longitude}` : 'N/A',
+            'Images': (activity.images || []).join(', '),
+            'Associated Anchor': activity.anchorName || 'N/A',
+            'Associated Dealer': activity.dealerName || 'N/A',
+            'Associated Vendor': activity.vendorName || 'N/A',
+        }));
+
+        // 2. Create workbook and worksheets
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedUsers), "Users");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedAnchors), "Anchors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDealers), "Dealers");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedVendors), "Vendors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedTasks), "Tasks");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedActivityLogs), "Interaction Logs");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDailyActivities), "Daily Activities");
+
+        // 3. Trigger download
+        XLSX.writeFile(wb, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+
+        setIsDownloading(false);
+    };
 
     const salesUsers = users.filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager');
     
@@ -348,6 +465,18 @@ function AdminReports() {
 
   return (
     <div className="grid gap-4">
+      <Card>
+          <CardHeader>
+              <CardTitle>Data Export</CardTitle>
+              <CardDescription>Download all CRM data in a single Excel file.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Button onClick={handleDownload} disabled={isDownloading}>
+                  {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  Download All Data
+              </Button>
+          </CardContent>
+      </Card>
       <AdminDataChat />
       <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={salesUsers} />
       <Card>
