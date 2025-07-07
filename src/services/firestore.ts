@@ -142,6 +142,10 @@ export const updateDealer = async (dealer: Dealer) => {
     const { id, ...dealerData } = dealer;
     await updateDoc(doc(db, 'dealers', id), { ...dealerData, updatedAt: new Date().toISOString() });
 };
+export const deleteDealer = async (dealerId: string) => {
+    if (!db) throw new Error("Firestore not initialized");
+    await deleteDoc(doc(db, 'dealers', dealerId));
+};
 
 // --- Vendor Service ---
 export const getVendors = async (): Promise<Vendor[]> => {
@@ -160,6 +164,10 @@ export const updateVendor = async (vendor: Vendor) => {
     if (!db) throw new Error("Firestore not initialized");
     const { id, ...vendorData } = vendor;
     await updateDoc(doc(db, 'vendors', id), { ...vendorData, updatedAt: new Date().toISOString() });
+};
+export const deleteVendor = async (vendorId: string) => {
+    if (!db) throw new Error("Firestore not initialized");
+    await deleteDoc(doc(db, 'vendors', vendorId));
 };
 
 

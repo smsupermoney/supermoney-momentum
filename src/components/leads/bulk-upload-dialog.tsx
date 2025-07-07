@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useRef } from 'react';
 import { useApp } from '@/contexts/app-context';
@@ -25,7 +26,7 @@ interface BulkUploadDialogProps {
 }
 
 export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUploadDialogProps) {
-  const { addDealer, addVendor, currentUser, anchors } = useApp();
+  const { addDealer, addVendor, currentUser, anchors, users } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,12 +63,24 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
       rows.forEach(row => {
         const columns = row.split(',').map(c => c.trim());
-        // Expected format: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product
+        // Expected format: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email
         if (columns.length >= 2 && columns[0] && columns[1]) {
           try {
-            const anchorName = columns[5] || '';
+            const anchorName = (columns[5] || '').trim();
+            const assignedToEmail = (columns[7] || '').trim();
+
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
+            
+            let finalAssignedToId = currentUser.uid;
+            if (assignedToEmail) {
+                const targetUser = users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase());
+                if(targetUser) {
+                    finalAssignedToId = targetUser.uid;
+                } else {
+                    console.warn(`Bulk Upload: User with email "${assignedToEmail}" not found. Assigning to current user ${currentUser.name}.`);
+                }
+            }
             
             const commonData = {
               id: `${type.toLowerCase()}-${Date.now()}-${Math.random()}`,
@@ -77,8 +90,8 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               gstin: columns[3] || undefined,
               location: columns[4] || undefined,
               product: columns[6] || undefined,
-              assignedTo: currentUser.uid,
-              onboardingStatus: finalAnchorId ? 'Invited' : 'Unassigned Lead',
+              assignedTo: finalAssignedToId,
+              onboardingStatus: 'Invited' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               leadType: 'New Lead' as const,
@@ -120,7 +133,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product. The first row should be headers.
+            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email. The first row should be headers.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

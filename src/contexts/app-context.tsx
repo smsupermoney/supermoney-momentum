@@ -25,9 +25,11 @@ interface AppContextType {
   dealers: Dealer[];
   addDealer: (dealer: Omit<Dealer, 'id'>) => void;
   updateDealer: (dealer: Dealer) => void;
+  deleteDealer: (dealerId: string) => void;
   vendors: Vendor[];
   addVendor: (vendor: Omit<Vendor, 'id'>) => void;
   updateVendor: (vendor: Vendor) => void;
+  deleteVendor: (vendorId: string) => void;
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
   updateTask: (task: Task) => void;
@@ -354,6 +356,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
   };
+
+  const deleteDealer = async (dealerId: string) => {
+    if (firebaseEnabled) {
+        await firestoreService.deleteDealer(dealerId);
+    }
+    setDealers(prev => prev.filter(d => d.id !== dealerId));
+    toast({
+        title: 'Dealer Deleted',
+        description: 'The dealer has been removed from the system.',
+    });
+  };
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
     if (firebaseEnabled) {
@@ -368,6 +381,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await firestoreService.updateVendor(updatedVendor);
     }
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
+  };
+
+  const deleteVendor = async (vendorId: string) => {
+    if (firebaseEnabled) {
+        await firestoreService.deleteVendor(vendorId);
+    }
+    setVendors(prev => prev.filter(v => v.id !== vendorId));
+    toast({
+        title: 'Vendor Deleted',
+        description: 'The vendor has been removed from the system.',
+    });
   };
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
@@ -446,9 +470,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     dealers,
     addDealer,
     updateDealer,
+    deleteDealer,
     vendors,
     addVendor,
     updateVendor,
+    deleteVendor,
     tasks,
     addTask,
     updateTask,
