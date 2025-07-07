@@ -88,6 +88,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
   
+  const logout = useCallback(async () => {
+    if (firebaseEnabled && auth) {
+      await firebaseSignOut(auth);
+    }
+    setCurrentUser(null);
+    sessionStorage.removeItem('currentUser');
+    setUsers(mockUsers); // Reset users to show login options
+  }, []);
+
   useEffect(() => {
     if (!firebaseEnabled) {
       console.log("Firebase is not enabled. Loading mock data.");
@@ -103,50 +112,74 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     console.log("Firebase is enabled. Setting up auth state listener.");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsLoading(true);
-      if (user) {
-        const userProfile = await firestoreService.checkAndCreateUser(user);
-        if (userProfile) {
-          setCurrentUser(userProfile);
-          const allUsers = await firestoreService.getUsers();
-          setUsers(allUsers);
-          
-          const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-            firestoreService.getAnchors(userProfile, allUsers),
-            firestoreService.getDealers(),
-            firestoreService.getVendors(),
-            firestoreService.getTasks(),
-            firestoreService.getActivityLogs(),
-            firestoreService.getDailyActivities(),
-          ]);
-          setAnchors(anchorsData);
-          setDealers(dealersData);
-          setVendors(vendorsData);
-          setTasks(tasksData);
-          setActivityLogs(activityLogsData);
-          setDailyActivities(dailyActivitiesData);
+      try {
+        setIsLoading(true);
+        if (user) {
+          const userProfile = await firestoreService.checkAndCreateUser(user);
+          if (userProfile) {
+            setCurrentUser(userProfile);
+            const allUsers = await firestoreService.getUsers();
+            setUsers(allUsers);
+            
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+              firestoreService.getAnchors(userProfile, allUsers),
+              firestoreService.getDealers(),
+              firestoreService.getVendors(),
+              firestoreService.getTasks(),
+              firestoreService.getActivityLogs(),
+              firestoreService.getDailyActivities(),
+            ]);
+            setAnchors(anchorsData);
+            setDealers(dealersData);
+            setVendors(vendorsData);
+            setTasks(tasksData);
+            setActivityLogs(activityLogsData);
+            setDailyActivities(dailyActivitiesData);
 
+          } else {
+              console.error(`Could not get or create a user profile for ${user.email}.`);
+              await logout();
+          }
         } else {
-            console.error(`Could not get or create a user profile for ${user.email}.`);
-            await logout();
+          // User is signed out.
+          setCurrentUser(null);
+          sessionStorage.removeItem('currentUser');
+          setUsers(mockUsers);
+          setAnchors([]);
+          setDealers([]);
+          setVendors([]);
+          setTasks([]);
+          setActivityLogs([]);
+          setDailyActivities([]);
         }
-      } else {
-        // User is signed out.
-        setCurrentUser(null);
-        sessionStorage.removeItem('currentUser');
-        setUsers(mockUsers);
-        setAnchors([]);
-        setDealers([]);
-        setVendors([]);
-        setTasks([]);
-        setActivityLogs([]);
-        setDailyActivities([]);
+        setIsLoading(false);
+      } catch (error: any) {
+        console.error("Firebase error caught in onAuthStateChanged:", error);
+        if (error.code === 'auth/invalid-api-key' || (error.message && error.message.includes('api-key-not-valid'))) {
+            console.warn("Firebase API key is invalid. Falling back to mock data mode. Please check your .env file.");
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Firebase API Key',
+                description: 'Falling back to mock data. Please check your .env file configuration.',
+                duration: 9000
+            })
+            loadMockData();
+        } else {
+            console.error("An unexpected Firebase error occurred during data fetch:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Firebase Connection Error',
+                description: 'Could not connect to the database. Using mock data.',
+                duration: 9000
+            })
+            loadMockData();
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [loadMockData]);
+  }, [loadMockData, logout, toast]);
 
   const visibleUsers = useMemo(() => {
       if (!currentUser || users.length === 0) return [];
@@ -270,15 +303,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return true;
     }
     return false;
-  };
-
-  const logout = async () => {
-    if (firebaseEnabled && auth) {
-      await firebaseSignOut(auth);
-    }
-    setCurrentUser(null);
-    sessionStorage.removeItem('currentUser');
-    setUsers(mockUsers); // Reset users to show login options
   };
 
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
