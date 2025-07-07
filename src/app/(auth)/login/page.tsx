@@ -26,7 +26,7 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, users, setCurrentUser } = useApp();
+  const { login, users } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,10 +44,20 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       // onAuthStateChanged in AppContext will handle the redirect
     } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      let description = error.message || 'An unknown error occurred.';
+
+      if (error.code === 'auth/unauthorized-domain') {
+        description = 'This app\'s domain is not authorized. Please add it to the "Authorized domains" list in your Firebase Authentication settings.';
+      } else if (error.code === 'auth/configuration-not-found') {
+        description = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
+      }
+
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
-        description: error.message || 'An unknown error occurred.',
+        description: description,
+        duration: 9000,
       });
       setIsLoading(false);
     }
