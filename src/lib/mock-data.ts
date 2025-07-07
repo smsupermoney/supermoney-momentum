@@ -11,7 +11,6 @@ export const mockUsers: User[] = [
   { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
   { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Business Development', region: 'National' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
-  { id: 'user-nikhil', uid: 'user-nikhil', name: 'Nikhil', email: 'nikhil@supermoney.in', role: 'Admin', region: 'National' },
 ];
 
 export const mockAnchors: Anchor[] = [
