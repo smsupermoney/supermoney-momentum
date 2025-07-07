@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Mail, Sparkles } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles } from 'lucide-react';
 import type { Dealer, OnboardingStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,17 +66,6 @@ export default function DealersPage() {
     }
   };
 
-  const handleEmailClick = (e: React.MouseEvent, dealer: Dealer) => {
-    e.stopPropagation();
-    if (!dealer.email) return;
-
-    setEmailConfig({
-        recipientEmail: dealer.email,
-        entity: { id: dealer.id, name: dealer.name, type: 'dealer' }
-    });
-    setIsEmailDialogOpen(true);
-  }
-
   const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
     e.stopPropagation();
     
@@ -127,11 +116,11 @@ export default function DealersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('dealers.table.contact')}</TableHead>
+              <TableHead>{t('dealers.table.contact')}</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('dealers.table.assignedTo')}</TableHead>
+              <TableHead>{t('dealers.table.assignedTo')}</TableHead>
               <TableHead className="text-right">{t('dealers.table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -147,7 +136,7 @@ export default function DealersPage() {
                       </Badge>
                   )}
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
+                <TableCell>
                     <div>{dealer.contactNumber}</div>
                     <div className="text-xs text-muted-foreground">{dealer.email || 'No email'}</div>
                 </TableCell>
@@ -156,15 +145,12 @@ export default function DealersPage() {
                 </TableCell>
                 <TableCell>{dealer.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
-                <TableCell className="hidden lg:table-cell">{getAssignedToName(dealer.assignedTo)}</TableCell>
+                <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
-                        <Mail className="h-4 w-4"/>
-                    </Button>
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
                         <Link href="https://supermoney.in/onboarding" target="_blank">
-                            {t('dealers.startOnboarding')}
+                            Onboarding
                         </Link>
                     </Button>
                   </div>
@@ -206,15 +192,12 @@ export default function DealersPage() {
                         <Badge variant="outline">{dealer.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
-                      <p className="text-sm text-muted-foreground">{dealer.email || 'No email'}</p>
+                      <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">
-                       <Button variant="ghost" size="icon" disabled={!dealer.email} onClick={(e) => handleEmailClick(e, dealer)}>
-                           <Mail className="h-4 w-4"/>
-                       </Button>
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
-                                {t('dealers.startOnboarding')}
+                                Onboarding
                             </Link>
                         </Button>
                   </CardFooter>

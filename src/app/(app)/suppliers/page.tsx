@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Mail, Sparkles } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles } from 'lucide-react';
 import type { Vendor, OnboardingStatus } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,17 +68,6 @@ export default function VendorsPage() {
     }
   };
 
-  const handleEmailClick = (e: React.MouseEvent, vendor: Vendor) => {
-    e.stopPropagation();
-    if (!vendor.email) return;
-
-    setEmailConfig({
-        recipientEmail: vendor.email,
-        entity: { id: vendor.id, name: vendor.name, type: 'vendor' }
-    });
-    setIsEmailDialogOpen(true);
-  }
-
   const handleStartOnboarding = (e: React.MouseEvent, vendor: Vendor) => {
     e.stopPropagation();
     
@@ -129,11 +118,11 @@ export default function VendorsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('dealers.table.contact')}</TableHead>
+              <TableHead>{t('dealers.table.contact')}</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('dealers.table.assignedTo')}</TableHead>
+              <TableHead>{t('dealers.table.assignedTo')}</TableHead>
               <TableHead className="text-right">{t('dealers.table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -149,7 +138,7 @@ export default function VendorsPage() {
                       </Badge>
                   )}
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
+                <TableCell>
                     <div>{vendor.contactNumber}</div>
                     <div className="text-xs text-muted-foreground">{vendor.email || 'No email'}</div>
                 </TableCell>
@@ -158,15 +147,12 @@ export default function VendorsPage() {
                 </TableCell>
                 <TableCell>{vendor.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
-                <TableCell className="hidden lg:table-cell">{getAssignedToName(vendor.assignedTo)}</TableCell>
+                <TableCell>{getAssignedToName(vendor.assignedTo)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" disabled={!vendor.email} onClick={(e) => handleEmailClick(e, vendor)}>
-                        <Mail className="h-4 w-4"/>
-                    </Button>
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
-                            {t('vendors.startOnboarding')}
+                            Onboarding
                         </Link>
                     </Button>
                   </div>
@@ -208,15 +194,12 @@ export default function VendorsPage() {
                         <Badge variant="outline">{vendor.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{vendor.contactNumber}</p>
-                      <p className="text-sm text-muted-foreground">{vendor.email || 'No email'}</p>
+                      <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">
-                       <Button variant="ghost" size="icon" disabled={!vendor.email} onClick={(e) => handleEmailClick(e, vendor)}>
-                           <Mail className="h-4 w-4"/>
-                       </Button>
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
                             <Link href="https://supermoney.in/onboarding" target="_blank">
-                                {t('vendors.startOnboarding')}
+                                Onboarding
                             </Link>
                         </Button>
                   </CardFooter>
