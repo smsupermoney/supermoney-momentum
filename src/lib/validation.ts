@@ -1,6 +1,4 @@
 
-'use server';
-
 import { z } from 'zod';
 
 // This file contains Zod schemas for "server-side" validation of data mutations.
