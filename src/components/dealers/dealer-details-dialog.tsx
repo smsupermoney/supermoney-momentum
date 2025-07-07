@@ -65,6 +65,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Invited">Invited</SelectItem>
+                        <SelectItem value="Onboarding">Onboarding</SelectItem>
                         <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                         <SelectItem value="Not reachable">Not reachable</SelectItem>
                         <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>

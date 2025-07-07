@@ -30,6 +30,7 @@ export default function DealersPage() {
   const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
+    if (d.onboardingStatus === 'Onboarding') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(d.assignedTo || '');
   });
@@ -54,6 +55,7 @@ export default function DealersPage() {
             return 'destructive';
         case 'Unassigned Lead':
             return 'outline';
+        case 'Onboarding':
         case 'Invited':
         case 'KYC Pending':
         case 'Not reachable':
@@ -78,23 +80,12 @@ export default function DealersPage() {
   const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
     e.stopPropagation();
     
-    updateDealer({ ...dealer, onboardingStatus: 'Invited' });
+    updateDealer({ ...dealer, onboardingStatus: 'Onboarding' });
 
     toast({
-        title: 'Onboarding Initiated',
-        description: `The onboarding process for ${dealer.name} has started.`,
+        title: 'Onboarding Started',
+        description: `${dealer.name} has been moved to the onboarding flow.`,
     });
-
-    setTimeout(() => {
-        const currentDealer = dealers.find(d => d.id === dealer.id);
-        if (currentDealer) {
-            updateDealer({ ...currentDealer, onboardingStatus: 'KYC Pending' });
-            toast({
-                title: 'Status Updated via Webhook',
-                description: `${dealer.name}'s status is now 'KYC Pending'.`,
-            });
-        }
-    }, 3000);
   };
 
 

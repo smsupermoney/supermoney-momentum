@@ -25,13 +25,19 @@ export default function AnchorsPage() {
   const pageTitle = currentUser.role === 'Business Development' ? t('anchors.onboardingTitle') : t('anchors.title');
 
   const userAnchors = anchors.filter(anchor => {
-    // Admin and BD see everything, including pending
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      return true;
+    if (anchor.status === 'Archived') return false;
+
+    if (currentUser.role === 'Business Development') {
+      return anchor.status === 'Onboarding';
     }
-    // Other roles see all approved anchors
+    // Admin sees all non-archived anchors.
+    if (currentUser.role === 'Admin') {
+        return true;
+    }
+    // Other roles see all approved anchors that are not archived
     return anchor.status !== 'Pending Approval' && anchor.status !== 'Unassigned Lead';
   });
+
 
   const getStatusVariant = (status: LeadStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {

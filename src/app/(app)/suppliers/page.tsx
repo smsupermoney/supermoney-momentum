@@ -31,6 +31,7 @@ export default function VendorsPage() {
   const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
+    if (s.onboardingStatus === 'Onboarding') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(s.assignedTo || '');
   });
@@ -56,6 +57,7 @@ export default function VendorsPage() {
             return 'destructive';
         case 'Unassigned Lead':
             return 'outline';
+        case 'Onboarding':
         case 'Invited':
         case 'KYC Pending':
         case 'Not reachable':
@@ -80,23 +82,12 @@ export default function VendorsPage() {
   const handleStartOnboarding = (e: React.MouseEvent, vendor: Vendor) => {
     e.stopPropagation();
     
-    updateVendor({ ...vendor, onboardingStatus: 'Invited' });
+    updateVendor({ ...vendor, onboardingStatus: 'Onboarding' });
 
     toast({
-        title: 'Onboarding Initiated',
-        description: `The onboarding process for ${vendor.name} has started.`,
+        title: 'Onboarding Started',
+        description: `${vendor.name} has been moved to the onboarding flow.`,
     });
-
-    setTimeout(() => {
-        const currentVendor = vendors.find(v => v.id === vendor.id);
-        if (currentVendor) {
-            updateVendor({ ...currentVendor, onboardingStatus: 'KYC Pending' });
-            toast({
-                title: 'Status Updated via Webhook',
-                description: `${vendor.name}'s status is now 'KYC Pending'.`,
-            });
-        }
-    }, 3000);
   };
 
 

@@ -65,6 +65,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Invited">Invited</SelectItem>
+                        <SelectItem value="Onboarding">Onboarding</SelectItem>
                         <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                         <SelectItem value="Not reachable">Not reachable</SelectItem>
                         <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>

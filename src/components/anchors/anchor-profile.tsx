@@ -63,7 +63,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
 
-  const isSalesRole = currentUser && ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
+  const isSalesRole = currentUser && ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
   const canAddContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
 
 
@@ -134,6 +134,13 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                   <SelectItem value="Proposal">Proposal</SelectItem>
                   <SelectItem value="Negotiation">Negotiation</SelectItem>
                   <SelectItem value="Onboarding">Onboarding</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  {currentUser?.role === 'Admin' && anchor.status === 'Active' && (
+                    <>
+                      <Separator />
+                      <SelectItem value="Archived">Archive</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             )}
@@ -326,6 +333,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                 return 'destructive';
             case 'Unassigned Lead':
                 return 'outline';
+            case 'Onboarding':
             case 'Invited':
             case 'KYC Pending':
             case 'Not reachable':
@@ -362,6 +370,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="Onboarding">Onboarding</SelectItem>
                                             <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>
                                             <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
@@ -404,6 +413,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="Onboarding">Onboarding</SelectItem>
                                             <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>
                                             <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
