@@ -95,14 +95,14 @@ export default function AnchorsPage() {
           return (
             <Link key={anchor.id} href={`/anchors/${anchor.id}`} className="block">
               <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-              <CardHeader>
+              <CardHeader className="p-4">
                   <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{anchor.name}</CardTitle>
                       <Badge variant={getStatusVariant(anchor.status)}>{anchor.status}</Badge>
                   </div>
                   <CardDescription>{anchor.industry}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 pt-0">
                   {anchor.nextBestAction && (
                     <div className="mb-2">
                       <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
