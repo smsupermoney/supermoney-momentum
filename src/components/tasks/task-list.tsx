@@ -16,9 +16,10 @@ interface TaskListProps {
   dueDateFilter?: string;
   priorityFilter?: string;
   anchorFilter?: string;
+  assignedToFilter?: string;
 }
 
-export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskListProps) {
+export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assignedToFilter }: TaskListProps) {
   const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, visibleUserIds } = useApp();
   const { t } = useLanguage();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
@@ -50,6 +51,10 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
     .filter(task => {
         if (!anchorFilter || anchorFilter === 'all') return true;
         return task.associatedWith.anchorId === anchorFilter;
+    })
+    .filter(task => {
+      if (!assignedToFilter || assignedToFilter === 'all') return true;
+      return task.assignedTo === assignedToFilter;
     });
 
 
@@ -86,9 +91,6 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
       }
       setCompletedTask(null);
   }
-  
-  const showAssignedTo = true;
-
 
   return (
     <>
@@ -100,7 +102,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               <TableHead>{t('tasks.list.priority')}</TableHead>
               <TableHead>{t('tasks.list.title')}</TableHead>
               <TableHead>{t('tasks.list.anchor')}</TableHead>
-              {showAssignedTo && <TableHead className="hidden lg:table-cell">{t('tasks.list.assignedTo')}</TableHead>}
+              <TableHead>{t('tasks.list.assignedTo')}</TableHead>
               <TableHead className="hidden lg:table-cell">{t('tasks.list.type')}</TableHead>
               <TableHead>{t('tasks.list.dueDate')}</TableHead>
               <TableHead>{t('tasks.list.status')}</TableHead>
@@ -113,7 +115,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
                 <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>{getEntityName(task)}</TableCell>
-                {showAssignedTo && <TableCell className="hidden lg:table-cell">{getAssignedToName(task.assignedTo)}</TableCell>}
+                <TableCell>{getAssignedToName(task.assignedTo)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
                 <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
                 <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
@@ -145,7 +147,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p><span className="font-medium">{t('tasks.list.anchor')}:</span> {getEntityName(task)}</p>
-                {showAssignedTo && <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>}
+                <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>
                 <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {format(new Date(task.dueDate), 'PP')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

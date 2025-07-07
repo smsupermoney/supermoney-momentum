@@ -13,18 +13,22 @@ import { useLanguage } from '@/contexts/language-context';
 
 export default function TasksPage() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  const { anchors, currentUser } = useApp();
+  const { anchors, currentUser, visibleUsers } = useApp();
   const { t } = useLanguage();
 
   const [dueDateFilter, setDueDateFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [anchorFilter, setAnchorFilter] = useState('all');
+  const [assignedToFilter, setAssignedToFilter] = useState('all');
 
   const userAnchors = anchors.filter(anchor => {
-    if (currentUser.role === 'Admin') return true;
-    if (currentUser.role === 'Business Development') return anchor.status === 'Onboarding';
-    return anchor.assignedTo === currentUser.uid;
-  })
+    if (currentUser.role === 'Business Development') {
+      return anchor.status === 'Onboarding';
+    }
+    return anchor.status !== 'Archived';
+  });
+
+  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
 
   return (
     <div className="h-full flex flex-col">
@@ -38,9 +42,9 @@ export default function TasksPage() {
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto ml-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
                <Select value={dueDateFilter} onValueChange={setDueDateFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={t('tasks.filterDueDate')} /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder={t('tasks.filterDueDate')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('tasks.allDueDates')}</SelectItem>
                     <SelectItem value="today">{t('tasks.today')}</SelectItem>
@@ -49,7 +53,7 @@ export default function TasksPage() {
                   </SelectContent>
                </Select>
                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={t('tasks.filterPriority')} /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder={t('tasks.filterPriority')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('tasks.allPriorities')}</SelectItem>
                     <SelectItem value="High">{t('tasks.high')}</SelectItem>
@@ -58,12 +62,21 @@ export default function TasksPage() {
                   </SelectContent>
                </Select>
                <Select value={anchorFilter} onValueChange={setAnchorFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={t('tasks.filterAnchor')} /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder={t('tasks.filterAnchor')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('tasks.allAnchors')}</SelectItem>
                     {userAnchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                   </SelectContent>
                </Select>
+               {canShowAssignedToFilter && (
+                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        {visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+               )}
           </div>
       </div>
 
@@ -72,6 +85,7 @@ export default function TasksPage() {
           dueDateFilter={dueDateFilter}
           priorityFilter={priorityFilter}
           anchorFilter={anchorFilter}
+          assignedToFilter={assignedToFilter}
         />
       </div>
     </div>
