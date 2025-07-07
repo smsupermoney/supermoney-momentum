@@ -140,30 +140,42 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
         // Set the current user and show the app shell immediately
         setCurrentUser(userProfile);
-        const allUsers = await firestoreService.getUsers();
-        setUsers(allUsers);
         setIsLoading(false);
 
-        // Fetch remaining data in the background
-        const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-          firestoreService.getAnchors(userProfile, allUsers),
-          firestoreService.getDealers(),
-          firestoreService.getVendors(),
-          firestoreService.getTasks(),
-          firestoreService.getActivityLogs(),
-          firestoreService.getDailyActivities(),
-        ]);
-
-        setAnchors(anchorsData);
-        setDealers(dealersData);
-        setVendors(vendorsData);
-        setTasks(tasksData);
-        setActivityLogs(activityLogsData);
-        setDailyActivities(dailyActivitiesData);
+        // Asynchronously load all other data in the background
+        const loadAllData = async () => {
+            const allUsers = await firestoreService.getUsers();
+            setUsers(allUsers);
+    
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+              firestoreService.getAnchors(userProfile, allUsers),
+              firestoreService.getDealers(),
+              firestoreService.getVendors(),
+              firestoreService.getTasks(),
+              firestoreService.getActivityLogs(),
+              firestoreService.getDailyActivities(),
+            ]);
+    
+            setAnchors(anchorsData);
+            setDealers(dealersData);
+            setVendors(vendorsData);
+            setTasks(tasksData);
+            setActivityLogs(activityLogsData);
+            setDailyActivities(dailyActivitiesData);
+        };
+        
+        loadAllData().catch(err => {
+            console.error("Error loading background data:", err);
+            toast({
+                variant: 'destructive',
+                title: 'Data Loading Error',
+                description: 'Could not load all app data. Please refresh the page.'
+            })
+        });
 
       } catch (error: any) {
         console.error("Firebase error caught in onAuthStateChanged:", error);
-        if (error.code === 'auth/invalid-api-key' || (error.message && error.message.includes('api-key-not-valid'))) {
+        if (error.code === 'auth/api-key-not-valid' || (error.message && error.message.includes('api-key-not-valid'))) {
             console.warn("Firebase API key is invalid. Falling back to mock data mode. Please check your .env file.");
             toast({
                 variant: 'destructive',
