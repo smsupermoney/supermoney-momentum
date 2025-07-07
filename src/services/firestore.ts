@@ -14,6 +14,7 @@ import {
   orderBy,
   writeBatch,
   deleteDoc,
+  getDoc,
 } from 'firebase/firestore';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 
@@ -61,26 +62,19 @@ export const deleteUser = async (userId: string): Promise<void> => {
     await deleteDoc(userDocRef);
 };
 
-export const getUserByEmail = async (email: string): Promise<User | null> => {
-    if (!db) return null;
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where("email", "==", email));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-        return null;
-    }
-    const userDoc = snapshot.docs[0];
-    const userData = userDoc.data() as Omit<User, 'uid' | 'id'>;
-    return { uid: userDoc.id, id: userDoc.id, ...userData };
-}
-
 export const checkAndCreateUser = async (authUser: { email: string | null; displayName: string | null; uid: string }): Promise<User | null> => {
     if (!db || !authUser.email) return null;
 
-    const userProfile = await getUserByEmail(authUser.email);
+    const userDocRef = doc(db, 'users', authUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
 
-    if (userProfile) {
-        return userProfile;
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as Omit<User, 'uid' | 'id'>;
+        return {
+            id: userDocSnap.id,
+            uid: userDocSnap.id,
+            ...userData
+        };
     }
     
     // User does not exist, create a new one with a default 'Sales' role
@@ -90,7 +84,6 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         role: 'Sales', // Default role for new sign-ups
     };
     const batch = writeBatch(db);
-    const userDocRef = doc(db, 'users', authUser.uid);
     batch.set(userDocRef, newUser);
     await batch.commit();
     
