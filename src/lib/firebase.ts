@@ -12,11 +12,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all required config values are present and not just empty strings
-export const firebaseEnabled = !!(
-  firebaseConfig.apiKey &&
-  firebaseConfig.projectId
-);
+// Force disable Firebase to revert to mock login
+export const firebaseEnabled = false;
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
