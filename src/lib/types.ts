@@ -38,6 +38,7 @@ export interface NextBestAction {
 
 export interface BaseLead {
   id: string;
+  leadId: string;
   name: string;
   contactNumber: string;
   email?: string;
@@ -51,6 +52,7 @@ export interface BaseLead {
 }
 
 export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType' | 'assignedTo'> {
+  leadId: string;
   name: string; // Anchor name is company name
   industry: string;
   annualTurnover?: number;

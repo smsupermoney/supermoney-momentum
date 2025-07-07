@@ -195,6 +195,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                 <Card>
                     <CardHeader><CardTitle>{t('anchors.profile.companyInfo')}</CardTitle></CardHeader>
                     <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
+                        <div><div className="text-muted-foreground">Lead ID</div><div>{anchor.leadId || 'N/A'}</div></div>
                         <div><div className="text-muted-foreground">{t('anchors.profile.gstin')}</div><div>{anchor.gstin || 'N/A'}</div></div>
                         <div><div className="text-muted-foreground">{t('anchors.profile.creditRating')}</div><div>{anchor.creditRating || 'N/A'}</div></div>
                         <div><div className="text-muted-foreground">{t('anchors.profile.annualTurnover')}</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</div></div>

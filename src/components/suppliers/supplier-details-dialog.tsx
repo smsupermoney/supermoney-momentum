@@ -70,6 +70,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             </DialogHeader>
             <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div><p className="text-muted-foreground">Lead ID</p><p>{vendor.leadId || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Contact Number</p><p>{vendor.contactNumber}</p></div>
                     <div><p className="text-muted-foreground">Email</p><p>{vendor.email || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Location</p><p>{vendor.location || 'N/A'}</p></div>

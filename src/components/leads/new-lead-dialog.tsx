@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -28,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Vendor, LeadType } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2 } from 'lucide-react';
+import { generateLeadId } from '@/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
@@ -96,6 +98,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const scoreResult = await spokeScoring(scoringInput);
         
         const commonData = {
+          leadId: generateLeadId(),
           name: values.name,
           contactNumber: values.contactNumber,
           email: values.email,

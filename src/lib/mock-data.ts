@@ -16,7 +16,8 @@ export const mockUsers: User[] = [
 
 export const mockAnchors: Anchor[] = [
   { 
-    id: 'anchor-1', 
+    id: 'anchor-1',
+    leadId: 'RLNC01',
     name: 'Reliance Retail', 
     industry: 'Retail',
     status: 'Active',
@@ -37,7 +38,8 @@ export const mockAnchors: Anchor[] = [
     leadScoreReason: "High turnover, strong credit rating, and strategic industry make this a prime lead."
   },
   { 
-    id: 'anchor-2', 
+    id: 'anchor-2',
+    leadId: 'TAMO02',
     name: 'Tata Motors', 
     industry: 'Automotive',
     status: 'Onboarding', // Changed to Onboarding for the specialist to see it
@@ -54,6 +56,7 @@ export const mockAnchors: Anchor[] = [
   },
   { 
     id: 'anchor-3', 
+    leadId: 'APTY03',
     name: 'Apollo Tyres', 
     industry: 'Automotive',
     status: 'Negotiation',
@@ -69,7 +72,8 @@ export const mockAnchors: Anchor[] = [
     nextBestAction: { recommendedAction: 'Send Industry Case Study', justification: 'They are in negotiation, a case study can help build confidence.' }
   },
   { 
-    id: 'anchor-4', 
+    id: 'anchor-4',
+    leadId: 'FGRP04',
     name: 'Future Group', 
     industry: 'Retail',
     status: 'Initial Contact',
@@ -85,7 +89,8 @@ export const mockAnchors: Anchor[] = [
     nextBestAction: { recommendedAction: 'Send Follow-up Email', justification: 'It has been a while since initial contact, a follow-up email is appropriate.' }
   },
   { 
-    id: 'anchor-5', 
+    id: 'anchor-5',
+    leadId: 'UCRP05',
     name: 'Unassigned Corp', 
     industry: 'Manufacturing',
     status: 'Unassigned Lead',
@@ -99,7 +104,8 @@ export const mockAnchors: Anchor[] = [
     leadSource: 'CA / Financial Consultant Referral',
   },
    { 
-    id: 'anchor-6', 
+    id: 'anchor-6',
+    leadId: 'PHSL06',
     name: 'Pharma Solutions', 
     industry: 'Pharmaceutical',
     status: 'Lead',
@@ -114,7 +120,8 @@ export const mockAnchors: Anchor[] = [
     annualTurnover: 750000000,
   },
   { 
-    id: 'anchor-7', 
+    id: 'anchor-7',
+    leadId: 'LGKG07',
     name: 'Logistics King', 
     industry: 'Logistics',
     status: 'Pending Approval',
@@ -130,16 +137,16 @@ export const mockAnchors: Anchor[] = [
 ];
 
 export const mockDealers: Dealer[] = [
-  { id: 'dealer-1', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New', nextBestAction: { recommendedAction: 'Nurture (Wait)', justification: 'This dealer is already active and requires no immediate action.' } },
-  { id: 'dealer-2', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New', nextBestAction: { recommendedAction: 'Send Follow-up Email', justification: 'The invitation was just sent, a follow-up in a few days would be appropriate.' } },
-  { id: 'dealer-3', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New' },
-  { id: 'dealer-4', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
+  { id: 'dealer-1', leadId: 'MUMO01', name: 'Mumbai Motors', contactNumber: '9123456780', email: 'contact@mumbaimotors.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 85, leadScoreReason: "Strong association with a top-tier anchor in a major hub.", leadType: 'New', nextBestAction: { recommendedAction: 'Nurture (Wait)', justification: 'This dealer is already active and requires no immediate action.' } },
+  { id: 'dealer-2', leadId: 'PUAU02', name: 'Pune Auto', contactNumber: '9123456781', email: 'puneauto@example.com', onboardingStatus: 'Invited', anchorId: 'anchor-2', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Secondary', leadType: 'New', nextBestAction: { recommendedAction: 'Send Follow-up Email', justification: 'The invitation was just sent, a follow-up in a few days would be appropriate.' } },
+  { id: 'dealer-3', leadId: 'DEDE03', name: 'Delhi Dealers', contactNumber: '9123456782', email: 'info@delhidealers.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Delhi', product: 'BL', leadType: 'New' },
+  { id: 'dealer-4', leadId: 'REAU04', name: 'Reliance Autozone', contactNumber: '9123456783', email: 'autozone@reliance.com', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New' },
 ];
 
 export const mockVendors: Vendor[] = [
-  { id: 'vendor-1', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New' },
-  { id: 'vendor-2', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New', nextBestAction: { recommendedAction: 'Address a Specific Question', justification: 'KYC is pending, follow up to see if they have any questions holding them back.' } },
-  { id: 'vendor-3', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New' },
+  { id: 'vendor-1', leadId: 'SKPA01', name: 'Shree Krishna Parts', contactNumber: '8123456780', email: 'skp@gmail.com', onboardingStatus: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'New' },
+  { id: 'vendor-2', leadId: 'BACO02', name: 'Balaji Components', contactNumber: '8123456781', onboardingStatus: 'KYC Pending', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), product: 'SCF - Primary', leadType: 'New', nextBestAction: { recommendedAction: 'Address a Specific Question', justification: 'KYC is pending, follow up to see if they have any questions holding them back.' } },
+  { id: 'vendor-3', leadId: 'UNVE03', name: 'Unassigned Vendors Inc', contactNumber: '8123456782', email: 'contact@unassigned.co', onboardingStatus: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), location: 'Chennai', product: 'Other', leadType: 'New' },
 ];
 
 export const mockTasks: Task[] = [

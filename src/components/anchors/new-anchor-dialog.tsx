@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Anchor, LeadStatus } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
+import { generateLeadId } from '@/lib/utils';
 
 const formSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required' }),
@@ -114,6 +115,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       }
       
       const newAnchor: Omit<Anchor, 'id'> = {
+        leadId: generateLeadId(),
         name: values.companyName,
         industry: values.industry,
         contacts: [{

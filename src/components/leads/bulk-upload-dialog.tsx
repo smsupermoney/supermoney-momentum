@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Download } from 'lucide-react';
 import type { Dealer, Vendor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
+import { generateLeadId } from '@/lib/utils';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -105,6 +106,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const commonData = {
               id: `${type.toLowerCase()}-${Date.now()}-${Math.random()}`,
+              leadId: generateLeadId(),
               name: columns[0],
               contactNumber: columns[1],
               email: columns[2] || undefined,
@@ -154,7 +156,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: <span className="font-semibold">Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email</span>. Download our sample file to ensure the format is correct.
+            Upload a CSV file with columns: <b>Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email</b>. Download our sample file to ensure the format is correct.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
