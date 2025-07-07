@@ -68,6 +68,9 @@ const generateOnboardingPlanFlow = ai.defineFlow(
     outputSchema: GenerateOnboardingPlanOutputSchema,
   },
   async (input) => {
+    // INFOSEC: In a production environment, implement rate-limiting here
+    // to prevent abuse and control costs. For example, using a Redis-backed
+    // counter per user or IP address.
     const {output} = await prompt(input);
     return output!;
   }

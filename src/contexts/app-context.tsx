@@ -10,6 +10,9 @@ import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
 import * as firestoreService from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema } from '@/lib/validation';
+
 
 interface AppContextType {
   users: User[];
@@ -325,9 +328,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
+    // --- Server-Side Validation ---
+    try {
+      NewAnchorSchema.parse(anchorData);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        console.error("Server-side validation failed for new anchor:", e.flatten().fieldErrors);
+        toast({
+          variant: 'destructive',
+          title: 'Validation Error',
+          description: Object.values(e.flatten().fieldErrors).flat().join(', '),
+        });
+        return; // Halt execution
+      }
+    }
+    // --- End Validation ---
+
     if (firebaseEnabled) {
       await firestoreService.addAnchor(anchorData);
-      // Data will be re-fetched via listener, but optimistic update is good for UI
       setAnchors(prev => [{ ...anchorData, id: `temp-${Date.now()}` }, ...prev]);
     } else {
       const newAnchor = { ...anchorData, id: `anchor-${Date.now()}`};
@@ -336,6 +354,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateAnchor = async (updatedAnchor: Anchor) => {
+    // --- Server-Side Validation ---
+    try {
+        NewAnchorSchema.extend({ id: z.string() }).parse(updatedAnchor);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Server-side validation failed for anchor update:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for anchor update.' });
+            return;
+        }
+    }
+    // --- End Validation ---
+
     if (firebaseEnabled) {
       await firestoreService.updateAnchor(updatedAnchor);
     }
@@ -343,6 +373,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
+    try {
+        NewSpokeSchema.parse(dealerData);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for new dealer:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for new dealer.' });
+            return;
+        }
+    }
     if(firebaseEnabled) {
       await firestoreService.addDealer(dealerData);
     }
@@ -351,6 +390,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateDealer = async (updatedDealer: Dealer) => {
+    try {
+        NewSpokeSchema.extend({ id: z.string() }).parse(updatedDealer);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for dealer update.' });
+            return;
+        }
+    }
     if(firebaseEnabled) {
       await firestoreService.updateDealer(updatedDealer);
     }
@@ -358,6 +406,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteDealer = async (dealerId: string) => {
+    // --- Server-Side Auth Check ---
+    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
+        return;
+    }
+    // --- End Auth Check ---
     if (firebaseEnabled) {
         await firestoreService.deleteDealer(dealerId);
     }
@@ -369,6 +423,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
+     try {
+        NewSpokeSchema.parse(vendorData);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for new vendor:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for new vendor.' });
+            return;
+        }
+    }
     if (firebaseEnabled) {
       await firestoreService.addVendor(vendorData);
     }
@@ -377,6 +440,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateVendor = async (updatedVendor: Vendor) => {
+     try {
+        NewSpokeSchema.extend({ id: z.string() }).parse(updatedVendor);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for vendor update:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for vendor update.' });
+            return;
+        }
+    }
     if(firebaseEnabled) {
       await firestoreService.updateVendor(updatedVendor);
     }
@@ -384,6 +456,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteVendor = async (vendorId: string) => {
+     // --- Server-Side Auth Check ---
+    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
+        return;
+    }
+    // --- End Auth Check ---
     if (firebaseEnabled) {
         await firestoreService.deleteVendor(vendorId);
     }
@@ -395,6 +473,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
+     try {
+        NewTaskSchema.parse(taskData);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for new task:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for new task.' });
+            return;
+        }
+    }
     if (firebaseEnabled) {
       await firestoreService.addTask(taskData);
     }
@@ -403,6 +490,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateTask = async (updatedTask: Task) => {
+    try {
+        NewTaskSchema.extend({ id: z.string() }).parse(updatedTask);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for task update:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for task update.' });
+            return;
+        }
+    }
     if (firebaseEnabled) {
       await firestoreService.updateTask(updatedTask);
     }
@@ -418,6 +514,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
+     try {
+        NewDailyActivitySchema.parse(activityData);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for new daily activity:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for daily activity.' });
+            return;
+        }
+    }
     if (firebaseEnabled) {
       await firestoreService.addDailyActivity(activityData);
     }
@@ -426,6 +531,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
+    try {
+        NewUserSchema.parse(userData);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for new user:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for new user.' });
+            return;
+        }
+    }
      if (firebaseEnabled) {
       toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User creation should be handled via Firebase Authentication console.' });
       return;
@@ -435,6 +549,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteUser = async (userId: string) => {
+     // --- Server-Side Auth Check ---
+    if (!currentUser || currentUser.role !== 'Admin') {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only Admins can delete users.' });
+        return;
+    }
+    if (currentUser.uid === userId) {
+        toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot delete your own account.' });
+        return;
+    }
+     // --- End Auth Check ---
     if(firebaseEnabled) {
       toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User deletion should be handled via Firebase Authentication console.' });
       return;
