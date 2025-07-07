@@ -272,7 +272,6 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                         <SelectItem value="Site Visit">Site Visit</SelectItem>
                         <SelectItem value="Sales Presentation">Sales Presentation</SelectItem>
                         <SelectItem value="Follow-up">Follow-up</SelectItem>
-                        <SelectItem value="Travel Time">Travel Time</SelectItem>
                         <SelectItem value="Administrative">Administrative</SelectItem>
                         <SelectItem value="Training">Training</SelectItem>
                         <SelectItem value="Networking">Networking</SelectItem>

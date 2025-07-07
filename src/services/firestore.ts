@@ -11,7 +11,8 @@ import {
   DocumentData,
   QuerySnapshot,
   orderBy,
-  writeBatch
+  writeBatch,
+  deleteDoc,
 } from 'firebase/firestore';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 
@@ -51,6 +52,12 @@ export const addUser = async (user: Omit<User, 'uid' | 'id'>): Promise<User> => 
     const usersCollection = collection(db, 'users');
     const docRef = await addDoc(usersCollection, user);
     return { uid: docRef.id, id: docRef.id, ...user };
+};
+
+export const deleteUser = async (userId: string): Promise<void> => {
+    if (!db) throw new Error("Firestore not initialized");
+    const userDocRef = doc(db, 'users', userId);
+    await deleteDoc(userDocRef);
 };
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {

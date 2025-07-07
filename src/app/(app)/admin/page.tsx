@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -9,9 +10,20 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 // Define a union type for the different kinds of leads
 type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
@@ -126,11 +138,12 @@ function LeadTable({
 }
 
 export default function AdminPage() {
-  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser, visibleUsers } = useApp();
+  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
   const [assignments, setAssignments] = useState<Record<string, string>>({});
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const assignableUsers = useMemo(() => {
     if (!currentUser) return [];
@@ -182,6 +195,13 @@ export default function AdminPage() {
     });
   };
 
+  const handleDeleteUser = () => {
+    if (userToDelete) {
+        deleteUser(userToDelete.uid);
+        setUserToDelete(null);
+    }
+  };
+
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   if (!currentUser || (currentUser.role !== 'Admin' && !managerialRoles.includes(currentUser.role) && currentUser.role !== 'Onboarding Specialist')) {
     return (
@@ -200,6 +220,23 @@ export default function AdminPage() {
     <>
       <PageHeader title={t('admin.title')} description={t('admin.description')} />
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the user account for {userToDelete?.name} and remove them from the system.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
+                    Delete User
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="grid gap-4 mt-6">
         {currentUser.role === 'Admin' && (
           <Card>
@@ -226,6 +263,7 @@ export default function AdminPage() {
                       <TableHead>{t('admin.table.role')}</TableHead>
                       <TableHead>{t('admin.table.manager')}</TableHead>
                       <TableHead>{t('admin.table.region')}</TableHead>
+                      <TableHead className="text-right">{t('admin.table.action')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -236,6 +274,13 @@ export default function AdminPage() {
                         <TableCell>{user.role}</TableCell>
                         <TableCell>{getManagerName(user.managerId)}</TableCell>
                         <TableCell>{user.region || 'N/A'}</TableCell>
+                        <TableCell className="text-right">
+                          {user.uid !== currentUser.uid && (
+                            <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -262,6 +307,13 @@ export default function AdminPage() {
                         <span className="text-muted-foreground">{t('admin.table.region')}:</span>
                         <span className="font-medium">{user.region || 'N/A'}</span>
                       </div>
+                       {user.uid !== currentUser.uid && (
+                         <div className="pt-2">
+                           <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
+                            <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
+                           </Button>
+                         </div>
+                       )}
                     </CardContent>
                   </Card>
                 ))}

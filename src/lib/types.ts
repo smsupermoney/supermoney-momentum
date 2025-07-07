@@ -112,7 +112,7 @@ export interface ActivityLog {
   userId: string;
 }
 
-export type DailyActivityType = 'Client Meeting' | 'Site Visit' | 'Sales Presentation' | 'Follow-up' | 'Travel Time' | 'Administrative' | 'Training' | 'Networking';
+export type DailyActivityType = 'Client Meeting' | 'Site Visit' | 'Sales Presentation' | 'Follow-up' | 'Administrative' | 'Training' | 'Networking';
 
 export interface DailyActivity {
     id: string;

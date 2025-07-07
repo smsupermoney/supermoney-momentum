@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,7 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, VideoOff, Check, SwitchCamera } from 'lucide-react';
+import { Camera, VideoOff, Check, RotateCcw, SwitchCamera } from 'lucide-react';
+import Image from 'next/image';
 
 interface CameraCaptureDialogProps {
   open: boolean;
@@ -25,65 +27,62 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentDeviceIndex, setCurrentDeviceIndex] = useState(0);
 
-  const stopStream = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
-  
-  const getStream = useCallback(async () => {
-      // Stop any previous stream before starting a new one
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+  const stopStream = useCallback((stream: MediaStream | null) => {
+    stream?.getTracks().forEach(track => track.stop());
+  }, []);
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    
+    const getStream = async () => {
+      if (!open || capturedImage) return;
+
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(device => device.kind === 'videoinput');
-        
         setVideoDevices(videoInputs);
-        const deviceId = videoInputs.length > 0 ? videoInputs[currentDeviceIndex].deviceId : undefined;
+        
+        if (videoInputs.length === 0) {
+          console.log("No video input devices found.");
+          setHasCameraPermission(false);
+          return;
+        }
 
+        const deviceId = videoInputs[currentDeviceIndex % videoInputs.length]?.deviceId;
         const constraints: MediaStreamConstraints = {
           video: deviceId 
             ? { deviceId: { exact: deviceId } } 
-            : { facingMode: { ideal: "environment" } } // Prefer back camera if available
+            : { facingMode: { ideal: "environment" } }
         };
 
-        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        setStream(mediaStream);
-        setHasCameraPermission(true);
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+        stream = newStream;
         if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
+          videoRef.current.srcObject = stream;
         }
-
+        setHasCameraPermission(true);
       } catch (error) {
-        console.error('Error accessing camera:', error);
+        console.error("Camera access error:", error);
         setHasCameraPermission(false);
         toast({
             variant: 'destructive',
             title: 'Camera Access Denied',
-            description: 'Please enable camera permissions.',
+            description: 'Please enable camera permissions in your browser settings.',
         });
       }
-  }, [currentDeviceIndex, stream, toast]);
+    };
+    
+    getStream();
 
-  useEffect(() => {
-    if (open && !capturedImage) {
-        getStream();
+    return () => {
+      stopStream(stream);
     }
-    if (!open) {
-        stopStream();
-    }
-  }, [open, capturedImage, getStream, stopStream]);
-
+  }, [open, capturedImage, currentDeviceIndex, stopStream, toast]);
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -96,33 +95,33 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataUrl = canvas.toDataURL('image/jpeg');
         setCapturedImage(imageDataUrl);
-        stopStream();
       }
     }
   };
   
   const handleSwitchCamera = () => {
     if (videoDevices.length > 1) {
-      setCurrentDeviceIndex((prevIndex) => (prevIndex + 1) % videoDevices.length);
+      setCurrentDeviceIndex(prevIndex => prevIndex + 1);
     }
   };
 
   const handleConfirm = () => {
     if (capturedImage) {
       onCapture(capturedImage);
-      onOpenChange(false);
+      handleClose(false);
     }
   };
 
   const handleRetake = () => {
     setCapturedImage(null);
-    // The useEffect will call getStream() since capturedImage is now null
   };
   
-  const handleClose = () => {
-    stopStream();
-    setCurrentDeviceIndex(0);
-    onOpenChange(false);
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      setCapturedImage(null);
+      setCurrentDeviceIndex(0);
+    }
+    onOpenChange(isOpen);
   };
 
   return (
@@ -133,8 +132,7 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
         </DialogHeader>
         <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
           {capturedImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={capturedImage} alt="Captured" className="h-full w-full object-cover" />
+            <Image src={capturedImage} alt="Captured" layout="fill" objectFit="cover" />
           ) : (
             <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
           )}
@@ -167,7 +165,7 @@ export function CameraCaptureDialog({ open, onOpenChange, onCapture }: CameraCap
         <DialogFooter>
           {capturedImage ? (
             <>
-              <Button variant="outline" onClick={handleRetake}>Retake Photo</Button>
+              <Button variant="outline" onClick={handleRetake}><RotateCcw className="mr-2 h-4 w-4" /> Retake</Button>
               <Button onClick={handleConfirm}><Check className="mr-2 h-4 w-4" /> Use Photo</Button>
             </>
           ) : (

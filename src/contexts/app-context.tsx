@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 interface AppContextType {
   users: User[];
   addUser: (user: Omit<User, 'uid' | 'id'>) => void;
+  deleteUser: (userId: string) => void;
   currentUser: User | null;
   login: (email: string, password: string) => boolean;
   logout: () => void;
@@ -411,6 +412,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
     setUsers(prev => [newUser, ...prev]);
   };
+
+  const deleteUser = async (userId: string) => {
+    if(firebaseEnabled) {
+      toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User deletion should be handled via Firebase Authentication console.' });
+      return;
+    }
+    setUsers(prev => prev.filter(u => u.uid !== userId));
+    toast({
+      title: 'User Deleted',
+      description: 'The user has been removed from the system.',
+    });
+  }
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -425,6 +438,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     users,
     addUser,
+    deleteUser,
     currentUser,
     login,
     logout,
