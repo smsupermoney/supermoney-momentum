@@ -98,21 +98,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!firebaseEnabled) {
-      console.log("Firebase is not enabled. Loading mock data.");
+    if (!firebaseEnabled || !auth) {
+      console.log("Firebase not enabled or auth not available. Loading mock data.");
       loadMockData();
       return;
     }
-    
-    if (!auth) {
-        console.log("Firebase Auth is not available. Loading mock data.");
-        loadMockData();
-        return;
-    }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Handle user being signed out
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
+        // Handle sign out
         setCurrentUser(null);
         sessionStorage.removeItem('currentUser');
         setUsers(mockUsers);
@@ -126,75 +120,81 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Handle user being signed in
-      try {
-        setIsLoading(true);
-        const userProfile = await firestoreService.checkAndCreateUser(user);
-        
-        if (!userProfile) {
-          console.error(`Could not get or create a user profile for ${user.email}.`);
-          await logout();
-          setIsLoading(false);
-          return;
+      // **Optimistic UI update**
+      // Create a temporary user object from the auth data to show the UI immediately.
+      const optimisticUser: User = {
+        id: user.uid,
+        uid: user.uid,
+        name: user.displayName || 'User',
+        email: user.email || '',
+        role: 'Sales', // Default role, will be updated shortly
+      };
+
+      // Set the optimistic user and stop the main loading screen.
+      setCurrentUser(optimisticUser);
+      setIsLoading(false);
+
+      // **Full data load in the background**
+      const loadFullUserData = async () => {
+        try {
+          // Get the full, correct user profile from Firestore.
+          const userProfile = await firestoreService.checkAndCreateUser(user);
+
+          if (!userProfile) {
+            console.error(`Could not get or create a user profile for ${user.email}.`);
+            await logout();
+            return;
+          }
+
+          // Update the context with the full user profile, including the correct role.
+          setCurrentUser(userProfile);
+          sessionStorage.setItem('currentUser', JSON.stringify(userProfile));
+
+          // Now fetch all other data based on the correct profile.
+          const allUsers = await firestoreService.getUsers();
+          setUsers(allUsers);
+  
+          const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+            firestoreService.getAnchors(userProfile, allUsers),
+            firestoreService.getDealers(),
+            firestoreService.getVendors(),
+            firestoreService.getTasks(),
+            firestoreService.getActivityLogs(),
+            firestoreService.getDailyActivities(),
+          ]);
+  
+          setAnchors(anchorsData);
+          setDealers(dealersData);
+          setVendors(vendorsData);
+          setTasks(tasksData);
+          setActivityLogs(activityLogsData);
+          setDailyActivities(dailyActivitiesData);
+
+        } catch (error: any) {
+            console.error("Firebase error caught during full data load:", error);
+            if (error.code === 'auth/api-key-not-valid' || (error.message && error.message.includes('api-key-not-valid'))) {
+                console.warn("Firebase API key is invalid. Falling back to mock data mode. Please check your .env file.");
+                toast({
+                    variant: 'destructive',
+                    title: 'Invalid Firebase API Key',
+                    description: 'Falling back to mock data. Please check your .env file configuration.',
+                    duration: 9000
+                })
+                loadMockData();
+            } else {
+                console.error("An unexpected Firebase error occurred during data fetch:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Firebase Connection Error',
+                    description: 'Could not connect to the database. Using mock data.',
+                    duration: 9000
+                })
+                loadMockData();
+            }
         }
+      };
 
-        // Set the current user and show the app shell immediately
-        setCurrentUser(userProfile);
-        setIsLoading(false);
-
-        // Asynchronously load all other data in the background
-        const loadAllData = async () => {
-            const allUsers = await firestoreService.getUsers();
-            setUsers(allUsers);
-    
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-              firestoreService.getAnchors(userProfile, allUsers),
-              firestoreService.getDealers(),
-              firestoreService.getVendors(),
-              firestoreService.getTasks(),
-              firestoreService.getActivityLogs(),
-              firestoreService.getDailyActivities(),
-            ]);
-    
-            setAnchors(anchorsData);
-            setDealers(dealersData);
-            setVendors(vendorsData);
-            setTasks(tasksData);
-            setActivityLogs(activityLogsData);
-            setDailyActivities(dailyActivitiesData);
-        };
-        
-        loadAllData().catch(err => {
-            console.error("Error loading background data:", err);
-            toast({
-                variant: 'destructive',
-                title: 'Data Loading Error',
-                description: 'Could not load all app data. Please refresh the page.'
-            })
-        });
-
-      } catch (error: any) {
-        console.error("Firebase error caught in onAuthStateChanged:", error);
-        if (error.code === 'auth/api-key-not-valid' || (error.message && error.message.includes('api-key-not-valid'))) {
-            console.warn("Firebase API key is invalid. Falling back to mock data mode. Please check your .env file.");
-            toast({
-                variant: 'destructive',
-                title: 'Invalid Firebase API Key',
-                description: 'Falling back to mock data. Please check your .env file configuration.',
-                duration: 9000
-            })
-            loadMockData();
-        } else {
-            console.error("An unexpected Firebase error occurred during data fetch:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Firebase Connection Error',
-                description: 'Could not connect to the database. Using mock data.',
-                duration: 9000
-            })
-            loadMockData();
-        }
-      }
+      loadFullUserData();
     });
 
     return () => unsubscribe();
@@ -327,7 +327,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
     if (firebaseEnabled) {
       await firestoreService.addAnchor(anchorData);
-      setAnchors(prev => [{ ...anchorData, id: `temp-${Date.now()}` }, ...prev]); // Optimistic update
+      // Data will be re-fetched via listener, but optimistic update is good for UI
+      setAnchors(prev => [{ ...anchorData, id: `temp-${Date.now()}` }, ...prev]);
     } else {
       const newAnchor = { ...anchorData, id: `anchor-${Date.now()}`};
       setAnchors(prev => [newAnchor, ...prev]);
