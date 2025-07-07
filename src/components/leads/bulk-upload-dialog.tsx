@@ -114,7 +114,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               location: columns[4] || undefined,
               product: columns[6] || undefined,
               assignedTo: finalAssignedToId,
-              onboardingStatus: 'Invited' as const,
+              status: 'Invited' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               leadType: 'New Lead' as const,

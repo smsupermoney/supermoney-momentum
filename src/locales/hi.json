@@ -108,7 +108,7 @@
       "spokeTable": {
         "name": "{type} का नाम",
         "contact": "संपर्क नंबर",
-        "status": "ऑनबोर्डिंग स्थिति",
+        "status": "स्थिति",
         "actions": "कार्रवाइयाँ",
         "viewDetails": "विवरण देखें",
         "noSpokes": "अभी तक कोई {type} संबद्ध नहीं है।"
@@ -138,7 +138,7 @@
     "table": {
       "name": "नाम",
       "contact": "संपर्क",
-      "status": "ऑनबोर्डिंग स्थिति",
+      "status": "स्थिति",
       "leadType": "लीड प्रकार",
       "anchor": "संबद्ध एंकर",
       "assignedTo": "किसे सौंपा गया",

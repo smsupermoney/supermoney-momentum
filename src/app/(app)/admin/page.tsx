@@ -161,8 +161,8 @@ export default function AdminPage() {
     return visibleUsers.filter(u => u.uid !== currentUser.uid);
   }, [currentUser, users, visibleUsers]);
 
-  const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.onboardingStatus === 'Unassigned Lead');
-  const unassignedVendors = vendors.filter((s) => s.assignedTo === null || s.onboardingStatus === 'Unassigned Lead');
+  const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.status === 'Unassigned Lead');
+  const unassignedVendors = vendors.filter((s) => s.assignedTo === null || s.status === 'Unassigned Lead');
 
   const handleAssignmentChange = (leadId: string, userId: string) => {
     setAssignments((prev) => ({ ...prev, [leadId]: userId }));
@@ -179,10 +179,10 @@ export default function AdminPage() {
 
     if (leadType === 'Dealer') {
       const dealer = dealers.find((d) => d.id === leadId);
-      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, onboardingStatus: 'Invited' });
+      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, status: 'Invited' });
     } else if (leadType === 'Vendor') {
       const vendor = vendors.find((s) => s.id === leadId);
-      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, onboardingStatus: 'Invited' });
+      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'Invited' });
     }
 
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });

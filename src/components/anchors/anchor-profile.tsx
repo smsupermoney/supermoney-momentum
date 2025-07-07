@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, OnboardingStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
+import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, SpokeStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -320,11 +320,11 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
     const { t } = useLanguage();
     const isSpecialist = currentUser?.role === 'Business Development';
 
-    const handleStatusChange = (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
-        onUpdateSpoke({...spoke, onboardingStatus: newStatus});
+    const handleStatusChange = (spoke: Dealer | Vendor, newStatus: SpokeStatus) => {
+        onUpdateSpoke({...spoke, status: newStatus});
     }
 
-    const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+    const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
         switch (status) {
             case 'Active':
                 return 'default';
@@ -365,7 +365,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                             <TableCell>{spoke.contactNumber}</TableCell>
                             <TableCell>
                                 {isSpecialist ? (
-                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
+                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
                                         <SelectTrigger className="w-[180px] h-8 text-xs">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -382,7 +382,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         </SelectContent>
                                     </Select>
                                 ) : (
-                                    <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
+                                    <Badge variant={getStatusVariant(spoke.status)}>{spoke.status}</Badge>
                                 )}
                             </TableCell>
                             <TableCell className="text-right">
@@ -408,7 +408,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                             </div>
                             <div>
                                 {isSpecialist ? (
-                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as OnboardingStatus)} defaultValue={spoke.onboardingStatus}>
+                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
                                         <SelectTrigger className="w-full h-9 text-xs">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -425,7 +425,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         </SelectContent>
                                     </Select>
                                 ) : (
-                                    <Badge variant={getStatusVariant(spoke.onboardingStatus)}>{spoke.onboardingStatus}</Badge>
+                                    <Badge variant={getStatusVariant(spoke.status)}>{spoke.status}</Badge>
                                 )}
                             </div>
                             <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>

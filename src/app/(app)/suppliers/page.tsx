@@ -11,7 +11,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles } from 'lucide-react';
-import type { Vendor, OnboardingStatus } from '@/lib/types';
+import type { Vendor, SpokeStatus } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -31,7 +31,7 @@ export default function VendorsPage() {
   const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
-    if (s.onboardingStatus === 'Onboarding') return false;
+    if (s.status === 'Onboarding') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(s.assignedTo || '');
   });
@@ -47,7 +47,7 @@ export default function VendorsPage() {
     return users.find(u => u.uid === userId)?.name || 'Unknown';
   };
 
-  const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+  const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
         case 'Active':
             return 'default';
@@ -71,7 +71,7 @@ export default function VendorsPage() {
   const handleStartOnboarding = (e: React.MouseEvent, vendor: Vendor) => {
     e.stopPropagation();
     
-    updateVendor({ ...vendor, onboardingStatus: 'Onboarding' });
+    updateVendor({ ...vendor, status: 'Onboarding' });
 
     toast({
         title: 'Onboarding Started',
@@ -138,7 +138,7 @@ export default function VendorsPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(vendor.onboardingStatus)}>{vendor.onboardingStatus}</Badge>
+                  <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
                 </TableCell>
                 <TableCell>{vendor.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
@@ -185,7 +185,7 @@ export default function VendorsPage() {
                       </div>
                     )}
                      <div className="flex items-center gap-2">
-                        <Badge variant={getStatusVariant(vendor.onboardingStatus)}>{vendor.onboardingStatus}</Badge>
+                        <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
                         <Badge variant="outline">{vendor.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{vendor.contactNumber}</p>

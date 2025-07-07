@@ -106,7 +106,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           location: values.location,
           product: values.product || undefined,
           assignedTo: isSpecialist ? null : currentUser.uid,
-          onboardingStatus: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
+          status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
           anchorId: finalAnchorId,
           createdAt: new Date().toISOString(),
           leadScore: scoreResult.score,

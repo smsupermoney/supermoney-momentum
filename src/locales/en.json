@@ -108,7 +108,7 @@
       "spokeTable": {
         "name": "{type} Name",
         "contact": "Contact Number",
-        "status": "Onboarding Status",
+        "status": "Status",
         "actions": "Actions",
         "viewDetails": "View Details",
         "noSpokes": "No {type} associated yet."
@@ -138,7 +138,7 @@
     "table": {
       "name": "Name",
       "contact": "Contact",
-      "status": "Onboarding Status",
+      "status": "Status",
       "leadType": "Lead Type",
       "anchor": "Associated Anchor",
       "assignedTo": "Assigned To",

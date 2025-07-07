@@ -14,7 +14,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Dealer, OnboardingStatus } from '@/lib/types';
+import type { Dealer, SpokeStatus } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -43,8 +43,8 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const anchorName = dealer.anchorId ? anchors.find(a => a.id === dealer.anchorId)?.name : 'N/A';
 
-  const handleStatusChange = (newStatus: OnboardingStatus) => {
-    updateDealer({ ...dealer, onboardingStatus: newStatus });
+  const handleStatusChange = (newStatus: SpokeStatus) => {
+    updateDealer({ ...dealer, status: newStatus });
     toast({
       title: 'Dealer Status Updated',
       description: `${dealer.name}'s status is now ${newStatus}.`,
@@ -65,7 +65,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
             <DialogHeader>
             <DialogTitle>{dealer.name}</DialogTitle>
             <DialogDescription>
-                Update the onboarding status and view details for this dealer.
+                Update the status and view details for this dealer.
             </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
@@ -80,9 +80,9 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     <div><p className="text-muted-foreground">Lead Type</p><p>{dealer.leadType || 'New'}</p></div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="onboarding-status">Onboarding Status</Label>
-                    <Select onValueChange={(v) => handleStatusChange(v as OnboardingStatus)} defaultValue={dealer.onboardingStatus}>
-                        <SelectTrigger id="onboarding-status">
+                    <Label htmlFor="status">Status</Label>
+                    <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
+                        <SelectTrigger id="status">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

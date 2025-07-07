@@ -170,9 +170,9 @@ function OnboardingDashboard() {
                         <TableBody>
                             {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
                                 const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
-                                const activeDealers = anchorDealers.filter(d => d.onboardingStatus === 'Active').length;
+                                const activeDealers = anchorDealers.filter(d => d.status === 'Active').length;
                                 const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
-                                const activeVendors = anchorVendors.filter(s => s.onboardingStatus === 'Active').length;
+                                const activeVendors = anchorVendors.filter(s => s.status === 'Active').length;
                                 return (
                                     <TableRow key={anchor.id}>
                                         <TableCell className="font-medium">{anchor.name}</TableCell>
@@ -198,9 +198,9 @@ function OnboardingDashboard() {
                  <div className="space-y-4 md:hidden">
                     {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
                         const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
-                        const activeDealers = anchorDealers.filter(d => d.onboardingStatus === 'Active').length;
+                        const activeDealers = anchorDealers.filter(d => d.status === 'Active').length;
                         const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
-                        const activeVendors = anchorVendors.filter(s => s.onboardingStatus === 'Active').length;
+                        const activeVendors = anchorVendors.filter(s => s.status === 'Active').length;
                         return (
                              <Card key={anchor.id} className="p-0">
                                 <CardHeader className="p-4 pb-2">

@@ -11,7 +11,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles } from 'lucide-react';
-import type { Dealer, OnboardingStatus } from '@/lib/types';
+import type { Dealer, SpokeStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -30,7 +30,7 @@ export default function DealersPage() {
   const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
-    if (d.onboardingStatus === 'Onboarding') return false;
+    if (d.status === 'Onboarding') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(d.assignedTo || '');
   });
@@ -45,7 +45,7 @@ export default function DealersPage() {
     return users.find(u => u.uid === userId)?.name || 'Unknown';
   };
   
-  const getStatusVariant = (status: OnboardingStatus): "default" | "secondary" | "outline" | "destructive" => {
+  const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
         case 'Active':
             return 'default';
@@ -69,7 +69,7 @@ export default function DealersPage() {
   const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
     e.stopPropagation();
     
-    updateDealer({ ...dealer, onboardingStatus: 'Onboarding' });
+    updateDealer({ ...dealer, status: 'Onboarding' });
 
     toast({
         title: 'Onboarding Started',
@@ -136,7 +136,7 @@ export default function DealersPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
+                  <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                 </TableCell>
                 <TableCell>{dealer.leadType || 'New'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
@@ -183,7 +183,7 @@ export default function DealersPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
+                        <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                         <Badge variant="outline">{dealer.leadType || 'New'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
