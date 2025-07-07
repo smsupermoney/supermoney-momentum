@@ -34,13 +34,13 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
   }
   
   const filteredTasks = getVisibleTasks()
+    .filter(task => task.status !== 'Completed')
     .filter(task => {
         if (!dueDateFilter || dueDateFilter === 'all') return true;
         const dueDate = new Date(task.dueDate);
         if (dueDateFilter === 'today') return isToday(dueDate);
         if (dueDateFilter === 'this-week') return isThisWeek(dueDate, { weekStartsOn: 1 });
-        // Show overdue tasks that are not yet completed
-        if (dueDateFilter === 'overdue') return isPast(dueDate) && !isToday(dueDate) && task.status !== 'Completed';
+        if (dueDateFilter === 'overdue') return isPast(dueDate) && !isToday(dueDate);
         return true;
     })
     .filter(task => {
@@ -87,7 +87,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
       setCompletedTask(null);
   }
   
-  const showAssignedTo = currentUser && currentUser.role !== 'Sales' && currentUser.role !== 'Business Development';
+  const showAssignedTo = true;
 
 
   return (
@@ -125,7 +125,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               </TableRow>
             )) : (
               <TableRow>
-                  <TableCell colSpan={showAssignedTo ? 8 : 7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     {t('tasks.list.noTasks')}
                   </TableCell>
                 </TableRow>
