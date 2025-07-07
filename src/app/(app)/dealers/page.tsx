@@ -116,7 +116,6 @@ export default function DealersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
-              <TableHead>{t('dealers.table.contact')}</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
@@ -137,10 +136,6 @@ export default function DealersPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                    <div>{dealer.contactNumber}</div>
-                    <div className="text-xs text-muted-foreground">{dealer.email || 'No email'}</div>
-                </TableCell>
-                <TableCell>
                   <Badge variant={getStatusVariant(dealer.onboardingStatus)}>{dealer.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{dealer.leadType || 'New'}</TableCell>
@@ -158,7 +153,7 @@ export default function DealersPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   {t('dealers.noDealers')}
                 </TableCell>
               </TableRow>

@@ -118,7 +118,6 @@ export default function VendorsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
-              <TableHead>{t('dealers.table.contact')}</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
@@ -139,10 +138,6 @@ export default function VendorsPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                    <div>{vendor.contactNumber}</div>
-                    <div className="text-xs text-muted-foreground">{vendor.email || 'No email'}</div>
-                </TableCell>
-                <TableCell>
                   <Badge variant={getStatusVariant(vendor.onboardingStatus)}>{vendor.onboardingStatus}</Badge>
                 </TableCell>
                 <TableCell>{vendor.leadType || 'New'}</TableCell>
@@ -160,7 +155,7 @@ export default function VendorsPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   {t('vendors.noVendors')}
                 </TableCell>
               </TableRow>
