@@ -6,6 +6,9 @@ import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, No
 import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs } from '@/lib/mock-data';
 import { isPast, isToday, isAfter, subDays, format } from 'date-fns';
 import { useLanguage } from './language-context';
+import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
+import * as firestoreService from '@/services/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppContextType {
   users: User[];
@@ -53,6 +56,7 @@ const getAllSubordinates = (managerId: string, users: User[]): User[] => {
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { t: translate } = useLanguage();
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +69,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  useEffect(() => {
+  const loadMockData = useCallback(() => {
     setUsers(mockUsers);
     setAnchors(mockAnchors);
     setDealers(mockDealers);
@@ -73,7 +77,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setTasks(mockTasks);
     setActivityLogs(mockActivityLogs);
     setDailyActivities([]);
-
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -81,10 +84,69 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Could not parse user from session storage", error);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }, []);
+  
+  useEffect(() => {
+    if (!firebaseEnabled) {
+      console.log("Firebase is not enabled. Loading mock data.");
+      loadMockData();
+      return;
+    }
+    
+    if (!auth) {
+        console.log("Firebase Auth is not available. Loading mock data.");
+        loadMockData();
+        return;
+    }
+
+    console.log("Firebase is enabled. Setting up auth state listener.");
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoading(true);
+      if (user) {
+        const userProfile = await firestoreService.checkAndCreateUser(user);
+        if (userProfile) {
+          setCurrentUser(userProfile);
+          const allUsers = await firestoreService.getUsers();
+          setUsers(allUsers);
+          
+          const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+            firestoreService.getAnchors(userProfile, allUsers),
+            firestoreService.getDealers(),
+            firestoreService.getVendors(),
+            firestoreService.getTasks(),
+            firestoreService.getActivityLogs(),
+            firestoreService.getDailyActivities(),
+          ]);
+          setAnchors(anchorsData);
+          setDealers(dealersData);
+          setVendors(vendorsData);
+          setTasks(tasksData);
+          setActivityLogs(activityLogsData);
+          setDailyActivities(dailyActivitiesData);
+
+        } else {
+            console.error(`Could not get or create a user profile for ${user.email}.`);
+            await logout();
+        }
+      } else {
+        // User is signed out.
+        setCurrentUser(null);
+        sessionStorage.removeItem('currentUser');
+        setUsers(mockUsers);
+        setAnchors([]);
+        setDealers([]);
+        setVendors([]);
+        setTasks([]);
+        setActivityLogs([]);
+        setDailyActivities([]);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [loadMockData]);
 
   const visibleUsers = useMemo(() => {
       if (!currentUser || users.length === 0) return [];
@@ -107,10 +169,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const userNotifications: Notification[] = [];
         const now = new Date();
 
-        // --- Notifications for the Current User ---
         const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid && t.status !== 'Completed');
 
-        // 1. Overdue tasks
         userTasks
             .filter(t => isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate)))
             .forEach(task => {
@@ -126,7 +186,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 });
             });
 
-        // 2. Tasks due today
         userTasks
             .filter(t => isToday(new Date(t.dueDate)))
             .forEach(task => {
@@ -142,16 +201,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 });
             });
 
-
-        // --- Notifications for Managers ---
         if (['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
             const subordinateIds = visibleUserIds.filter(id => id !== currentUser.uid);
-            
-            // 3. Deal Won by a reportee
             const subordinateAnchors = anchors.filter(a => subordinateIds.includes(a.assignedTo || ''));
             
             subordinateAnchors
-                .filter(a => a.status === 'Active' && isAfter(new Date(a.updatedAt || a.createdAt), subDays(now, 2))) // Recently became active
+                .filter(a => a.status === 'Active' && isAfter(new Date(a.updatedAt || a.createdAt), subDays(now, 2)))
                 .forEach(anchor => {
                     const assignedUser = users.find(u => u.uid === anchor.assignedTo);
                     userNotifications.push({
@@ -203,6 +258,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = (email: string, password: string): boolean => {
+    if (firebaseEnabled) {
+      toast({ variant: 'destructive', title: 'Login method changed', description: 'Please use the "Sign in with Google" button.' });
+      return false;
+    }
     if (password !== 'test123') return false;
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (user) {
@@ -213,58 +272,98 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (firebaseEnabled && auth) {
+      await firebaseSignOut(auth);
+    }
     setCurrentUser(null);
     sessionStorage.removeItem('currentUser');
+    setUsers(mockUsers); // Reset users to show login options
   };
 
-  const addAnchor = (anchorData: Omit<Anchor, 'id'>) => {
-    const newAnchor = { id: `anchor-${Date.now()}`, createdAt: new Date().toISOString(), ...anchorData };
-    setAnchors(prev => [newAnchor, ...prev]);
+  const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addAnchor(anchorData);
+      setAnchors(prev => [{ ...anchorData, id: `temp-${Date.now()}` }, ...prev]); // Optimistic update
+    } else {
+      const newAnchor = { ...anchorData, id: `anchor-${Date.now()}`};
+      setAnchors(prev => [newAnchor, ...prev]);
+    }
   };
 
-  const updateAnchor = (updatedAnchor: Anchor) => {
+  const updateAnchor = async (updatedAnchor: Anchor) => {
+    if (firebaseEnabled) {
+      await firestoreService.updateAnchor(updatedAnchor);
+    }
     setAnchors(prev => prev.map(a => a.id === updatedAnchor.id ? {...updatedAnchor, updatedAt: new Date().toISOString()} : a));
   };
 
-  const addDealer = (dealerData: Omit<Dealer, 'id'>) => {
-    const newDealer = { id: `dealer-${Date.now()}`, createdAt: new Date().toISOString(), ...dealerData };
+  const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
+    if(firebaseEnabled) {
+      await firestoreService.addDealer(dealerData);
+    }
+    const newDealer = { ...dealerData, id: `dealer-${Date.now()}` };
     setDealers(prev => [newDealer, ...prev]);
   };
   
-  const updateDealer = (updatedDealer: Dealer) => {
+  const updateDealer = async (updatedDealer: Dealer) => {
+    if(firebaseEnabled) {
+      await firestoreService.updateDealer(updatedDealer);
+    }
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
   };
   
-  const addVendor = (vendorData: Omit<Vendor, 'id'>) => {
-    const newVendor = { id: `vendor-${Date.now()}`, createdAt: new Date().toISOString(), ...vendorData };
+  const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addVendor(vendorData);
+    }
+    const newVendor = { ...vendorData, id: `vendor-${Date.now()}` };
     setVendors(prev => [newVendor, ...prev]);
   };
 
-  const updateVendor = (updatedVendor: Vendor) => {
+  const updateVendor = async (updatedVendor: Vendor) => {
+    if(firebaseEnabled) {
+      await firestoreService.updateVendor(updatedVendor);
+    }
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
   };
 
-  const addTask = (taskData: Omit<Task, 'id'>) => {
-    const newTask = { id: `task-${Date.now()}`, createdAt: new Date().toISOString(), ...taskData };
+  const addTask = async (taskData: Omit<Task, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addTask(taskData);
+    }
+    const newTask = { ...taskData, id: `task-${Date.now()}` };
     setTasks(prev => [newTask, ...prev]);
   };
 
-  const updateTask = (updatedTask: Task) => {
+  const updateTask = async (updatedTask: Task) => {
+    if (firebaseEnabled) {
+      await firestoreService.updateTask(updatedTask);
+    }
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
   };
   
-  const addActivityLog = (logData: Omit<ActivityLog, 'id'>) => {
-    const newLog = { id: `log-${Date.now()}`, ...logData };
+  const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addActivityLog(logData);
+    }
+    const newLog = { ...logData, id: `log-${Date.now()}` };
     setActivityLogs(prev => [newLog, ...prev]);
   };
   
-  const addDailyActivity = (activityData: Omit<DailyActivity, 'id'>) => {
-    const newActivity = { id: `daily-activity-${Date.now()}`, ...activityData };
+  const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addDailyActivity(activityData);
+    }
+    const newActivity = { ...activityData, id: `daily-activity-${Date.now()}` };
     setDailyActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.activityTimestamp).getTime() - new Date(a.activityTimestamp).getTime()));
   };
 
-  const addUser = (userData: Omit<User, 'uid'|'id'>) => {
+  const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
+     if (firebaseEnabled) {
+      toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User creation should be handled via Firebase Authentication console.' });
+      return;
+    }
     const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
     setUsers(prev => [newUser, ...prev]);
   };
