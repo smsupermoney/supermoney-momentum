@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -59,19 +60,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
   const allNavItems = [
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
     { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
     { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
   ];
   
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role)).map(item => {
       let label = t(item.labelKey);
-      if (currentUser.role === 'Onboarding Specialist' && item.href === '/anchors') {
+      if (currentUser.role === 'Business Development' && item.href === '/anchors') {
           label = t('sidebar.onboarding');
       }
       return { ...item, label };

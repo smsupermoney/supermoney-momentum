@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -157,7 +158,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                       <SelectItem value="Zonal Sales Manager">Zonal Sales Manager</SelectItem>
                       <SelectItem value="Regional Sales Manager">Regional Sales Manager</SelectItem>
                       <SelectItem value="National Sales Manager">National Sales Manager</SelectItem>
-                      <SelectItem value="Onboarding Specialist">Onboarding Specialist</SelectItem>
+                      <SelectItem value="Business Development">Business Development</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>

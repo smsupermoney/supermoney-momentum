@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -50,7 +51,7 @@ export function TaskBoard() {
         const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
         teamMemberIds.push(currentUser.uid);
         return tasks.filter(task => teamMemberIds.includes(task.assignedTo));
-      case 'Onboarding Specialist':
+      case 'Business Development':
       case 'Sales':
         return tasks.filter(task => task.assignedTo === currentUser.uid);
       default:

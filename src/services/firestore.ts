@@ -1,4 +1,5 @@
 
+
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -108,7 +109,7 @@ export const getAnchors = async (user: User, allUsers: User[]): Promise<Anchor[]
   let visibleUserIds: string[];
   if (user.role === 'Admin') {
     visibleUserIds = allUsers.map(u => u.uid);
-  } else if (user.role === 'Sales' || user.role === 'Onboarding Specialist') {
+  } else if (user.role === 'Sales' || user.role === 'Business Development') {
     visibleUserIds = [user.uid];
   } else {
     const subordinates = getAllSubordinates(user.uid, allUsers);

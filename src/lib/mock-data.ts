@@ -9,7 +9,7 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 export const mockUsers: User[] = [
   { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2', region: 'West' },
   { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
-  { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Onboarding Specialist', region: 'National' },
+  { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Business Development', region: 'National' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
   { id: 'user-nikhil', uid: 'user-nikhil', name: 'Nikhil', email: 'nikhil@supermoney.in', role: 'Admin', region: 'National' },
 ];
@@ -25,6 +25,7 @@ export const mockAnchors: Anchor[] = [
       { id: 'contact-2', name: 'Sunita Sharma', designation: 'Procurement Head', email: 'sunita.s@reliance.com', phone: '9876543219', isPrimary: false },
     ],
     assignedTo: 'user-1',
+    createdBy: 'user-1',
     createdAt: daysAgo(20),
     dealerIds: ['dealer-1', 'dealer-4'],
     vendorIds: ['vendor-1', 'vendor-2'],
@@ -45,6 +46,7 @@ export const mockAnchors: Anchor[] = [
       { id: 'contact-3', name: 'Sunita Rao', designation: 'VP Finance', email: 'sunita.rao@tatamotors.com', phone: '9876543211', isPrimary: true },
     ],
     assignedTo: 'user-1',
+    createdBy: 'user-1',
     createdAt: daysAgo(15),
     dealerIds: ['dealer-2'],
     vendorIds: [],
@@ -61,6 +63,7 @@ export const mockAnchors: Anchor[] = [
         { id: 'contact-4', name: 'Vijay Singh', designation: 'Finance Director', email: 'vijay.s@apollotyres.com', phone: '9876543212', isPrimary: true },
     ],
     assignedTo: 'user-2',
+    createdBy: 'user-2',
     createdAt: daysAgo(10),
     dealerIds: [],
     vendorIds: [],
@@ -77,6 +80,7 @@ export const mockAnchors: Anchor[] = [
         { id: 'contact-5', name: 'Kishore Biyani', designation: 'CEO', email: 'kb@futuregroup.in', phone: '9876543213', isPrimary: true },
     ],
     assignedTo: 'user-2',
+    createdBy: 'user-2',
     createdAt: daysAgo(8),
     dealerIds: [],
     vendorIds: [],
@@ -93,6 +97,7 @@ export const mockAnchors: Anchor[] = [
         { id: 'contact-6', name: 'John Doe', designation: 'Owner', email: 'john.doe@unassigned.com', phone: '9999999999', isPrimary: true },
     ],
     assignedTo: null,
+    createdBy: 'user-admin',
     createdAt: daysAgo(2),
     dealerIds: [],
     vendorIds: [],
@@ -107,11 +112,27 @@ export const mockAnchors: Anchor[] = [
         { id: 'contact-7', name: 'Aisha Khan', designation: 'Head of Finance', email: 'aisha.k@pharmasol.com', phone: '9876512345', isPrimary: true },
     ],
     assignedTo: 'user-1',
+    createdBy: 'user-1',
     createdAt: daysAgo(5),
     dealerIds: [],
     vendorIds: [],
     leadSource: 'Content Marketing',
     annualTurnover: 750000000,
+  },
+  { 
+    id: 'anchor-7', 
+    name: 'Logistics King', 
+    industry: 'Logistics',
+    status: 'Pending Approval',
+    contacts: [
+        { id: 'contact-8', name: 'Raj Verma', designation: 'Director', email: 'raj.v@logisticking.com', phone: '9876543214', isPrimary: true },
+    ],
+    assignedTo: null,
+    createdBy: 'user-3', // Business Development user
+    createdAt: daysAgo(1),
+    dealerIds: [],
+    vendorIds: [],
+    leadSource: 'Referral',
   },
 ];
 
@@ -210,7 +231,7 @@ export const mockTasks: Task[] = [
     priority: 'High',
     description: 'Collect all required KYC documents for Pune Auto.',
     status: 'To-Do',
-    assignedTo: 'user-3', // Assigned to Onboarding Specialist
+    assignedTo: 'user-3', // Assigned to Business Development
     createdAt: daysAgo(1),
   },
 ];

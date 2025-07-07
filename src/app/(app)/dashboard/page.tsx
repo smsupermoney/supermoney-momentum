@@ -31,12 +31,12 @@ function QuickNav() {
 
   const allNavLinks = [
     { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
-    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
     { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Onboarding Specialist'] },
+    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
   ];
 
   const visibleNavLinks = allNavLinks.filter(link => link.roles.includes(currentUser.role as UserRole));
@@ -46,7 +46,7 @@ function QuickNav() {
       {visibleNavLinks.map(link => {
         const Icon = link.icon;
         let label = t(link.labelKey);
-        if (currentUser.role === 'Onboarding Specialist' && link.href === '/anchors') {
+        if (currentUser.role === 'Business Development' && link.href === '/anchors') {
           label = t('sidebar.onboarding');
         }
         return (
@@ -80,7 +80,7 @@ export default function DashboardPage() {
             case 'Regional Sales Manager':
             case 'National Sales Manager':
                 return <ManagerDashboard />;
-            case 'Onboarding Specialist':
+            case 'Business Development':
                 return <OnboardingDashboard />;
             case 'Admin':
                 return <AdminDashboard />;
@@ -96,7 +96,7 @@ export default function DashboardPage() {
           case 'Regional Sales Manager':
           case 'National Sales Manager':
               return t('dashboard.managerDescription');
-          case 'Onboarding Specialist': return t('dashboard.specialistDescription');
+          case 'Business Development': return t('dashboard.specialistDescription');
           case 'Admin': return t('dashboard.adminDescription');
           default: return "";
       }
@@ -142,7 +142,7 @@ function ManagerDashboard() {
     );
 }
 
-// Onboarding Specialist Dashboard
+// Business Development Dashboard
 function OnboardingDashboard() {
     const { anchors, dealers, vendors } = useApp();
     const { t } = useLanguage();

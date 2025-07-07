@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import type { Task } from '@/lib/types';
+import type { Task, UserRole } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -34,6 +35,7 @@ const formSchema = z.object({
   dueDate: z.date({ required_error: 'A due date is required.' }),
   priority: z.string().min(1, 'Priority is required'),
   description: z.string().optional(),
+  assignedTo: z.string().optional(),
 });
 
 type NewTaskFormValues = z.infer<typeof formSchema>;
@@ -44,10 +46,14 @@ interface NewTaskDialogProps {
   prefilledAnchorId?: string;
 }
 
+const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+
 export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTaskDialogProps) {
-  const { anchors, addTask, currentUser } = useApp();
+  const { anchors, addTask, currentUser, visibleUsers } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isManager = currentUser && managerRoles.includes(currentUser.role);
 
   const form = useForm<NewTaskFormValues>({
     resolver: zodResolver(formSchema),
@@ -57,6 +63,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         type: '',
         priority: 'Medium',
         description: '',
+        assignedTo: currentUser?.uid,
     },
   });
 
@@ -64,7 +71,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     if(prefilledAnchorId) {
         form.setValue('anchorId', prefilledAnchorId);
     }
-  }, [prefilledAnchorId, form]);
+     form.setValue('assignedTo', currentUser?.uid);
+  }, [prefilledAnchorId, currentUser, form, open]);
 
   const handleClose = () => {
     form.reset({
@@ -73,7 +81,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         type: '',
         priority: 'Medium',
         description: '',
-        dueDate: undefined
+        dueDate: undefined,
+        assignedTo: currentUser?.uid,
     });
     onOpenChange(false);
   };
@@ -85,6 +94,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     }
     setIsSubmitting(true);
     try {
+        const assignedToId = values.assignedTo || currentUser.uid;
+
         const newTask: Omit<Task, 'id'> = {
           title: values.title,
           associatedWith: { anchorId: values.anchorId },
@@ -93,7 +104,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           priority: values.priority as Task['priority'],
           description: values.description || '',
           status: 'To-Do',
-          assignedTo: currentUser.uid,
+          assignedTo: assignedToId,
           createdAt: new Date().toISOString(),
         };
         addTask(newTask);
@@ -115,6 +126,32 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+            
+            {isManager && (
+                <FormField
+                control={form.control}
+                name="assignedTo"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Assign To</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a team member" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {visibleUsers.map((user) => (
+                                <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+
             <FormField name="title" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Task Title</FormLabel><FormControl><Input placeholder="e.g. Follow up on Proposal V2" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>

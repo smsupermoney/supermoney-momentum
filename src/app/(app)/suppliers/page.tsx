@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +31,7 @@ export default function VendorsPage() {
   const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
-    if (currentUser.role === 'Onboarding Specialist') return true;
+    if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(s.assignedTo || '');
   });
 

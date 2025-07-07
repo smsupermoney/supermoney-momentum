@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -11,8 +12,8 @@ export function PipelineCard() {
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
-    // Onboarding specialists do not see a pipeline view on their dashboard
-    if (currentUser.role === 'Onboarding Specialist') return [];
+    // Business Development role does not see a pipeline view on their dashboard
+    if (currentUser.role === 'Business Development') return [];
     return anchors.filter(anchor => visibleUserIds.includes(anchor.assignedTo || ''));
   }
 

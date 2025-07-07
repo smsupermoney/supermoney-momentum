@@ -31,7 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown, Loader2, MapPin, Paperclip, Camera, Mic, Square } from 'lucide-react';
-import type { DailyActivity, DailyActivityType } from '@/lib/types';
+import type { DailyActivity, DailyActivityType, UserRole } from '@/lib/types';
 import Image from 'next/image';
 import { CameraCaptureDialog } from './camera-capture-dialog';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
@@ -48,6 +48,7 @@ const formSchema = z.object({
   }).optional(),
   images: z.array(z.string()).optional(),
   activityTimestamp: z.string().optional(),
+  logForUserId: z.string().optional(),
 });
 
 type NewActivityFormValues = z.infer<typeof formSchema>;
@@ -57,8 +58,10 @@ interface NewActivityDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+
 export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps) {
-  const { currentUser, addDailyActivity, anchors, dealers, vendors } = useApp();
+  const { currentUser, addDailyActivity, anchors, dealers, vendors, visibleUsers, users } = useApp();
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +74,8 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  const isManager = currentUser && managerRoles.includes(currentUser.role);
+  
   const form = useForm<NewActivityFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,6 +83,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       title: '',
       associatedEntity: '',
       notes: '',
+      logForUserId: currentUser?.uid,
     },
   });
 
@@ -88,7 +94,13 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   ];
 
   const handleClose = () => {
-    form.reset();
+    form.reset({
+      logForUserId: currentUser?.uid,
+      activityType: '',
+      title: '',
+      associatedEntity: '',
+      notes: '',
+    });
     setImagePreviews([]);
     onOpenChange(false);
   };
@@ -191,13 +203,15 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
 
 
   const onSubmit = (values: NewActivityFormValues) => {
-    if (!currentUser) return;
+    const logForUser = users.find(u => u.uid === values.logForUserId) || currentUser;
+    if (!logForUser) return;
+
     setIsSubmitting(true);
     
     try {
       const newActivity: Partial<DailyActivity> = {
-        userId: currentUser.uid,
-        userName: currentUser.name,
+        userId: logForUser.uid,
+        userName: logForUser.name,
         activityType: values.activityType as DailyActivityType,
         title: values.title,
         notes: values.notes,
@@ -226,7 +240,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       }
 
       addDailyActivity(newActivity as Omit<DailyActivity, 'id'>);
-      toast({ title: 'Activity Logged', description: 'Your activity has been successfully logged.' });
+      toast({ title: 'Activity Logged', description: `Activity for ${logForUser.name} has been logged.` });
       handleClose();
 
     } catch (error) {
@@ -259,6 +273,28 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+            
+            {isManager && (
+              <FormField
+                control={form.control}
+                name="logForUserId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Log Activity For</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {visibleUsers.map(user => (
+                          <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="activityType"

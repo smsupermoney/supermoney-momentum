@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -299,7 +300,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onUpdateSpoke: (spoke: any) => void; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
     const { currentUser } = useApp();
     const { t } = useLanguage();
-    const isSpecialist = currentUser?.role === 'Onboarding Specialist';
+    const isSpecialist = currentUser?.role === 'Business Development';
 
     const handleStatusChange = (spoke: Dealer | Vendor, newStatus: OnboardingStatus) => {
         onUpdateSpoke({...spoke, onboardingStatus: newStatus});

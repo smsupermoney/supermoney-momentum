@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -33,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { Anchor } from '@/lib/types';
+import type { Anchor, LeadStatus } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
@@ -101,8 +102,23 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
 
       const scoreResult = await leadScoring(leadScoringInput);
       
-      const isSpecialist = currentUser.role === 'Onboarding Specialist';
+      const isAdmin = currentUser.role === 'Admin';
+      const isBusinessDevelopment = currentUser.role === 'Business Development';
 
+      let status: LeadStatus;
+      let assignedTo: string | null;
+
+      if (isBusinessDevelopment) {
+        status = 'Pending Approval';
+        assignedTo = null; // Admin will assign after approval
+      } else if (isAdmin) {
+        status = 'Unassigned Lead';
+        assignedTo = null;
+      } else {
+        status = 'Lead';
+        assignedTo = currentUser.uid;
+      }
+      
       const newAnchor: Omit<Anchor, 'id'> = {
         name: values.companyName,
         industry: values.industry,
@@ -117,8 +133,9 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
-        status: isSpecialist ? 'Unassigned Lead' : 'Lead',
-        assignedTo: isSpecialist ? null : currentUser.uid,
+        status: status,
+        assignedTo: assignedTo,
+        createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],
         vendorIds: [],
@@ -133,6 +150,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         description: (
           <div>
             <p>{values.companyName} has been added as a new lead.</p>
+            {isBusinessDevelopment && <p className="font-semibold">It is now pending Admin approval.</p>}
             <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
             <p className="text-xs">{scoreResult.reason}</p>
           </div>

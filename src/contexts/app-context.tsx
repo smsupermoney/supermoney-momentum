@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
@@ -204,7 +205,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const visibleUsers = useMemo(() => {
       if (!currentUser || users.length === 0) return [];
       if (currentUser.role === 'Admin') return users;
-      if (currentUser.role === 'Sales' || currentUser.role === 'Onboarding Specialist') {
+      if (currentUser.role === 'Sales' || currentUser.role === 'Business Development') {
           return users.filter(u => u.uid === currentUser.uid);
       }
       const subordinates = getAllSubordinates(currentUser.uid, users);

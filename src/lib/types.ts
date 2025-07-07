@@ -1,5 +1,6 @@
 
-export type UserRole = 'Admin' | 'Sales' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Onboarding Specialist';
+
+export type UserRole = 'Admin' | 'Sales' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development';
 
 export interface User {
   id: string; // Document ID from Firestore
@@ -11,7 +12,7 @@ export interface User {
   region?: string;
 }
 
-export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted';
+export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Pending Approval' | 'Rejected';
 export type OnboardingStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested';
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
@@ -63,6 +64,7 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
   vendorIds: string[];
   contacts: Contact[];
   nextBestAction?: NextBestAction;
+  createdBy?: string;
 }
 
 export interface Dealer extends BaseLead {

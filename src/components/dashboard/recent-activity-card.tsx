@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -29,8 +30,8 @@ export function RecentActivityCard({ className }: { className?: string }) {
   const getVisibleLogs = () => {
     if (!currentUser) return [];
     
-    // Onboarding Specialists only see their own activity.
-    if (currentUser.role === 'Onboarding Specialist') {
+    // Business Development users only see their own activity.
+    if (currentUser.role === 'Business Development') {
       return activityLogs.filter(log => log.userName === currentUser.name);
     }
     

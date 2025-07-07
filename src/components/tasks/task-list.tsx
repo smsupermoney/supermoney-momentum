@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { useApp } from '@/contexts/app-context';
@@ -26,7 +27,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
   
   const getVisibleTasks = () => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Onboarding Specialist') {
+    if (currentUser.role === 'Business Development') {
       return tasks.filter(task => task.assignedTo === currentUser.uid);
     }
     return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
@@ -82,7 +83,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
       setCompletedTask(null);
   }
   
-  const showAssignedTo = currentUser && currentUser.role !== 'Sales' && currentUser.role !== 'Onboarding Specialist';
+  const showAssignedTo = currentUser && currentUser.role !== 'Sales' && currentUser.role !== 'Business Development';
 
 
   return (

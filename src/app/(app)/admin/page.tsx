@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { PendingAnchorsTable } from '@/components/admin/pending-anchors-table';
 
 
 // Define a union type for the different kinds of leads
@@ -149,9 +150,9 @@ export default function AdminPage() {
     if (!currentUser) return [];
     if (currentUser.role === 'Admin') {
       // Admins can assign to any non-admin, non-specialist user.
-      return users.filter(u => u.role !== 'Admin' && u.role !== 'Onboarding Specialist');
+      return users.filter(u => u.role !== 'Admin' && u.role !== 'Business Development');
     }
-    if(currentUser.role === 'Onboarding Specialist') {
+    if(currentUser.role === 'Business Development') {
       return users.filter(u => ['Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
     }
     // Managers can assign to their direct or indirect subordinates.
@@ -203,7 +204,7 @@ export default function AdminPage() {
   };
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  if (!currentUser || (currentUser.role !== 'Admin' && !managerialRoles.includes(currentUser.role) && currentUser.role !== 'Onboarding Specialist')) {
+  if (!currentUser || (currentUser.role !== 'Admin' && !managerialRoles.includes(currentUser.role) && currentUser.role !== 'Business Development')) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">You do not have permission to view this page.</p>
@@ -239,87 +240,90 @@ export default function AdminPage() {
 
       <div className="grid gap-4 mt-6">
         {currentUser.role === 'Admin' && (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <CardTitle>{t('admin.userManagement')}</CardTitle>
-                  <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
+          <>
+            <PendingAnchorsTable />
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle>{t('admin.userManagement')}</CardTitle>
+                    <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
+                  </div>
+                  <Button onClick={() => setIsNewUserDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {t('admin.addNewUser')}
+                  </Button>
                 </div>
-                <Button onClick={() => setIsNewUserDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  {t('admin.addNewUser')}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Desktop Table */}
-              <div className="hidden rounded-lg border md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('admin.table.name')}</TableHead>
-                      <TableHead>{t('admin.table.email')}</TableHead>
-                      <TableHead>{t('admin.table.role')}</TableHead>
-                      <TableHead>{t('admin.table.manager')}</TableHead>
-                      <TableHead>{t('admin.table.region')}</TableHead>
-                      <TableHead className="text-right">{t('admin.table.action')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.uid}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.role}</TableCell>
-                        <TableCell>{getManagerName(user.managerId)}</TableCell>
-                        <TableCell>{user.region || 'N/A'}</TableCell>
-                        <TableCell className="text-right">
-                          {user.uid !== currentUser.uid && (
-                            <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
-                        </TableCell>
+              </CardHeader>
+              <CardContent>
+                {/* Desktop Table */}
+                <div className="hidden rounded-lg border md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('admin.table.name')}</TableHead>
+                        <TableHead>{t('admin.table.email')}</TableHead>
+                        <TableHead>{t('admin.table.role')}</TableHead>
+                        <TableHead>{t('admin.table.manager')}</TableHead>
+                        <TableHead>{t('admin.table.region')}</TableHead>
+                        <TableHead className="text-right">{t('admin.table.action')}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {/* Mobile Cards */}
-              <div className="space-y-4 md:hidden">
-                {users.map((user) => (
-                  <Card key={user.uid} className="p-0">
-                    <CardHeader className="p-4 pb-2">
-                      <CardTitle className="text-base">{user.name}</CardTitle>
-                      <CardDescription>{user.email}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-1 p-4 pt-0">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t('admin.table.role')}:</span>
-                        <span className="font-medium">{user.role}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t('admin.table.manager')}:</span>
-                        <span className="font-medium">{getManagerName(user.managerId)}</span>
-                      </div>
-                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{t('admin.table.region')}:</span>
-                        <span className="font-medium">{user.region || 'N/A'}</span>
-                      </div>
-                       {user.uid !== currentUser.uid && (
-                         <div className="pt-2">
-                           <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
-                            <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
-                           </Button>
-                         </div>
-                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.uid}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>{user.role}</TableCell>
+                          <TableCell>{getManagerName(user.managerId)}</TableCell>
+                          <TableCell>{user.region || 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                            {user.uid !== currentUser.uid && (
+                              <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {/* Mobile Cards */}
+                <div className="space-y-4 md:hidden">
+                  {users.map((user) => (
+                    <Card key={user.uid} className="p-0">
+                      <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-base">{user.name}</CardTitle>
+                        <CardDescription>{user.email}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1 p-4 pt-0">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{t('admin.table.role')}:</span>
+                          <span className="font-medium">{user.role}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{t('admin.table.manager')}:</span>
+                          <span className="font-medium">{getManagerName(user.managerId)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{t('admin.table.region')}:</span>
+                          <span className="font-medium">{user.region || 'N/A'}</span>
+                        </div>
+                        {user.uid !== currentUser.uid && (
+                          <div className="pt-2">
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
+                              <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
         <LeadTable
           title={t('admin.unassignedAnchors')}

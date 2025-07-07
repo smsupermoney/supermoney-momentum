@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +30,7 @@ export default function DealersPage() {
   const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
-    if (currentUser.role === 'Onboarding Specialist') return true;
+    if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(d.assignedTo || '');
   });
 

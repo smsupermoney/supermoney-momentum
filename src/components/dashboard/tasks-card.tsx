@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -17,7 +18,7 @@ export function TasksCard() {
 
   const getVisibleTasks = () => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Onboarding Specialist') {
+    if (currentUser.role === 'Business Development') {
       return tasks.filter(task => task.assignedTo === currentUser.uid);
     }
     return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
@@ -72,7 +73,7 @@ export function TasksCard() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">{getAnchorName(task.associatedWith.anchorId)}</p>
                     <Badge variant={priorityVariant[task.priority]} className="capitalize">{task.priority}</Badge>
-                     { (currentUser.role !== 'Sales' && currentUser.role !== 'Onboarding Specialist') && (
+                     { (currentUser.role !== 'Sales' && currentUser.role !== 'Business Development') && (
                         <Badge variant="outline">{getAssignedToName(task.assignedTo)}</Badge>
                      )}
                   </div>

@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -19,10 +20,12 @@ export default function AnchorsPage() {
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
 
-  const pageTitle = currentUser.role === 'Onboarding Specialist' ? t('anchors.onboardingTitle') : t('anchors.title');
+  const canAddAnchor = currentUser.role === 'Admin' || currentUser.role === 'Business Development';
+
+  const pageTitle = currentUser.role === 'Business Development' ? t('anchors.onboardingTitle') : t('anchors.title');
 
   const userAnchors = anchors.filter(anchor => {
-    if (currentUser.role === 'Onboarding Specialist') return true;
+    if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(anchor.assignedTo || '');
   });
 
@@ -31,12 +34,15 @@ export default function AnchorsPage() {
       case 'Active':
       case 'Onboarding':
         return 'default';
-      case 'Negotiation':
       case 'Proposal':
+      case 'Negotiation':
+      case 'Pending Approval':
         return 'secondary';
       case 'Lead':
       case 'Initial Contact':
         return 'outline';
+      case 'Rejected':
+        return 'destructive';
       default:
         return 'outline';
     }
@@ -55,10 +61,12 @@ export default function AnchorsPage() {
   return (
     <>
       <PageHeader title={pageTitle} description={t('anchors.description')}>
-        <Button onClick={() => setIsDialogOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {t('anchors.new')}
-        </Button>
+        {canAddAnchor && (
+          <Button onClick={() => setIsDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('anchors.new')}
+          </Button>
+        )}
       </PageHeader>
       
       <NewAnchorDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
