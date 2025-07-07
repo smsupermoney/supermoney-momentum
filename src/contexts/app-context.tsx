@@ -110,49 +110,57 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    console.log("Firebase is enabled. Setting up auth state listener.");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Handle user being signed out
+      if (!user) {
+        setCurrentUser(null);
+        sessionStorage.removeItem('currentUser');
+        setUsers(mockUsers);
+        setAnchors([]);
+        setDealers([]);
+        setVendors([]);
+        setTasks([]);
+        setActivityLogs([]);
+        setDailyActivities([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Handle user being signed in
       try {
         setIsLoading(true);
-        if (user) {
-          const userProfile = await firestoreService.checkAndCreateUser(user);
-          if (userProfile) {
-            setCurrentUser(userProfile);
-            const allUsers = await firestoreService.getUsers();
-            setUsers(allUsers);
-            
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-              firestoreService.getAnchors(userProfile, allUsers),
-              firestoreService.getDealers(),
-              firestoreService.getVendors(),
-              firestoreService.getTasks(),
-              firestoreService.getActivityLogs(),
-              firestoreService.getDailyActivities(),
-            ]);
-            setAnchors(anchorsData);
-            setDealers(dealersData);
-            setVendors(vendorsData);
-            setTasks(tasksData);
-            setActivityLogs(activityLogsData);
-            setDailyActivities(dailyActivitiesData);
-
-          } else {
-              console.error(`Could not get or create a user profile for ${user.email}.`);
-              await logout();
-          }
-        } else {
-          // User is signed out.
-          setCurrentUser(null);
-          sessionStorage.removeItem('currentUser');
-          setUsers(mockUsers);
-          setAnchors([]);
-          setDealers([]);
-          setVendors([]);
-          setTasks([]);
-          setActivityLogs([]);
-          setDailyActivities([]);
+        const userProfile = await firestoreService.checkAndCreateUser(user);
+        
+        if (!userProfile) {
+          console.error(`Could not get or create a user profile for ${user.email}.`);
+          await logout();
+          setIsLoading(false);
+          return;
         }
+
+        // Set the current user and show the app shell immediately
+        setCurrentUser(userProfile);
+        const allUsers = await firestoreService.getUsers();
+        setUsers(allUsers);
         setIsLoading(false);
+
+        // Fetch remaining data in the background
+        const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+          firestoreService.getAnchors(userProfile, allUsers),
+          firestoreService.getDealers(),
+          firestoreService.getVendors(),
+          firestoreService.getTasks(),
+          firestoreService.getActivityLogs(),
+          firestoreService.getDailyActivities(),
+        ]);
+
+        setAnchors(anchorsData);
+        setDealers(dealersData);
+        setVendors(vendorsData);
+        setTasks(tasksData);
+        setActivityLogs(activityLogsData);
+        setDailyActivities(dailyActivitiesData);
+
       } catch (error: any) {
         console.error("Firebase error caught in onAuthStateChanged:", error);
         if (error.code === 'auth/invalid-api-key' || (error.message && error.message.includes('api-key-not-valid'))) {
@@ -174,7 +182,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             })
             loadMockData();
         }
-        setIsLoading(false);
       }
     });
 
