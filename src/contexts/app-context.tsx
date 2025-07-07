@@ -157,7 +157,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           setUsers(allUsers);
   
           const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-            firestoreService.getAnchors(userProfile, allUsers),
+            firestoreService.getAnchors(),
             firestoreService.getDealers(),
             firestoreService.getVendors(),
             firestoreService.getTasks(),
@@ -255,25 +255,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 });
             });
 
-        if (['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
-            const subordinateIds = visibleUserIds.filter(id => id !== currentUser.uid);
-            const subordinateAnchors = anchors.filter(a => subordinateIds.includes(a.assignedTo || ''));
-            
-            subordinateAnchors
-                .filter(a => a.status === 'Active' && isAfter(new Date(a.updatedAt || a.createdAt), subDays(now, 2)))
-                .forEach(anchor => {
-                    const assignedUser = users.find(u => u.uid === anchor.assignedTo);
-                    userNotifications.push({
-                        id: `notif-deal-won-${anchor.id}`,
-                        userId: currentUser.uid,
-                        title: `Deal Won by ${assignedUser?.name || 'team'}`,
-                        description: `${anchor.name} is now an active anchor.`,
-                        href: `/anchors/${anchor.id}`,
-                        timestamp: anchor.updatedAt || anchor.createdAt,
-                        isRead: false,
-                        icon: 'Trophy'
-                    });
+        if (['Admin'].includes(currentUser.role)) {
+            const pendingAnchors = anchors.filter(a => a.status === 'Pending Approval');
+            pendingAnchors.forEach(anchor => {
+                 const creator = users.find(u => u.uid === anchor.createdBy);
+                 userNotifications.push({
+                    id: `notif-approval-${anchor.id}`,
+                    userId: currentUser.uid,
+                    title: `New Anchor for Approval`,
+                    description: `${anchor.name} created by ${creator?.name || 'BD'} is waiting for your approval.`,
+                    href: `/admin`,
+                    timestamp: anchor.createdAt,
+                    isRead: false,
+                    icon: 'Star'
                 });
+            })
         }
         
         return userNotifications;

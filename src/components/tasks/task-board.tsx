@@ -36,7 +36,7 @@ const priorityColors: Record<TaskPriority, string> = {
 };
 
 export function TaskBoard() {
-  const { tasks, anchors, updateTask, currentUser, users } = useApp();
+  const { tasks, anchors, dealers, vendors, updateTask, currentUser, users } = useApp();
   const { t } = useLanguage();
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
@@ -44,13 +44,17 @@ export function TaskBoard() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   const getVisibleTasks = () => {
+    if (!currentUser) return [];
+    const visibleUserIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
+    visibleUserIds.push(currentUser.uid);
+
     switch (currentUser.role) {
       case 'Admin':
         return tasks;
       case 'Zonal Sales Manager':
-        const teamMemberIds = users.filter(u => u.managerId === currentUser.uid).map(u => u.uid);
-        teamMemberIds.push(currentUser.uid);
-        return tasks.filter(task => teamMemberIds.includes(task.assignedTo));
+      case 'Regional Sales Manager':
+      case 'National Sales Manager':
+        return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
       case 'Business Development':
       case 'Sales':
         return tasks.filter(task => task.assignedTo === currentUser.uid);
@@ -109,6 +113,15 @@ export function TaskBoard() {
           updateTask({ ...task, status });
         }
   }
+  
+  const getEntityName = (task: Task) => {
+    const { anchorId, dealerId, vendorId } = task.associatedWith;
+    if (anchorId) return anchors.find(a => a.id === anchorId)?.name;
+    if (dealerId) return dealers.find(d => d.id === dealerId)?.name;
+    if (vendorId) return vendors.find(v => v.id === vendorId)?.name;
+    return 'General Task';
+  };
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-start">
@@ -121,7 +134,6 @@ export function TaskBoard() {
             {userTasks
               .filter(task => task.status === status)
               .map(task => {
-                const anchor = anchors.find(a => a.id === task.associatedWith.anchorId);
                 const Icon = taskTypeIcons[task.type];
 
                 return (
@@ -145,7 +157,7 @@ export function TaskBoard() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{anchor?.name}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{getEntityName(task)}</p>
                     <div className="flex items-center justify-between mt-3 text-xs">
                       <Badge variant="outline">{format(new Date(task.dueDate), 'MMM d')}</Badge>
                       <div className="flex items-center gap-2">

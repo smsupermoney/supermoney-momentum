@@ -27,7 +27,7 @@ import { PendingAnchorsTable } from '@/components/admin/pending-anchors-table';
 
 
 // Define a union type for the different kinds of leads
-type LeadType = 'Anchor' | 'Dealer' | 'Vendor';
+type LeadType = 'Dealer' | 'Vendor';
 
 // A specific type for what the LeadTable component needs to display.
 // This ensures type safety and avoids using `any`.
@@ -139,7 +139,7 @@ function LeadTable({
 }
 
 export default function AdminPage() {
-  const { anchors, dealers, vendors, users, updateAnchor, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser } = useApp();
+  const { dealers, vendors, users, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
@@ -160,7 +160,6 @@ export default function AdminPage() {
     return visibleUsers.filter(u => u.uid !== currentUser.uid);
   }, [currentUser, users, visibleUsers]);
 
-  const unassignedAnchors = anchors.filter((a) => a.assignedTo === null || a.status === 'Unassigned Lead');
   const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.onboardingStatus === 'Unassigned Lead');
   const unassignedVendors = vendors.filter((s) => s.assignedTo === null || s.onboardingStatus === 'Unassigned Lead');
 
@@ -177,10 +176,7 @@ export default function AdminPage() {
 
     const user = users.find((u) => u.uid === assignedToId);
 
-    if (leadType === 'Anchor') {
-      const anchor = anchors.find((a) => a.id === leadId);
-      if (anchor) updateAnchor({ ...anchor, assignedTo: assignedToId, status: 'Lead' });
-    } else if (leadType === 'Dealer') {
+    if (leadType === 'Dealer') {
       const dealer = dealers.find((d) => d.id === leadId);
       if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, onboardingStatus: 'Invited' });
     } else if (leadType === 'Vendor') {
@@ -325,14 +321,6 @@ export default function AdminPage() {
             </Card>
           </>
         )}
-        <LeadTable
-          title={t('admin.unassignedAnchors')}
-          leads={unassignedAnchors}
-          assignableUsers={assignableUsers}
-          assignments={assignments}
-          onAssign={(id) => handleAssign(id, 'Anchor')}
-          onAssignmentChange={handleAssignmentChange}
-        />
         <LeadTable
           title={t('admin.unassignedDealers')}
           leads={unassignedDealers}

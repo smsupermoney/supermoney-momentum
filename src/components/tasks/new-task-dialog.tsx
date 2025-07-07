@@ -19,18 +19,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2, Check, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Task, UserRole } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
+
 
 const formSchema = z.object({
   title: z.string().min(3, 'Title is required'),
-  anchorId: z.string().min(1, 'Associated anchor is required'),
+  associatedEntity: z.string().optional(),
   type: z.string().min(1, 'Task type is required'),
   dueDate: z.date({ required_error: 'A due date is required.' }),
   priority: z.string().min(1, 'Priority is required'),
@@ -49,17 +50,24 @@ interface NewTaskDialogProps {
 const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
 
 export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTaskDialogProps) {
-  const { anchors, addTask, currentUser, visibleUsers } = useApp();
+  const { anchors, dealers, vendors, addTask, currentUser, visibleUsers } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   const isManager = currentUser && managerRoles.includes(currentUser.role);
+  
+  const allEntities = [
+      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: a.name, group: 'Anchors' })),
+      ...dealers.map(d => ({ value: `dealer:${d.id}`, label: d.name, group: 'Dealers' })),
+      ...vendors.map(v => ({ value: `vendor:${v.id}`, label: v.name, group: 'Vendors' })),
+  ];
 
   const form = useForm<NewTaskFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
         title: '',
-        anchorId: prefilledAnchorId || '',
+        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
         type: '',
         priority: 'Medium',
         description: '',
@@ -69,7 +77,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
 
   useEffect(() => {
     if(prefilledAnchorId) {
-        form.setValue('anchorId', prefilledAnchorId);
+        form.setValue('associatedEntity', `anchor:${prefilledAnchorId}`);
     }
      form.setValue('assignedTo', currentUser?.uid);
   }, [prefilledAnchorId, currentUser, form, open]);
@@ -77,7 +85,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
   const handleClose = () => {
     form.reset({
         title: '',
-        anchorId: prefilledAnchorId || '',
+        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
         type: '',
         priority: 'Medium',
         description: '',
@@ -95,10 +103,18 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     setIsSubmitting(true);
     try {
         const assignedToId = values.assignedTo || currentUser.uid;
+        
+        const associatedWith: { anchorId?: string; dealerId?: string; vendorId?: string; } = {};
+        if (values.associatedEntity) {
+            const [type, id] = values.associatedEntity.split(':');
+            if (type === 'anchor') associatedWith.anchorId = id;
+            if (type === 'dealer') associatedWith.dealerId = id;
+            if (type === 'vendor') associatedWith.vendorId = id;
+        }
 
         const newTask: Omit<Task, 'id'> = {
           title: values.title,
-          associatedWith: { anchorId: values.anchorId },
+          associatedWith: associatedWith,
           type: values.type as Task['type'],
           dueDate: values.dueDate.toISOString(),
           priority: values.priority as Task['priority'],
@@ -119,7 +135,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>+ New Task</DialogTitle>
           <DialogDescription>Schedule a new action or follow-up.</DialogDescription>
@@ -155,13 +171,90 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
             <FormField name="title" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Task Title</FormLabel><FormControl><Input placeholder="e.g. Follow up on Proposal V2" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
-             <FormField name="anchorId" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Associated With</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an Anchor" /></SelectTrigger></FormControl>
-                        <SelectContent>{anchors.map(a => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}</SelectContent>
-                    </Select><FormMessage />
-                </FormItem>
-            )}/>
+             <FormField
+                control={form.control}
+                name="associatedEntity"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Associated With (Optional)</FormLabel>
+                        <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value
+                                        ? allEntities.find(
+                                            (entity) => entity.value === field.value
+                                          )?.label
+                                        : "Select an entity"}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search entity..." />
+                                    <CommandEmpty>No entity found.</CommandEmpty>
+                                    <CommandList>
+                                        <CommandGroup heading="Anchors">
+                                            {anchors.map((item) => (
+                                                <CommandItem
+                                                  key={item.id}
+                                                  value={item.name}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `anchor:${item.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                  <Check className={cn("mr-2 h-4 w-4", field.value === `anchor:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                  {item.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                        <CommandGroup heading="Dealers">
+                                             {dealers.map((item) => (
+                                                <CommandItem
+                                                  key={item.id}
+                                                  value={item.name}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `dealer:${item.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `dealer:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                   {item.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                        <CommandGroup heading="Vendors">
+                                             {vendors.map((item) => (
+                                                <CommandItem
+                                                  key={item.id}
+                                                  value={item.name}
+                                                  onSelect={() => {
+                                                    form.setValue("associatedEntity", `vendor:${item.id}`);
+                                                    setComboboxOpen(false);
+                                                  }}
+                                                >
+                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `vendor:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                   {item.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormField name="type" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Task Type</FormLabel>

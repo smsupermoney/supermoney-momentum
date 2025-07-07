@@ -19,7 +19,7 @@ interface TaskListProps {
 }
 
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskListProps) {
-  const { tasks, anchors, currentUser, users, updateTask, visibleUserIds } = useApp();
+  const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, visibleUserIds } = useApp();
   const { t } = useLanguage();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
@@ -53,8 +53,12 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
     });
 
 
-  const getAnchorName = (anchorId: string) => {
-    return anchors.find(a => a.id === anchorId)?.name || 'Unknown';
+  const getEntityName = (task: Task) => {
+    const { anchorId, dealerId, vendorId } = task.associatedWith;
+    if (anchorId) return anchors.find(a => a.id === anchorId)?.name || 'Unknown Anchor';
+    if (dealerId) return dealers.find(d => d.id === dealerId)?.name || 'Unknown Dealer';
+    if (vendorId) return vendors.find(v => v.id === vendorId)?.name || 'Unknown Vendor';
+    return 'N/A';
   };
 
   const getAssignedToName = (userId: string) => {
@@ -108,7 +112,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
               <TableRow key={task.id}>
                 <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
                 <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>{getAnchorName(task.associatedWith.anchorId)}</TableCell>
+                <TableCell>{getEntityName(task)}</TableCell>
                 {showAssignedTo && <TableCell className="hidden lg:table-cell">{getAssignedToName(task.assignedTo)}</TableCell>}
                 <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
                 <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
@@ -140,7 +144,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter }: TaskLi
                 <Badge variant={priorityVariant[task.priority]} className="flex-shrink-0">{task.priority}</Badge>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p><span className="font-medium">{t('tasks.list.anchor')}:</span> {getAnchorName(task.associatedWith.anchorId)}</p>
+                <p><span className="font-medium">{t('tasks.list.anchor')}:</span> {getEntityName(task)}</p>
                 {showAssignedTo && <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>}
                 <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {format(new Date(task.dueDate), 'PP')}</p>
               </div>

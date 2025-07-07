@@ -50,7 +50,7 @@ export interface BaseLead {
   leadType?: LeadType;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType'> {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType' | 'assignedTo'> {
   name: string; // Anchor name is company name
   industry: string;
   annualTurnover?: number;
@@ -87,7 +87,7 @@ export interface Task {
   id: string;
   title: string;
   associatedWith: {
-    anchorId: string;
+    anchorId?: string;
     dealerId?: string;
     vendorId?: string;
   };

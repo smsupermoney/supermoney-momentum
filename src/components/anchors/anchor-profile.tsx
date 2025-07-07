@@ -22,6 +22,7 @@ import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 import { useLanguage } from '@/contexts/language-context';
+import { NewContactDialog } from './new-contact-dialog';
 
 const iconMap: Record<TaskType, React.ElementType> = {
     'Call': Phone,
@@ -50,6 +51,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [newActivity, setNewActivity] = useState('');
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Vendor'>('Dealer');
   const [activeTab, setActiveTab] = useState('details'); 
   const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -62,6 +64,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 
 
   const isSalesRole = currentUser && ['Admin', 'Sales', 'Zonal Sales Manager'].includes(currentUser.role);
+  const canAddContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+
 
   const handleLogActivity = () => {
     if (newActivity.trim() === '' || !currentUser) return;
@@ -145,6 +149,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
+      <NewContactDialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen} anchor={anchor} />
       {emailConfig && (
         <ComposeEmailDialog 
             open={isEmailDialogOpen} 
@@ -190,7 +195,12 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                     </CardContent>
                 </Card>
                  <Card>
-                    <CardHeader><CardTitle>{t('anchors.profile.keyContacts')}</CardTitle></CardHeader>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>{t('anchors.profile.keyContacts')}</CardTitle>
+                            {canAddContact && <Button variant="outline" size="sm" onClick={() => setIsNewContactOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add Contact</Button>}
+                        </div>
+                    </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                            {anchor.contacts.map(contact => (

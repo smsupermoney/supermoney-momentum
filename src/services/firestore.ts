@@ -103,44 +103,14 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
 
 
 // --- Anchor Service ---
-export const getAnchors = async (user: User, allUsers: User[]): Promise<Anchor[]> => {
+export const getAnchors = async (): Promise<Anchor[]> => {
   if (!db) return [];
-  
-  let visibleUserIds: string[];
-  if (user.role === 'Admin') {
-    visibleUserIds = allUsers.map(u => u.uid);
-  } else if (user.role === 'Sales' || user.role === 'Business Development') {
-    visibleUserIds = [user.uid];
-  } else {
-    const subordinates = getAllSubordinates(user.uid, allUsers);
-    visibleUserIds = [user.uid, ...subordinates.map(u => u.uid)];
-  }
-
-  if (visibleUserIds.length === 0) return [];
-  
-  // Firestore 'in' queries are limited to 30 items per query.
-  // If there are more, we need to split into multiple queries.
-  const chunks: string[][] = [];
-  for (let i = 0; i < visibleUserIds.length; i += 30) {
-      chunks.push(visibleUserIds.slice(i, i + 30));
-  }
-  
   const anchorsCollection = collection(db, 'anchors');
-  const promises = chunks.map(chunk => {
-      const q = query(anchorsCollection, where('assignedTo', 'in', chunk), orderBy('createdAt', 'desc'));
-      return getDocs(q);
-  });
-  
-  const snapshots = await Promise.all(promises);
-  const results = snapshots.flatMap(snapshot => snapshotToData<Omit<Anchor, 'id'>>(snapshot));
-
-  // If we had multiple chunks, we need to sort the combined results in memory.
-  if (chunks.length > 1) {
-    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-  
-  return results;
+  const q = query(anchorsCollection, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshotToData<Omit<Anchor, 'id'>>(snapshot);
 };
+
 export const addAnchor = async (anchor: Omit<Anchor, 'id'>) => {
   if (!db) throw new Error("Firestore not initialized");
   const anchorsCollection = collection(db, 'anchors');

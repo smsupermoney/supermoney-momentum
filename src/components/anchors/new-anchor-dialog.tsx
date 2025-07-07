@@ -102,21 +102,15 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
 
       const scoreResult = await leadScoring(leadScoringInput);
       
-      const isAdmin = currentUser.role === 'Admin';
       const isBusinessDevelopment = currentUser.role === 'Business Development';
 
       let status: LeadStatus;
-      let assignedTo: string | null;
 
       if (isBusinessDevelopment) {
         status = 'Pending Approval';
-        assignedTo = null; // Admin will assign after approval
-      } else if (isAdmin) {
-        status = 'Unassigned Lead';
-        assignedTo = null;
       } else {
-        status = 'Lead';
-        assignedTo = currentUser.uid;
+        // Admin or other roles
+        status = 'Unassigned Lead';
       }
       
       const newAnchor: Omit<Anchor, 'id'> = {
@@ -134,7 +128,6 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         gstin: values.gstin,
         location: values.location,
         status: status,
-        assignedTo: assignedTo,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],

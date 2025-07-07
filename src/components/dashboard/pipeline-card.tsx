@@ -7,14 +7,15 @@ import { Handshake, Target, FileText, Bot } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
 export function PipelineCard() {
-  const { anchors, currentUser, visibleUserIds } = useApp();
+  const { anchors, currentUser } = useApp();
   const { t } = useLanguage();
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
     // Business Development role does not see a pipeline view on their dashboard
     if (currentUser.role === 'Business Development') return [];
-    return anchors.filter(anchor => visibleUserIds.includes(anchor.assignedTo || ''));
+    // All other roles see the global pipeline of approved anchors
+    return anchors.filter(a => a.status !== 'Pending Approval' && a.status !== 'Unassigned Lead');
   }
 
   const visibleAnchors = getVisibleAnchors();
@@ -34,11 +35,12 @@ export function PipelineCard() {
   ];
 
   const getTitle = () => {
-    if (!currentUser) return t('dashboard.myPipeline');
-    if (currentUser.role === 'Sales') return t('dashboard.myPipeline');
-    if (currentUser.role === 'Admin') return t('dashboard.companyPipeline');
-    // For ZSM, RSM, NSM
-    return t('dashboard.teamPipeline');
+    if (!currentUser || currentUser.role === 'Business Development') return '';
+    return t('dashboard.companyPipeline');
+  }
+
+  if (currentUser?.role === 'Business Development') {
+      return null;
   }
 
   return (

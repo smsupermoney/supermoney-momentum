@@ -24,7 +24,6 @@ export const mockAnchors: Anchor[] = [
       { id: 'contact-1', name: 'Anil Mehta', designation: 'CFO', email: 'anil.mehta@reliance.com', phone: '9876543210', isPrimary: true },
       { id: 'contact-2', name: 'Sunita Sharma', designation: 'Procurement Head', email: 'sunita.s@reliance.com', phone: '9876543219', isPrimary: false },
     ],
-    assignedTo: 'user-1',
     createdBy: 'user-1',
     createdAt: daysAgo(20),
     dealerIds: ['dealer-1', 'dealer-4'],
@@ -45,7 +44,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
       { id: 'contact-3', name: 'Sunita Rao', designation: 'VP Finance', email: 'sunita.rao@tatamotors.com', phone: '9876543211', isPrimary: true },
     ],
-    assignedTo: 'user-1',
     createdBy: 'user-1',
     createdAt: daysAgo(15),
     dealerIds: ['dealer-2'],
@@ -62,7 +60,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
         { id: 'contact-4', name: 'Vijay Singh', designation: 'Finance Director', email: 'vijay.s@apollotyres.com', phone: '9876543212', isPrimary: true },
     ],
-    assignedTo: 'user-2',
     createdBy: 'user-2',
     createdAt: daysAgo(10),
     dealerIds: [],
@@ -79,7 +76,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
         { id: 'contact-5', name: 'Kishore Biyani', designation: 'CEO', email: 'kb@futuregroup.in', phone: '9876543213', isPrimary: true },
     ],
-    assignedTo: 'user-2',
     createdBy: 'user-2',
     createdAt: daysAgo(8),
     dealerIds: [],
@@ -96,7 +92,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
         { id: 'contact-6', name: 'John Doe', designation: 'Owner', email: 'john.doe@unassigned.com', phone: '9999999999', isPrimary: true },
     ],
-    assignedTo: null,
     createdBy: 'user-admin',
     createdAt: daysAgo(2),
     dealerIds: [],
@@ -111,7 +106,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
         { id: 'contact-7', name: 'Aisha Khan', designation: 'Head of Finance', email: 'aisha.k@pharmasol.com', phone: '9876512345', isPrimary: true },
     ],
-    assignedTo: 'user-1',
     createdBy: 'user-1',
     createdAt: daysAgo(5),
     dealerIds: [],
@@ -127,7 +121,6 @@ export const mockAnchors: Anchor[] = [
     contacts: [
         { id: 'contact-8', name: 'Raj Verma', designation: 'Director', email: 'raj.v@logisticking.com', phone: '9876543214', isPrimary: true },
     ],
-    assignedTo: null,
     createdBy: 'user-3', // Business Development user
     createdAt: daysAgo(1),
     dealerIds: [],
@@ -189,7 +182,7 @@ export const mockTasks: Task[] = [
   {
     id: 'task-4',
     title: 'Send welcome kit to Mumbai Motors',
-    associatedWith: { anchorId: 'anchor-1', dealerId: 'dealer-1' },
+    associatedWith: { dealerId: 'dealer-1' },
     type: 'Email',
     dueDate: daysAgo(1),
     priority: 'Low',
@@ -213,7 +206,7 @@ export const mockTasks: Task[] = [
    {
     id: 'task-6',
     title: 'Overdue: Collect KYC from Balaji',
-    associatedWith: { anchorId: 'anchor-1' },
+    associatedWith: { vendorId: 'vendor-2' },
     type: 'KYC Document Collection',
     dueDate: daysAgo(3),
     priority: 'High',
@@ -225,7 +218,7 @@ export const mockTasks: Task[] = [
   {
     id: 'task-7',
     title: 'Collect KYC for Pune Auto',
-    associatedWith: { anchorId: 'anchor-2' },
+    associatedWith: { dealerId: 'dealer-2' },
     type: 'KYC Document Collection',
     dueDate: daysFromNow(3),
     priority: 'High',
@@ -279,7 +272,7 @@ export const mockActivityLogs: ActivityLog[] = [
     },
     {
         id: 'log-5',
-        anchorId: 'anchor-2',
+        dealerId: 'dealer-2',
         taskId: 'task-7',
         timestamp: daysAgo(1),
         type: 'Email',
