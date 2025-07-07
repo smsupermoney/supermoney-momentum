@@ -12,8 +12,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Force disable Firebase to revert to mock login
-export const firebaseEnabled = false;
+// Enable Firebase to use live authentication and database
+export const firebaseEnabled = true;
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
