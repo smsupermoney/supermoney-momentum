@@ -48,7 +48,9 @@ export default function LoginPage() {
       let description = error.message || 'An unknown error occurred.';
 
       if (error.code === 'auth/unauthorized-domain') {
-        description = 'This app\'s domain is not authorized. Please add it to the "Authorized domains" list in your Firebase Authentication settings.';
+        const hostname = window.location.hostname;
+        const origin = window.location.origin;
+        description = `Error: This app's domain (${hostname}) is not authorized. In the Firebase Console, please add this domain to the 'Authorized domains' list in Authentication > Settings. Also ensure the redirect URI ('${origin}/__/auth/handler') is added to the Google sign-in provider settings.`;
       } else if (error.code === 'auth/configuration-not-found') {
         description = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
       }
@@ -57,7 +59,7 @@ export default function LoginPage() {
         variant: 'destructive',
         title: 'Google Sign-In Failed',
         description: description,
-        duration: 9000,
+        duration: 15000,
       });
       setIsLoading(false);
     }
