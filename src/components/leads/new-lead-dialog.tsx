@@ -260,6 +260,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                       <SelectItem value="LAP">LAP</SelectItem>
                       <SelectItem value="WCDL">WCDL</SelectItem>
                       <SelectItem value="WCTL">WCTL</SelectItem>
+                      <SelectItem value="PID">PID</SelectItem>
+                      <SelectItem value="SID">SID</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
