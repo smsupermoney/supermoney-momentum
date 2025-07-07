@@ -75,7 +75,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     <div><p className="text-muted-foreground">Email</p><p>{vendor.email || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Location</p><p>{vendor.location || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">GSTIN</p><p>{vendor.gstin || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Associated Anchor</p><p>{anchorName}</p></div>
+                    <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
                     <div><p className="text-muted-foreground">Product Interest</p><p>{vendor.product || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Lead Type</p><p>{vendor.leadType || 'New'}</p></div>
                 </div>

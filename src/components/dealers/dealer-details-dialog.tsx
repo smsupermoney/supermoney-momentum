@@ -75,7 +75,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     <div><p className="text-muted-foreground">Email</p><p>{dealer.email || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Location</p><p>{dealer.location || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">GSTIN</p><p>{dealer.gstin || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Associated Anchor</p><p>{anchorName}</p></div>
+                    <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
                     <div><p className="text-muted-foreground">Product Interest</p><p>{dealer.product || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Lead Type</p><p>{dealer.leadType || 'New'}</p></div>
                 </div>

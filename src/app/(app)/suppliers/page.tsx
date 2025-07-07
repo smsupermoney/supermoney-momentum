@@ -31,7 +31,7 @@ export default function VendorsPage() {
   const { toast } = useToast();
 
   const userVendors = vendors.filter(s => {
-    if (s.status === 'Onboarding') return false;
+    if (s.status === 'Active') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(s.assignedTo || '');
   });

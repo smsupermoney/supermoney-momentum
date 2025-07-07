@@ -225,7 +225,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 name="anchorId"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Associated Anchor (Optional)</FormLabel>
+                        <FormLabel>Anchor (Optional)</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>

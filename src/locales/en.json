@@ -140,7 +140,7 @@
       "contact": "Contact",
       "status": "Status",
       "leadType": "Lead Type",
-      "anchor": "Associated Anchor",
+      "anchor": "Anchor",
       "assignedTo": "Assigned To",
       "actions": "Actions"
     },
@@ -180,7 +180,7 @@
     "list": {
       "priority": "Priority",
       "title": "Task Title",
-      "anchor": "Associated Anchor",
+      "anchor": "Anchor",
       "assignedTo": "Assigned To",
       "type": "Task Type",
       "dueDate": "Due Date",

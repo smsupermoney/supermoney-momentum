@@ -30,7 +30,7 @@ export default function DealersPage() {
   const { toast } = useToast();
 
   const userDealers = dealers.filter(d => {
-    if (d.status === 'Onboarding') return false;
+    if (d.status === 'Active') return false;
     if (currentUser.role === 'Business Development') return true;
     return visibleUserIds.includes(d.assignedTo || '');
   });
