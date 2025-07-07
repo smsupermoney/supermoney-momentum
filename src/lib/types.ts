@@ -65,6 +65,7 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
   contacts: Contact[];
   nextBestAction?: NextBestAction;
   createdBy?: string;
+  updatedAt?: string;
 }
 
 export interface Dealer extends BaseLead {

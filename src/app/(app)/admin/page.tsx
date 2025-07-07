@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PendingAnchorsTable } from '@/components/admin/pending-anchors-table';
+import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 
 
 // Define a union type for the different kinds of leads
@@ -238,6 +239,7 @@ export default function AdminPage() {
         {currentUser.role === 'Admin' && (
           <>
             <PendingAnchorsTable />
+            <ArchivedAnchorsTable />
             <Card>
               <CardHeader>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
