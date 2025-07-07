@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Download } from 'lucide-react';
 import type { Dealer, Vendor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -44,6 +44,27 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     if(fileInputRef.current) fileInputRef.current.value = "";
     onOpenChange(false);
   }
+
+  const handleDownloadSample = () => {
+    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Assigned To Email";
+    const sampleData = type === 'Dealer' 
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,asm@supermoney.in"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,zsm@supermoney.in"];
+    
+    const csvContent = [headers, ...sampleData].join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `sample_${type.toLowerCase()}_upload.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
 
   const processCSV = () => {
     if (!selectedFile) {
@@ -133,12 +154,18 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email. The first row should be headers.
+            Upload a CSV file with columns: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email. Download our sample file to ensure the format is correct.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Label htmlFor="csv-file">CSV File</Label>
-          <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
+        <div className="py-4 space-y-4">
+          <div>
+            <Label htmlFor="csv-file">CSV File</Label>
+            <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
+          </div>
+          <Button variant="outline" className="w-full" onClick={handleDownloadSample}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Sample CSV
+          </Button>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
