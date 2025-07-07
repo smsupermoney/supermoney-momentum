@@ -1,0 +1,123 @@
+
+rules_version = '2';
+
+// These rules enforce the application's security and data access policies on the server side.
+// They ensure that users can only read or write data they are explicitly permitted to access,
+// based on their role and their position in the management hierarchy.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUser(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    function getRequestingUserRole() {
+      return getUser(request.auth.uid).role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getRequestingUserRole() == 'Admin';
+    }
+    
+    function isManager() {
+        let role = getRequestingUserRole();
+        return isAuthenticated() && (role == 'Zonal Sales Manager' || role == 'Regional Sales Manager' || role == 'National Sales Manager');
+    }
+    
+    // Checks if the requesting user is a direct manager of the target user.
+    function canManageUser(targetUserId) {
+        let targetUser = getUser(targetUserId);
+        return isAdmin() || (isManager() && targetUser.managerId == request.auth.uid);
+    }
+
+    // --- COLLECTION RULES ---
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || request.auth.uid == userId;
+    }
+
+    match /anchors/{anchorId} {
+        function resourceData() { return resource.data; }
+        function incomingData() { return request.resource.data; }
+        function isOwner() { return resourceData().createdBy == request.auth.uid; }
+        function isAssignedToRequester() { return resourceData().assignedTo == request.auth.uid; }
+        
+        function isAssignedToSubordinate() {
+            let assignedToUserId = resourceData().assignedTo;
+            return assignedToUserId != null && canManageUser(assignedToUserId);
+        }
+
+      allow read: if isAdmin() || isAssignedToRequester() || isAssignedToSubordinate();
+      
+      allow create: if (getRequestingUserRole() == 'Business Development' && incomingData().status == 'Pending Approval' && incomingData().createdBy == request.auth.uid) || isAdmin();
+      
+      allow update: if isAdmin() || isAssignedToRequester() || isAssignedToSubordinate() || (getRequestingUserRole() == 'Business Development' && isOwner() && resourceData().status == 'Pending Approval');
+      
+      allow delete: if isAdmin();
+    }
+    
+    match /{spokeCollection}/{spokeId} where spokeCollection in ['dealers', 'vendors'] {
+        function resourceData() { return resource.data; }
+        function incomingData() { return request.resource.data; }
+        function isAssignedToRequester() { return resourceData().assignedTo == request.auth.uid; }
+
+        function isAssignedToSubordinate() {
+            let assignedToUserId = resourceData().assignedTo;
+            return assignedToUserId != null && canManageUser(assignedToUserId);
+        }
+        
+        function canBDEdit() {
+            let anchorData = get(/databases/$(database)/documents/anchors/$(resourceData().anchorId)).data;
+            return getRequestingUserRole() == 'Business Development' && anchorData.status == 'Onboarding';
+        }
+
+        allow read: if isAdmin() || isAssignedToRequester() || isAssignedToSubordinate() || canBDEdit();
+        allow create: if isAuthenticated(); 
+        allow update: if isAdmin() || isAssignedToRequester() || isAssignedToSubordinate() || canBDEdit();
+        allow delete: if isAdmin() || getRequestingUserRole() == 'Business Development';
+    }
+    
+    match /tasks/{taskId} {
+        function resourceData() { return resource.data; }
+        function isAssignedToRequester() { return resourceData().assignedTo == request.auth.uid; }
+        
+        function isAssignedToSubordinate() {
+            let assignedToUserId = resourceData().assignedTo;
+            return assignedToUserId != null && canManageUser(assignedToUserId);
+        }
+        
+        allow read, update: if isAdmin() || isAssignedToRequester() || isAssignedToSubordinate();
+        allow create: if isAuthenticated();
+        allow delete: if isAdmin() || isAssignedToRequester();
+    }
+    
+    match /{logCollection}/{logId} where logCollection in ['activityLogs', 'daily_activities'] {
+         function resourceData() { return resource.data; }
+         function incomingData() { return request.resource.data; }
+         function isOwner() { return resourceData().userId == request.auth.uid; }
+        
+         function canCreateLog() {
+            let targetUserId = incomingData().userId;
+            return request.auth.uid == targetUserId || canManageUser(targetUserId);
+         }
+        
+        function isLogOfSubordinate() {
+            let ownerId = resourceData().userId;
+            return ownerId != null && canManageUser(ownerId);
+        }
+        
+        allow read: if isAdmin() || isOwner() || isLogOfSubordinate();
+        allow create: if canCreateLog();
+        allow update, delete: if isAdmin() || isOwner();
+    }
+  }
+}
