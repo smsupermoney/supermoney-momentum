@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { firebaseEnabled, auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +31,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<{ title: string; description: React.ReactNode } | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -39,27 +41,43 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     setIsLoading(true);
+    setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
       // onAuthStateChanged in AppContext will handle the redirect
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      let description = error.message || 'An unknown error occurred.';
+      let toastDescription = error.message || 'An unknown error occurred.';
 
       if (error.code === 'auth/unauthorized-domain') {
         const hostname = window.location.hostname;
         const origin = window.location.origin;
-        description = `Error: This app's domain (${hostname}) is not authorized. In the Firebase Console, please add this domain to the 'Authorized domains' list in Authentication > Settings. Also ensure the redirect URI ('${origin}/__/auth/handler') is added to the Google sign-in provider settings.`;
+        setAuthError({
+          title: "Domain Not Authorized",
+          description: (
+            <div className="text-xs space-y-2">
+              <p>To fix this, you must authorize this app's domain in your Firebase project settings:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Go to **Firebase Console → Authentication → Settings**.</li>
+                <li>Under **Authorized domains**, add: <code className="bg-muted px-1 py-0.5 rounded">{hostname}</code></li>
+                <li>Go to **Sign-in method → Google**.</li>
+                <li>Under **Authorized redirect URIs**, add: <code className="bg-muted px-1 py-0.5 rounded">{`${origin}/__/auth/handler`}</code></li>
+              </ol>
+            </div>
+          )
+        });
+        toastDescription = "This app's domain is not authorized. See message below for instructions."
+
       } else if (error.code === 'auth/configuration-not-found') {
-        description = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
+        toastDescription = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
       }
 
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
-        description: description,
-        duration: 15000,
+        description: toastDescription,
+        duration: 9000,
       });
       setIsLoading(false);
     }
@@ -68,6 +86,7 @@ export default function LoginPage() {
 
   const onMockSubmit = (values: LoginFormValues) => {
     setIsLoading(true);
+    setAuthError(null);
     const success = login(values.email, values.password);
 
     if (success) {
@@ -105,6 +124,13 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {authError && (
+             <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{authError.title}</AlertTitle>
+              <AlertDescription>{authError.description}</AlertDescription>
+            </Alert>
+          )}
           {firebaseEnabled ? (
             <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
