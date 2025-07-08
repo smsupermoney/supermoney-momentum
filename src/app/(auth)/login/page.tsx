@@ -119,7 +119,7 @@ export default function LoginPage() {
           <CardTitle>{t('login.title')}</CardTitle>
           <CardDescription>
               {firebaseEnabled
-                ? 'Sign in with your Google account to continue.'
+                ? 'Use your company Google account to sign in. There is no separate password.'
                 : t('login.description')}
           </CardDescription>
         </CardHeader>

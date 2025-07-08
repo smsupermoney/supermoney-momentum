@@ -62,11 +62,12 @@ This manual is your guide to mastering Apex CRM. It is designed to not only teac
 ### **2. Getting Started: Your First Steps to Success**
 
 #### **2.1 Logging In and The Main Dashboard**
-Your journey with Apex begins at the login screen. You will be provided with a unique email and a temporary password.
+Your journey with Apex begins at the login screen. Your administrator will create an account for you using your company Google account email address.
 
 1.  Navigate to the Apex CRM URL provided by your administrator.
-2.  Enter your assigned email address and the password `test123`.
-3.  Upon successful login, you will land on your **Main Dashboard**. This is your mission control, tailored to your specific role. Take a moment to familiarize yourself with the key widgets:
+2.  Click the **"Sign in with Google"** button and select your company Google account.
+3.  There is no separate password for this application; all access is managed via your Google account.
+4.  Upon successful login, you will land on your **Main Dashboard**. This is your mission control, tailored to your specific role. Take a moment to familiarize yourself with the key widgets:
     *   **Pipeline Card**: This card at the top provides an at-a-glance summary of your active deals, broken down by their current stage in the sales cycle. For managers, this shows the combined pipeline of your entire team.
     *   **Recent Activity**: This is a live feed of the most recent interactions—calls, emails, meetings—logged by you or your team. It's the perfect way to catch up on the latest developments.
     *   **My Tasks for Today**: This widget is your daily action plan. It lists all tasks assigned to you that are due today, helping you prioritize your efforts effectively.
@@ -231,4 +232,3 @@ The **Reports** module is your strategic lens on the entire business. Use **Insi
 
 *   **Q: Why can't I see a lead that I know is in the system?**
     *   **A:** This is almost always due to data visibility rules. If you are a Sales Representative, you can only see leads assigned directly to you. If the lead is assigned to another rep or is currently unassigned, it will not appear in your "My Leads" view. If you believe you should have access, please speak to your manager.
-

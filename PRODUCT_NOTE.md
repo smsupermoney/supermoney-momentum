@@ -59,7 +59,7 @@ The CRM supports four distinct user roles, each with specific permissions.
 
 -   **Technology Stack:** The application is built with Next.js, React, Tailwind CSS, and ShadCN UI components. AI features are powered by Google's Gemini model via Genkit.
 -   **Data Persistence:** The application is fully integrated with **Firebase Firestore**, serving as the live backend database. All data created or modified in the app is persistent.
--   **User Authentication:** User login is currently **simulated**. A static list of users is available, and all use the password `test123`. The system is prepared for a drop-in replacement with Firebase Authentication.
+-   **User Authentication:** User login is handled by **Firebase Authentication**, using Google as the sign-in provider. Administrators create user profiles with specific roles within the app, and users then sign in with their corresponding Google account. There is no separate password management within this application.
 -   **Email & File I/O:** Emailing and CSV file uploads are **simulated**. The UI and front-end logic exist, but they are not yet connected to a real email service or file storage backend.
 
 ## IV. Production-Ready Roadmap
