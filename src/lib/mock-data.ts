@@ -7,9 +7,9 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 
 
 export const mockUsers: User[] = [
-  { id: 'user-1', uid: 'user-1', name: 'Ramesh Kumar', email: 'asm@supermoney.in', role: 'Sales', managerId: 'user-2', region: 'West' },
-  { id: 'user-2', uid: 'user-2', name: 'Priya Sharma', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
-  { id: 'user-3', uid: 'user-3', name: 'Sonia Singh', email: 'sonia@supermoney.in', role: 'Business Development', region: 'National' },
+  { id: 'user-1', uid: 'user-1', name: 'Ashish Singh', email: 'asm@supermoney.in', role: 'Area Sales Manager', managerId: 'user-2', region: 'West' },
+  { id: 'user-2', uid: 'user-2', name: 'Kamlesh Gupta', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
+  { id: 'user-3', uid: 'user-3', name: 'Falak Chawla', email: 'sonia@supermoney.in', role: 'Business Development', region: 'National' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
 ];
 
@@ -243,7 +243,7 @@ export const mockActivityLogs: ActivityLog[] = [
         type: 'Email',
         title: "Proposal sent to 'Tata Motors'",
         outcome: "Proposal V2 sent to Sunita Rao. Acknowledged receipt.",
-        userName: 'Ramesh Kumar',
+        userName: 'Ashish Singh',
         userId: 'user-1'
     },
     {
@@ -253,7 +253,7 @@ export const mockActivityLogs: ActivityLog[] = [
         type: 'Meeting (Online)',
         title: "Onboarding call with 'Reliance Retail'",
         outcome: "Successful onboarding call. Discussed next steps for dealer integration.",
-        userName: 'Ramesh Kumar',
+        userName: 'Ashish Singh',
         userId: 'user-1'
     },
     {
@@ -263,7 +263,7 @@ export const mockActivityLogs: ActivityLog[] = [
         type: 'Call',
         title: "Call logged with Kishore Biyani at 'Future Group'",
         outcome: "Discussed initial requirements. Client is interested in vendor finance. Sent introductory email.",
-        userName: 'Priya Sharma',
+        userName: 'Kamlesh Gupta',
         userId: 'user-2'
     },
      {
@@ -273,7 +273,7 @@ export const mockActivityLogs: ActivityLog[] = [
         type: 'Call',
         title: "Negotiation call with 'Apollo Tyres'",
         outcome: "Client has some objections on the pricing. Scheduled a follow-up meeting.",
-        userName: 'Priya Sharma',
+        userName: 'Kamlesh Gupta',
         userId: 'user-2'
     },
     {
@@ -284,7 +284,7 @@ export const mockActivityLogs: ActivityLog[] = [
         type: 'Email',
         title: 'Sent KYC document list to Pune Auto',
         outcome: 'Emailed the list of required documents to the primary contact at Pune Auto.',
-        userName: 'Sonia Singh',
+        userName: 'Falak Chawla',
         userId: 'user-3'
       },
 ];

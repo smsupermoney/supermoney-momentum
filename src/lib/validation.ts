@@ -47,5 +47,5 @@ export const NewDailyActivitySchema = z.object({
 export const NewUserSchema = z.object({
     name: z.string().min(2, "User name is required."),
     email: z.string().email("A valid email is required."),
-    role: z.enum(['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
+    role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });

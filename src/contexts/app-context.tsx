@@ -134,7 +134,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         uid: user.uid,
         name: user.displayName || 'User',
         email: user.email || '',
-        role: 'Sales', // Default role, will be updated shortly
+        role: 'Area Sales Manager', // Default role, will be updated shortly
       };
 
       // Set the optimistic user and stop the main loading screen.
@@ -210,7 +210,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const visibleUsers = useMemo(() => {
       if (!currentUser || users.length === 0) return [];
       if (currentUser.role === 'Admin') return users;
-      if (currentUser.role === 'Sales' || currentUser.role === 'Business Development') {
+      if (currentUser.role === 'Area Sales Manager' || currentUser.role === 'Business Development') {
           return users.filter(u => u.uid === currentUser.uid);
       }
       const subordinates = getAllSubordinates(currentUser.uid, users);

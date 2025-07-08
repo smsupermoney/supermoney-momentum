@@ -51,7 +51,7 @@ interface NewUserDialogProps {
 }
 
 const managerRolesHierarchy: Record<string, UserRole[]> = {
-    'Sales': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
+    'Area Sales Manager': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Regional Sales Manager': ['National Sales Manager', 'Admin'],
     'National Sales Manager': ['Admin']
@@ -154,7 +154,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="Area Sales Manager">Area Sales Manager</SelectItem>
                       <SelectItem value="Zonal Sales Manager">Zonal Sales Manager</SelectItem>
                       <SelectItem value="Regional Sales Manager">Regional Sales Manager</SelectItem>
                       <SelectItem value="National Sales Manager">National Sales Manager</SelectItem>
