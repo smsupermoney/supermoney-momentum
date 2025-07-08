@@ -13,7 +13,7 @@ const firebaseConfig = {
 };
 
 // Enable Firebase to use live authentication and database
-export const firebaseEnabled = true;
+export const firebaseEnabled = false;
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
