@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs } from '@/lib/mock-data';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
 import { isPast, isToday, isAfter, subDays, format } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
@@ -83,7 +83,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setVendors(mockVendors);
     setTasks(mockTasks);
     setActivityLogs(mockActivityLogs);
-    setDailyActivities([]);
+    setDailyActivities(mockDailyActivities);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -326,9 +326,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     return false;
   };
+  
+  const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
+    if (firebaseEnabled) {
+      await firestoreService.addActivityLog(logData);
+    }
+    const newLog = { ...logData, id: `log-${Date.now()}` };
+    setActivityLogs(prev => [newLog, ...prev]);
+  };
 
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
-    // --- Server-Side Validation ---
     try {
       NewAnchorSchema.parse(anchorData);
     } catch (e) {
@@ -339,22 +346,42 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           title: 'Validation Error',
           description: Object.values(e.flatten().fieldErrors).flat().join(', '),
         });
-        return; // Halt execution
+        return;
       }
     }
-    // --- End Validation ---
+    if (!currentUser) return;
 
     if (firebaseEnabled) {
-      await firestoreService.addAnchor(anchorData);
-      setAnchors(prev => [{ ...anchorData, id: `temp-${Date.now()}` }, ...prev]);
+      const docRef = await firestoreService.addAnchor(anchorData);
+      const newAnchor = { ...anchorData, id: docRef.id };
+      setAnchors(prev => [newAnchor, ...prev]);
+      addActivityLog({
+        anchorId: newAnchor.id,
+        timestamp: new Date().toISOString(),
+        type: 'Creation',
+        title: 'Anchor Lead Created',
+        outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
+        userName: 'System',
+        userId: currentUser.uid,
+        systemGenerated: true,
+      });
     } else {
       const newAnchor = { ...anchorData, id: `anchor-${Date.now()}`};
       setAnchors(prev => [newAnchor, ...prev]);
+      addActivityLog({
+        anchorId: newAnchor.id,
+        timestamp: new Date().toISOString(),
+        type: 'Creation',
+        title: 'Anchor Lead Created',
+        outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
+        userName: 'System',
+        userId: currentUser.uid,
+        systemGenerated: true,
+      });
     }
   };
 
   const updateAnchor = async (updatedAnchor: Anchor) => {
-    // --- Server-Side Validation ---
     try {
         NewAnchorSchema.extend({ id: z.string() }).parse(updatedAnchor);
     } catch (e) {
@@ -364,12 +391,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    // --- End Validation ---
-
+    const oldAnchor = anchors.find(a => a.id === updatedAnchor.id);
     if (firebaseEnabled) {
       await firestoreService.updateAnchor(updatedAnchor);
     }
     setAnchors(prev => prev.map(a => a.id === updatedAnchor.id ? {...updatedAnchor, updatedAt: new Date().toISOString()} : a));
+
+    if (oldAnchor && oldAnchor.status !== updatedAnchor.status && currentUser) {
+        addActivityLog({
+            anchorId: updatedAnchor.id,
+            timestamp: new Date().toISOString(),
+            type: 'Status Change',
+            title: `Status changed to ${updatedAnchor.status}`,
+            outcome: `Anchor status was updated from '${oldAnchor.status}' to '${updatedAnchor.status}' by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
+    }
   };
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
@@ -382,11 +421,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    if (!currentUser) return;
+
     if(firebaseEnabled) {
-      await firestoreService.addDealer(dealerData);
+      const docRef = await firestoreService.addDealer(dealerData);
+      const newDealer = { ...dealerData, id: docRef.id };
+      setDealers(prev => [newDealer, ...prev]);
+      addActivityLog({
+        dealerId: newDealer.id,
+        anchorId: newDealer.anchorId || undefined,
+        timestamp: new Date().toISOString(),
+        type: 'Creation',
+        title: 'Dealer Lead Created',
+        outcome: `New dealer '${newDealer.name}' was created by ${currentUser.name}.`,
+        userName: 'System',
+        userId: currentUser.uid,
+        systemGenerated: true,
+      });
+    } else {
+        const newDealer = { ...dealerData, id: `dealer-${Date.now()}` };
+        setDealers(prev => [newDealer, ...prev]);
+        addActivityLog({
+            dealerId: newDealer.id,
+            anchorId: newDealer.anchorId || undefined,
+            timestamp: new Date().toISOString(),
+            type: 'Creation',
+            title: 'Dealer Lead Created',
+            outcome: `New dealer '${newDealer.name}' was created by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
     }
-    const newDealer = { ...dealerData, id: `dealer-${Date.now()}` };
-    setDealers(prev => [newDealer, ...prev]);
   };
   
   const updateDealer = async (updatedDealer: Dealer) => {
@@ -399,19 +465,49 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    const oldDealer = dealers.find(d => d.id === updatedDealer.id);
     if(firebaseEnabled) {
       await firestoreService.updateDealer(updatedDealer);
     }
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
+    
+    if (currentUser && oldDealer) {
+        if (oldDealer.status !== updatedDealer.status) {
+            addActivityLog({
+                dealerId: updatedDealer.id,
+                anchorId: updatedDealer.anchorId || undefined,
+                timestamp: new Date().toISOString(),
+                type: 'Status Change',
+                title: `Dealer status changed`,
+                outcome: `Dealer '${updatedDealer.name}' status changed from '${oldDealer.status}' to '${updatedDealer.status}' by ${currentUser.name}.`,
+                userName: 'System',
+                userId: currentUser.uid,
+                systemGenerated: true,
+            });
+        }
+        if (oldDealer.assignedTo !== updatedDealer.assignedTo) {
+             const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
+             addActivityLog({
+                dealerId: updatedDealer.id,
+                anchorId: updatedDealer.anchorId || undefined,
+                timestamp: new Date().toISOString(),
+                type: 'Assignment',
+                title: `Dealer reassigned`,
+                outcome: `Dealer '${updatedDealer.name}' was assigned to ${assignedUser?.name || 'Unassigned'} by ${currentUser.name}.`,
+                userName: 'System',
+                userId: currentUser.uid,
+                systemGenerated: true,
+            });
+        }
+    }
   };
 
   const deleteDealer = async (dealerId: string) => {
-    // --- Server-Side Auth Check ---
     if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
         return;
     }
-    // --- End Auth Check ---
+    const dealerToDelete = dealers.find(d => d.id === dealerId);
     if (firebaseEnabled) {
         await firestoreService.deleteDealer(dealerId);
     }
@@ -420,6 +516,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         title: 'Dealer Deleted',
         description: 'The dealer has been removed from the system.',
     });
+    if (dealerToDelete && currentUser) {
+        addActivityLog({
+            dealerId: dealerId,
+            anchorId: dealerToDelete.anchorId || undefined,
+            timestamp: new Date().toISOString(),
+            type: 'Deletion',
+            title: `Dealer Deleted`,
+            outcome: `Dealer '${dealerToDelete.name}' was deleted by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
+    }
   };
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
@@ -432,11 +541,37 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    if (!currentUser) return;
     if (firebaseEnabled) {
-      await firestoreService.addVendor(vendorData);
+      const docRef = await firestoreService.addVendor(vendorData);
+      const newVendor = { ...vendorData, id: docRef.id };
+      setVendors(prev => [newVendor, ...prev]);
+       addActivityLog({
+          vendorId: newVendor.id,
+          anchorId: newVendor.anchorId || undefined,
+          timestamp: new Date().toISOString(),
+          type: 'Creation',
+          title: 'Vendor Lead Created',
+          outcome: `New vendor '${newVendor.name}' was created by ${currentUser.name}.`,
+          userName: 'System',
+          userId: currentUser.uid,
+          systemGenerated: true,
+      });
+    } else {
+        const newVendor = { ...vendorData, id: `vendor-${Date.now()}` };
+        setVendors(prev => [newVendor, ...prev]);
+         addActivityLog({
+          vendorId: newVendor.id,
+          anchorId: newVendor.anchorId || undefined,
+          timestamp: new Date().toISOString(),
+          type: 'Creation',
+          title: 'Vendor Lead Created',
+          outcome: `New vendor '${newVendor.name}' was created by ${currentUser.name}.`,
+          userName: 'System',
+          userId: currentUser.uid,
+          systemGenerated: true,
+      });
     }
-    const newVendor = { ...vendorData, id: `vendor-${Date.now()}` };
-    setVendors(prev => [newVendor, ...prev]);
   };
 
   const updateVendor = async (updatedVendor: Vendor) => {
@@ -449,19 +584,49 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    const oldVendor = vendors.find(s => s.id === updatedVendor.id);
     if(firebaseEnabled) {
       await firestoreService.updateVendor(updatedVendor);
     }
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
+
+    if (currentUser && oldVendor) {
+        if (oldVendor.status !== updatedVendor.status) {
+            addActivityLog({
+                vendorId: updatedVendor.id,
+                anchorId: updatedVendor.anchorId || undefined,
+                timestamp: new Date().toISOString(),
+                type: 'Status Change',
+                title: `Vendor status changed`,
+                outcome: `Vendor '${updatedVendor.name}' status changed from '${oldVendor.status}' to '${updatedVendor.status}' by ${currentUser.name}.`,
+                userName: 'System',
+                userId: currentUser.uid,
+                systemGenerated: true,
+            });
+        }
+        if (oldVendor.assignedTo !== updatedVendor.assignedTo) {
+             const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
+             addActivityLog({
+                vendorId: updatedVendor.id,
+                anchorId: updatedVendor.anchorId || undefined,
+                timestamp: new Date().toISOString(),
+                type: 'Assignment',
+                title: `Vendor reassigned`,
+                outcome: `Vendor '${updatedVendor.name}' was assigned to ${assignedUser?.name || 'Unassigned'} by ${currentUser.name}.`,
+                userName: 'System',
+                userId: currentUser.uid,
+                systemGenerated: true,
+            });
+        }
+    }
   };
 
   const deleteVendor = async (vendorId: string) => {
-     // --- Server-Side Auth Check ---
     if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
         return;
     }
-    // --- End Auth Check ---
+    const vendorToDelete = vendors.find(v => v.id === vendorId);
     if (firebaseEnabled) {
         await firestoreService.deleteVendor(vendorId);
     }
@@ -470,6 +635,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         title: 'Vendor Deleted',
         description: 'The vendor has been removed from the system.',
     });
+    if (vendorToDelete && currentUser) {
+        addActivityLog({
+            vendorId: vendorId,
+            anchorId: vendorToDelete.anchorId || undefined,
+            timestamp: new Date().toISOString(),
+            type: 'Deletion',
+            title: `Vendor Deleted`,
+            outcome: `Vendor '${vendorToDelete.name}' was deleted by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
+    }
   };
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
@@ -482,11 +660,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    if (!currentUser) return;
     if (firebaseEnabled) {
       await firestoreService.addTask(taskData);
     }
     const newTask = { ...taskData, id: `task-${Date.now()}` };
     setTasks(prev => [newTask, ...prev]);
+    addActivityLog({
+        taskId: newTask.id,
+        anchorId: newTask.associatedWith.anchorId,
+        dealerId: newTask.associatedWith.dealerId,
+        vendorId: newTask.associatedWith.vendorId,
+        timestamp: new Date().toISOString(),
+        type: 'Creation',
+        title: 'Task Created',
+        outcome: `Task '${newTask.title}' was created by ${currentUser.name}.`,
+        userName: 'System',
+        userId: currentUser.uid,
+        systemGenerated: true,
+    });
   };
 
   const updateTask = async (updatedTask: Task) => {
@@ -499,18 +691,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    const oldTask = tasks.find(t => t.id === updatedTask.id);
     if (firebaseEnabled) {
       await firestoreService.updateTask(updatedTask);
     }
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-  };
-  
-  const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
-    if (firebaseEnabled) {
-      await firestoreService.addActivityLog(logData);
+
+    if (currentUser && oldTask && oldTask.status !== updatedTask.status) {
+         addActivityLog({
+            taskId: updatedTask.id,
+            anchorId: updatedTask.associatedWith.anchorId,
+            dealerId: updatedTask.associatedWith.dealerId,
+            vendorId: updatedTask.associatedWith.vendorId,
+            timestamp: new Date().toISOString(),
+            type: 'Status Change',
+            title: `Task status changed`,
+            outcome: `Task '${updatedTask.title}' status changed from '${oldTask.status}' to '${updatedTask.status}' by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+         });
     }
-    const newLog = { ...logData, id: `log-${Date.now()}` };
-    setActivityLogs(prev => [newLog, ...prev]);
   };
   
   const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
@@ -540,10 +741,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    if (!currentUser) return;
      if (firebaseEnabled) {
         try {
             const newUser = await firestoreService.addUser(userData);
             setUsers(prev => [newUser, ...prev]);
+             addActivityLog({
+                timestamp: new Date().toISOString(),
+                type: 'Creation',
+                title: 'User Created',
+                outcome: `New user '${newUser.name}' (${newUser.role}) was created by ${currentUser.name}.`,
+                userName: 'System',
+                userId: currentUser.uid,
+                systemGenerated: true,
+            });
         } catch (error) {
             console.error("Failed to add user to Firestore:", error);
             toast({ variant: 'destructive', title: 'Database Error', description: 'Could not save the new user.' });
@@ -551,11 +762,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } else { // mock mode
         const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
         setUsers(prev => [newUser, ...prev]);
+         addActivityLog({
+            timestamp: new Date().toISOString(),
+            type: 'Creation',
+            title: 'User Created',
+            outcome: `New user '${newUser.name}' (${newUser.role}) was created by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
     }
   };
 
   const deleteUser = async (userId: string) => {
-     // --- Server-Side Auth Check ---
     if (!currentUser || currentUser.role !== 'Admin') {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only Admins can delete users.' });
         return;
@@ -564,7 +783,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'You cannot delete your own account.' });
         return;
     }
-     // --- End Auth Check ---
+    const userToDelete = users.find(u => u.uid === userId);
     if(firebaseEnabled) {
       try {
         await firestoreService.deleteUser(userId);
@@ -582,6 +801,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         toast({
           title: 'User Deleted',
           description: 'The user has been removed from the system.',
+        });
+    }
+    if (userToDelete && currentUser) {
+        addActivityLog({
+            timestamp: new Date().toISOString(),
+            type: 'Deletion',
+            title: 'User Deleted',
+            outcome: `User '${userToDelete.name}' was deleted by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
         });
     }
   }

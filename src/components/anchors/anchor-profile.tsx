@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -17,14 +18,15 @@ import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon } from 'lucide-react';
+import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 import { useLanguage } from '@/contexts/language-context';
 import { NewContactDialog } from './new-contact-dialog';
+import { cn } from '@/lib/utils';
 
-const iconMap: Record<TaskType, React.ElementType> = {
+const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
     'Email': Mail,
     'Meeting (Online)': Calendar,
@@ -32,7 +34,13 @@ const iconMap: Record<TaskType, React.ElementType> = {
     'KYC Document Collection': PenSquare,
     'Proposal Preparation': PenSquare,
     'Internal Review': PenSquare,
+    'Status Change': History,
+    'Creation': PlusCircle,
+    'Assignment': CheckCircle,
+    'Note': MessageSquare,
+    'Deletion': PenSquare,
 };
+
 
 interface AnchorProfileProps {
   anchor: Anchor;
@@ -63,7 +71,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
 
-  const isSalesRole = currentUser && ['Admin', 'Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
+  const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
   const canAddContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
 
 
@@ -72,11 +80,12 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
     const log: Omit<ActivityLog, 'id'> = {
       anchorId: anchor.id,
       timestamp: new Date().toISOString(),
-      type: 'Call', // Defaulting for manual entry, could be a dropdown
-      title: 'Manual Log Entry',
+      type: 'Note',
+      title: 'Note Added',
       outcome: newActivity,
       userName: currentUser.name,
       userId: currentUser.uid,
+      systemGenerated: false,
     };
     addActivityLog(log);
     setNewActivity('');
@@ -290,14 +299,19 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                         <Separator />
                         <div className="space-y-6">
                             {initialLogs.map(log => {
-                                const Icon = iconMap[log.type] || PenSquare;
+                                const Icon = activityIconMap[log.type] || PenSquare;
                                 return (
                                 <div key={log.id} className="flex items-start gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary flex-shrink-0">
+                                    <div className={cn(
+                                        "flex h-10 w-10 items-center justify-center rounded-full bg-secondary flex-shrink-0",
+                                        log.systemGenerated && "bg-muted"
+                                    )}>
                                         <Icon className="h-5 w-5 text-secondary-foreground" />
                                     </div>
                                     <div>
-                                    <p className="font-medium">{log.title} <span className="text-sm text-muted-foreground">by {log.userName}</span></p>
+                                    <p className="font-medium">{log.title}
+                                      {!log.systemGenerated && <span className="text-sm text-muted-foreground"> by {log.userName}</span>}
+                                    </p>
                                     <p className="text-sm">{log.outcome}</p>
                                     <p className="text-xs text-muted-foreground">{format(new Date(log.timestamp), 'PPpp')}</p>
                                     </div>

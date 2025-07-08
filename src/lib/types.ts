@@ -110,11 +110,12 @@ export interface ActivityLog {
   vendorId?: string;
   taskId?: string;
   timestamp: string;
-  type: TaskType;
+  type: string;
   title: string;
   outcome: string;
   userName: string;
   userId: string;
+  systemGenerated?: boolean;
 }
 
 export type DailyActivityType = 'Client Meeting' | 'Site Visit' | 'Sales Presentation' | 'Follow-up' | 'Administrative' | 'Training' | 'Networking';
