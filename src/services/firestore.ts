@@ -29,17 +29,6 @@ const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[
   }));
 };
 
-const getAllSubordinates = (managerId: string, users: User[]): User[] => {
-    const subordinates: User[] = [];
-    const directReports = users.filter(u => u.managerId === managerId);
-    subordinates.push(...directReports);
-    directReports.forEach(report => {
-        subordinates.push(...getAllSubordinates(report.uid, users));
-    });
-    return subordinates;
-};
-
-
 // --- User Service ---
 export const getUsers = async (): Promise<User[]> => {
   if (!db) return [];
@@ -77,12 +66,17 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         };
     }
     
-    // User does not exist, create a new one with a default 'Sales' role
+    // User does not exist, create a new one.
+    // Check if the new user's email is the designated admin email.
+    const isAdmin = authUser.email.toLowerCase() === 'nikhil@supermoney.in';
+    
     const newUser: Omit<User, 'uid' | 'id'> = {
-        name: authUser.displayName || 'New User',
+        name: authUser.displayName || (isAdmin ? 'Nikhil Admin' : 'New User'),
         email: authUser.email,
-        role: 'Sales', // Default role for new sign-ups
+        // Assign 'Admin' role if it's the admin email, otherwise default to 'Sales'.
+        role: isAdmin ? 'Admin' : 'Sales', 
     };
+
     const batch = writeBatch(db);
     batch.set(userDocRef, newUser);
     await batch.commit();
