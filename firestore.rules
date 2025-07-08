@@ -1,66 +1,72 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
     // --- Helper Functions ---
-    function isAuth() {
+    function isSignedIn() {
       return request.auth != null;
     }
+
+    // Checks if the requesting user has a specific role.
+    function hasRole(role) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
     
+    // Checks if the requesting user is the owner of the document.
     function isOwner(userId) {
-      // Check if the requesting user is the owner of the document.
-      return request.auth.uid == userId;
-    }
-    
-    function getUserRole(userId) {
-      // Get the role of a user from the /users collection.
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
-    }
-    
-    function isAdmin() {
-      // Check if the requesting user has the 'Admin' role.
-      // This is safe because the read on /users is protected.
-      return isAuth() && getUserRole(request.auth.uid) == 'Admin';
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- Collection Rules ---
-
-    // Users can create their own profile, but only admins can modify or delete others.
+    // --- User Collection Rules ---
     match /users/{userId} {
-      allow create: if isAuth() && isOwner(userId);
-      allow list, read: if isAuth();
-      allow update: if isAuth() && (isOwner(userId) || isAdmin());
-      allow delete: if isAdmin();
-    }
-    
-    // Anchors can be read by anyone authenticated, but only created/deleted by Admins.
-    match /anchors/{anchorId} {
-      allow list, read, update, create: if isAuth();
-      allow delete: if isAdmin();
-    }
-    
-    // Any authenticated user can manage dealers, vendors, tasks, and logs.
-    // In a more complex scenario, these rules could be tightened to check
-    // for assignedTo fields or manager relationships.
-    match /dealers/{dealerId} {
-      allow read, list, create, update, delete: if isAuth();
+      // Any signed-in user can read user profiles and list all users for dropdowns etc.
+      allow get, list: if isSignedIn();
+
+      // A user can create their own profile upon first sign-in.
+      allow create: if isOwner(userId);
+
+      // A user can update their own profile, or an Admin can update any profile.
+      allow update: if isOwner(userId) || hasRole('Admin');
+      
+      // Only an Admin can delete a user.
+      allow delete: if hasRole('Admin');
     }
 
-    match /vendors/{vendorId} {
-      allow read, list, create, update, delete: if isAuth();
-    }
-    
-    match /tasks/{taskId} {
-      allow read, list, create, update, delete: if isAuth();
-    }
-    
-    match /activityLogs/{logId} {
-      allow read, list, create, update, delete: if isAuth();
+    // --- Data Collection Rules ---
+    // Generic rule for data collections: any signed-in user can perform CRUD,
+    // except for deletion, which is reserved for Admins. This is a secure
+    // default for an internal enterprise application.
+
+    match /anchors/{docId} {
+      allow get, list, create, update: if isSignedIn();
+      allow delete: if hasRole('Admin');
     }
 
-    match /daily_activities/{activityId} {
-       allow read, list, create, update, delete: if isAuth();
+    match /dealers/{docId} {
+      allow get, list, create, update: if isSignedIn();
+      allow delete: if hasRole('Admin');
+    }
+
+    match /vendors/{docId} {
+      allow get, list, create, update: if isSignedIn();
+      allow delete: if hasRole('Admin');
+    }
+
+    match /tasks/{docId} {
+      allow get, list, create, update: if isSignedIn();
+      allow delete: if hasRole('Admin');
+    }
+
+    match /activityLogs/{docId} {
+      allow get, list, create, update: if isSignedIn();
+      allow delete: if hasRole('Admin');
+    }
+    
+    match /daily_activities/{docId} {
+       allow get, list, create, update: if isSignedIn();
+       allow delete: if hasRole('Admin');
     }
   }
 }
