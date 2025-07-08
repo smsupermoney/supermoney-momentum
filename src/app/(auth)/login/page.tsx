@@ -2,50 +2,39 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { useLanguage } from '@/contexts/language-context';
 import { firebaseEnabled, auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
-});
-
-type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, users } = useApp();
+  const { t } = useApp();
   const { toast } = useToast();
-  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<{ title: string; description: React.ReactNode } | null>(null);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { email: '', password: '' },
-  });
-  
   const handleGoogleSignIn = async () => {
-    if (!auth) return;
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Firebase Not Configured',
+            description: 'Authentication is not properly configured. Please check your Firebase setup.',
+        });
+        return;
+    }
+
     setIsLoading(true);
     setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       // onAuthStateChanged in AppContext will handle the redirect
+      router.replace('/dashboard');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       let toastDescription = error.message || 'An unknown error occurred.';
@@ -69,8 +58,14 @@ export default function LoginPage() {
         });
         toastDescription = "This app's domain is not authorized. See message below for instructions."
 
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        toastDescription = 'The sign-in popup was closed before completing. Please try again.';
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        toastDescription = 'Sign-in cancelled. You can try again at any time.';
       } else if (error.code === 'auth/configuration-not-found') {
         toastDescription = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
+      } else if (error.message.includes('a parameter or an operation is not supported')) {
+        toastDescription = 'A browser-related issue occurred. Refreshing the page and trying again often resolves this.';
       }
 
       toast({
@@ -79,38 +74,10 @@ export default function LoginPage() {
         description: toastDescription,
         duration: 9000,
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
-
-
-  const onMockSubmit = (values: LoginFormValues) => {
-    setIsLoading(true);
-    setAuthError(null);
-    const success = login(values.email, values.password);
-
-    if (success) {
-      router.replace('/dashboard');
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
-      });
-      setIsLoading(false);
-    }
-  };
-  
-  const handleMockUserSelect = (email: string) => {
-      form.setValue('email', email);
-      const user = users.find(u => u.email === email);
-      if(user) {
-          const success = login(email, 'test123');
-           if (success) {
-              router.replace('/dashboard');
-            }
-      }
-  }
 
   return (
     <div className="space-y-4">
@@ -118,9 +85,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>{t('login.title')}</CardTitle>
           <CardDescription>
-              {firebaseEnabled
-                ? 'Use your company Google account to sign in. There is no separate password.'
-                : t('login.description')}
+              Use your company Google account to sign in. There is no separate password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,78 +96,14 @@ export default function LoginPage() {
               <AlertDescription>{authError.description}</AlertDescription>
             </Alert>
           )}
-          {firebaseEnabled ? (
-            <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in with Google
-            </Button>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onMockSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('login.emailLabel')}</FormLabel>
-                       <Select onValueChange={handleMockUserSelect} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a demo user" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map(user => (
-                            <SelectItem key={user.uid} value={user.email}>
-                              {user.name} ({user.role})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('login.passwordLabel')}</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} value="test123" readOnly />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t('login.button')}
-                </Button>
-              </form>
-            </Form>
-          )}
+          
+          <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Sign in with Google
+          </Button>
+
         </CardContent>
       </Card>
-      {!firebaseEnabled && (
-        <Card>
-          <CardHeader>
-              <CardTitle className="text-base">{t('login.demoAccounts')}</CardTitle>
-              <CardDescription className="text-xs">{t('login.demoDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-              <ul className="space-y-2 text-sm">
-                  {users.map(user => (
-                      <li key={user.uid}>
-                          <p className="font-medium">{user.email}</p>
-                          <p className="text-muted-foreground">Role: {user.role}</p>
-                      </li>
-                  ))}
-              </ul>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
