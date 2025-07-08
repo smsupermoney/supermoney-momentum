@@ -1,3 +1,4 @@
+
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
@@ -9,7 +10,7 @@ const daysFromNow = (days: number) => new Date(today.getTime() + days * 24 * 60 
 export const mockUsers: User[] = [
   { id: 'user-1', uid: 'user-1', name: 'Ashish Singh', email: 'asm@supermoney.in', role: 'Area Sales Manager', managerId: 'user-2', region: 'West' },
   { id: 'user-2', uid: 'user-2', name: 'Kamlesh Gupta', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
-  { id: 'user-3', uid: 'user-3', name: 'Falak Chawla', email: 'sonia@supermoney.in', role: 'Business Development', region: 'National' },
+  { id: 'user-3', uid: 'user-3', name: 'Falak Chawla', email: 'bd@supermoney.in', role: 'Business Development', region: 'National' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
 ];
 
