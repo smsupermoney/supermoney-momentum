@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { firebaseEnabled, auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
@@ -80,30 +79,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('login.title')}</CardTitle>
-          <CardDescription>
-              Use your company Google account to sign in. There is no separate password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {authError && (
-             <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>{authError.title}</AlertTitle>
-              <AlertDescription>{authError.description}</AlertDescription>
-            </Alert>
-          )}
-          
-          <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in with Google
-          </Button>
-
-        </CardContent>
-      </Card>
+    <div className="w-full space-y-6 rounded-lg border bg-card p-6 text-center shadow-sm">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{t('login.title')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+            Use your company Google account to sign in. There is no separate password.
+        </p>
+      </div>
+      
+      {authError && (
+          <Alert variant="destructive" className="text-left">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{authError.title}</AlertTitle>
+          <AlertDescription>{authError.description}</AlertDescription>
+          </Alert>
+      )}
+      
+      <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Sign in with Google
+      </Button>
     </div>
   );
 }
