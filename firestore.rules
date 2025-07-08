@@ -3,55 +3,88 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Default deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
-    function isAppUser() {
+    // Helper functions
+    function isSignedIn() {
       return request.auth != null;
     }
+
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
     
-    function isOwner(userId) {
-      return isAppUser() && request.auth.uid == userId;
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function getUserRole() {
+        // Check if the user document exists before trying to access its data.
+        return exists(/databases/$(database)/documents/users/$(request.auth.uid)) ? getUserData().role : '';
     }
 
-    function getRole() {
-      // Use a path variable to check for existence before accessing .data
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      if (userDoc.data != null) {
-        return userDoc.data.role;
-      }
-      return '';
+    function isSalesOrManager() {
+        let userRole = getUserRole();
+        return userRole in ['Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
     }
     
     function isAdmin() {
-      return isAppUser() && getRole() == 'Admin';
+        return getUserRole() == 'Admin';
     }
 
+    // --- Collections ---
+
+    // Collection: users
     match /users/{userId} {
-      // Admins can get any user doc, other users can only get their own.
-      allow get: if isOwner(userId) || isAdmin();
-      
-      // Any logged-in user can query/list the users collection to populate dropdowns, etc.
-      allow list: if isAppUser();
+      // Any signed-in user can create their OWN user document.
+      allow create: if isUser(userId);
 
-      // A user can create their own profile document when they sign up.
-      allow create: if isOwner(userId);
+      // Any signed-in user can read any user's profile and list all users. 
+      // This is needed for dropdowns and general app function.
+      allow read: if isSignedIn();
       
-      // Users can update their own profile. Admins can update any profile.
-      allow update: if isOwner(userId) || isAdmin();
+      // A user can only update their own document, or an admin can update any.
+      allow update: if isUser(userId) || isAdmin();
+      
+      // Only an admin can delete users (but not themselves).
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
 
-      // Admins can delete users (but not themselves).
-      allow delete: if isAdmin() && !isOwner(userId);
+    // Collection: anchors
+    match /anchors/{anchorId} {
+      allow read, update: if isSignedIn();
+      allow create: if getUserRole() in ['Admin', 'Business Development'];
     }
     
-    // Rules for all other collections
-    match /{collection}/{docId} {
-      // For now, allow any authenticated user to read/write to other collections.
-      // This should be tightened in production (e.g. only assigned user can update a task).
-      allow read, write: if isAppUser() && collection != 'users';
+    match /anchors/{document=**} {
+      allow read, list: if isSignedIn();
+    }
+    
+    // Collections: dealers, vendors
+    match /{spokeCollection}/{spokeId} where spokeCollection in ['dealers', 'vendors'] {
+        allow read, update, create: if isSignedIn();
+        allow delete: if getUserRole() in ['Admin', 'Business Development'];
+    }
+    
+    match /{spokeCollection}/{document=**} where spokeCollection in ['dealers', 'vendors'] {
+        allow read, list: if isSignedIn();
+    }
+
+    // Collection: tasks
+    match /tasks/{taskId} {
+      allow read, create, update: if isSignedIn();
+    }
+    
+    match /tasks/{document=**} {
+        allow read, list: if isSignedIn();
+    }
+
+    // Collections: activityLogs, daily_activities
+    match /{activityCollection}/{activityId} where activityCollection in ['activityLogs', 'daily_activities'] {
+      allow read, create: if isSignedIn();
+    }
+    
+     match /{activityCollection}/{document=**} where activityCollection in ['activityLogs', 'daily_activities'] {
+      allow read, list: if isSignedIn();
     }
   }
 }
