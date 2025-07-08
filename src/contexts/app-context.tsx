@@ -541,11 +541,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
      if (firebaseEnabled) {
-      toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User creation should be handled via Firebase Authentication console.' });
-      return;
+        try {
+            const newUser = await firestoreService.addUser(userData);
+            setUsers(prev => [newUser, ...prev]);
+        } catch (error) {
+            console.error("Failed to add user to Firestore:", error);
+            toast({ variant: 'destructive', title: 'Database Error', description: 'Could not save the new user.' });
+        }
+    } else { // mock mode
+        const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
+        setUsers(prev => [newUser, ...prev]);
     }
-    const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
-    setUsers(prev => [newUser, ...prev]);
   };
 
   const deleteUser = async (userId: string) => {
@@ -560,14 +566,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
      // --- End Auth Check ---
     if(firebaseEnabled) {
-      toast({ variant: 'destructive', title: 'Action Not Allowed', description: 'User deletion should be handled via Firebase Authentication console.' });
-      return;
+      try {
+        await firestoreService.deleteUser(userId);
+        setUsers(prev => prev.filter(u => u.uid !== userId));
+        toast({
+          title: 'User Profile Deleted',
+          description: 'The user profile has been removed from the CRM. Note: The authentication account still exists in Firebase.',
+        });
+      } catch (error) {
+        console.error("Failed to delete user from Firestore:", error);
+        toast({ variant: 'destructive', title: 'Database Error', description: 'Could not delete the user profile.' });
+      }
+    } else { // mock mode
+        setUsers(prev => prev.filter(u => u.uid !== userId));
+        toast({
+          title: 'User Deleted',
+          description: 'The user has been removed from the system.',
+        });
     }
-    setUsers(prev => prev.filter(u => u.uid !== userId));
-    toast({
-      title: 'User Deleted',
-      description: 'The user has been removed from the system.',
-    });
   }
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {

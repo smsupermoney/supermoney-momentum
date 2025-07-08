@@ -66,14 +66,37 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         };
     }
     
-    // User does not exist, create a new one.
-    // Check if the new user's email is the designated admin email.
+    // If user doc with UID doesn't exist, check if an admin has pre-created a profile for this email.
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where("email", "==", authUser.email));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        // A profile for this email exists, but with the wrong (auto-generated) ID.
+        // We will migrate the data to a new doc with the correct ID (the auth UID) and delete the old one.
+        console.log(`Migrating pre-created user profile for ${authUser.email}`);
+        const oldDoc = querySnapshot.docs[0];
+        const oldData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
+        
+        const batch = writeBatch(db);
+        
+        // Create the new document with the correct UID as the ID
+        batch.set(userDocRef, oldData);
+        
+        // Delete the old document with the incorrect, auto-generated ID
+        batch.delete(oldDoc.ref);
+        
+        await batch.commit();
+
+        return { id: authUser.uid, uid: authUser.uid, ...oldData };
+    }
+
+    // This is a brand new user, not pre-created by an admin.
     const isAdmin = authUser.email.toLowerCase() === 'nikhil@supermoney.in';
     
     const newUser: Omit<User, 'uid' | 'id'> = {
         name: authUser.displayName || (isAdmin ? 'Nikhil Admin' : 'New User'),
         email: authUser.email,
-        // Assign 'Admin' role if it's the admin email, otherwise default to 'Sales'.
         role: isAdmin ? 'Admin' : 'Sales', 
     };
 
