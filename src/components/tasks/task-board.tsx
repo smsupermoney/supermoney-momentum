@@ -56,7 +56,7 @@ export function TaskBoard() {
       case 'National Sales Manager':
         return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
       case 'Business Development':
-      case 'Sales':
+      case 'Area Sales Manager':
         return tasks.filter(task => task.assignedTo === currentUser.uid);
       default:
         return [];

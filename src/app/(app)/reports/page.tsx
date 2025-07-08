@@ -168,7 +168,7 @@ export default function ReportsPage() {
         case 'National Sales Manager':
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager': return <ManagerReports />;
-        case 'Sales': return <SalesReports />;
+        case 'Area Sales Manager': return <SalesReports />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
   }
@@ -198,7 +198,7 @@ function SalesReports() {
   const { currentUser, tasks, anchors, activityLogs } = useApp();
   const { t } = useLanguage();
   const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
-  const userAnchors = anchors.filter(a => a.assignedTo === currentUser?.uid);
+  const userAnchors = anchors.filter(a => a.createdBy === currentUser?.uid);
   const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
 
   // Task Summary Calculation
@@ -284,7 +284,7 @@ function ManagerReports() {
     const { t } = useLanguage();
     const [period, setPeriod] = useState('this_month');
     
-    const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.assignedTo || ''));
+    const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.createdBy || ''));
     const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
     const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
     const teamUsers = visibleUsers.filter(u => u.uid !== currentUser?.uid);
@@ -412,7 +412,7 @@ function AdminReports() {
     const { t } = useLanguage();
     const [period, setPeriod] = useState('this_month');
 
-    const salesUsers = users.filter(u => u.role === 'Sales' || u.role === 'Zonal Sales Manager');
+    const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
     
     const getFiscalYearStart = (date: Date) => {
         const year = date.getFullYear();
@@ -641,7 +641,7 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
                 const totalActivities = activityLogs.length;
 
                 const performerDeals = wonDeals.reduce((acc, deal) => {
-                    const userName = users.find(u => u.uid === deal.assignedTo)?.name || 'Unknown';
+                    const userName = users.find(u => u.uid === deal.createdBy)?.name || 'Unknown';
                     acc[userName] = (acc[userName] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
