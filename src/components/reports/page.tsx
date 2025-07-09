@@ -9,7 +9,7 @@ import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, R
 import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
-import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor } from '@/lib/types';
+import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -408,6 +408,7 @@ function AdminReports() {
     const [period, setPeriod] = useState('this_month');
 
     const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
+    const allSpokes = useMemo(() => [...dealers, ...vendors], [dealers, vendors]);
     
     const getFiscalYearStart = (date: Date) => {
         const year = date.getFullYear();
@@ -415,7 +416,7 @@ function AdminReports() {
         return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
     }
     
-    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
+    const { periodSpokes, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
         let label = t('reports.month');
@@ -434,18 +435,18 @@ function AdminReports() {
                 break;
         }
         return {
-          periodAnchors: anchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+          periodSpokes: allSpokes.filter(s => isWithinInterval(new Date(s.createdAt), interval)),
           periodLogs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
           periodLabel: label
         };
-    }, [period, anchors, activityLogs, t]);
+    }, [period, allSpokes, activityLogs, t]);
     
-    const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Active'];
+    const pipelineStages: SpokeStatus[] = ['Invited', 'Onboarding', 'KYC Pending', 'Agreement Pending', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: periodAnchors
-            .filter(a => a.status === stage && a.annualTurnover)
-            .reduce((sum, a) => sum + (a.annualTurnover || 0), 0) / 10000000, // in Cr
+        value: periodSpokes
+            .filter(s => s.status === stage && s.dealValue)
+            .reduce((sum, s) => sum + (s.dealValue || 0), 0) / 100, // in Cr (value is in Lakhs)
     }));
     
     const activityCounts = salesUsers
@@ -456,14 +457,13 @@ function AdminReports() {
         .sort((a, b) => b.activities - a.activities)
         .slice(0, 5); // show top 5
         
-    const getCount = (status: string) => periodAnchors.filter(a => a.status === status).length;
-    const allLeadsCount = periodAnchors.length;
-    const allContactsCount = getCount('Initial Contact') + getCount('Proposal') + getCount('Negotiation') + getCount('Active');
-    const allProposalsCount = getCount('Proposal') + getCount('Negotiation') + getCount('Active');
+    const getCount = (status: SpokeStatus) => periodSpokes.filter(s => s.status === status).length;
+    const allLeadsCount = periodSpokes.length;
+    const allOnboardingCount = getCount('Onboarding') + getCount('KYC Pending') + getCount('Agreement Pending') + getCount('Active');
+    const allActiveCount = getCount('Active');
     
-    const leadToContact = allLeadsCount > 0 ? (allContactsCount / allLeadsCount) * 100 : 0;
-    const contactToProposal = allContactsCount > 0 ? (allProposalsCount / allContactsCount) * 100 : 0;
-    const proposalToWon = allProposalsCount > 0 ? (getCount('Active') / allProposalsCount) * 100 : 0;
+    const invitedToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
+    const onboardingToActive = allOnboardingCount > 0 ? (allActiveCount / allOnboardingCount) * 100 : 0;
 
     const activeAnchors = anchors.filter(a => a.status === 'Active');
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
@@ -473,7 +473,7 @@ function AdminReports() {
   return (
     <div className="grid gap-4">
       <AdminDataChat />
-      <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={salesUsers} />
+      <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
       <Card>
           <CardHeader>
              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -541,9 +541,8 @@ function AdminReports() {
                     <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
-                    <ConversionRateItem from="Lead" to="Contact" value={leadToContact} />
-                    <ConversionRateItem from="Contact" to="Proposal" value={contactToProposal} />
-                    <ConversionRateItem from="Proposal" to="Won" value={proposalToWon} />
+                    <ConversionRateItem from="Invited" to="Onboarding" value={invitedToOnboarding} />
+                    <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
                 </CardContent>
             </Card>
             <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>

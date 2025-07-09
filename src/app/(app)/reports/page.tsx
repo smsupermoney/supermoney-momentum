@@ -9,7 +9,7 @@ import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, R
 import { Badge } from '@/components/ui/badge';
 import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
-import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor } from '@/lib/types';
+import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -447,7 +447,7 @@ function AdminReports() {
         name: stage,
         value: periodSpokes
             .filter(s => s.status === stage && s.dealValue)
-            .reduce((sum, s) => sum + (s.dealValue || 0), 0) / 10000000, // in Cr
+            .reduce((sum, s) => sum + (s.dealValue || 0), 0) / 100, // in Cr (value is in Lakhs)
     }));
     
     const activityCounts = salesUsers

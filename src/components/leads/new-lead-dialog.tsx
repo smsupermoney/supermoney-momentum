@@ -146,7 +146,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>+ New {type} Lead</DialogTitle>
           <DialogDescription>
@@ -220,87 +220,90 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
               />
             </div>
-             <FormField
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
                 control={form.control}
                 name="dealValue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Potential Deal Value (INR)</FormLabel>
+                    <FormLabel>Deal Value (Lakhs INR)</FormLabel>
                     <FormControl>
-                       <Input type="number" placeholder="e.g. 500000" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                       <Input type="number" placeholder="e.g. 5" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            
-            {!anchorId && (
-                <FormField
-                control={form.control}
-                name="anchorId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Anchor (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an anchor" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {anchors.map(anchor => (
-                                    <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
-            
-            <FormField
-              control={form.control}
-              name="product"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product (Optional)</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a product" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="SCF - Primary">SCF - Primary</SelectItem>
-                      <SelectItem value="SCF - Secondary">SCF - Secondary</SelectItem>
-                      <SelectItem value="BL">BL</SelectItem>
-                      <SelectItem value="LAP">LAP</SelectItem>
-                      <SelectItem value="WCDL">WCDL</SelectItem>
-                      <SelectItem value="WCTL">WCTL</SelectItem>
-                      <SelectItem value="PID">PID</SelectItem>
-                      <SelectItem value="SID">SID</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+              {!anchorId && (
+                  <FormField
+                  control={form.control}
+                  name="anchorId"
+                  render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Anchor (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Select an anchor" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {anchors.map(anchor => (
+                                      <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )}
+                  />
               )}
-            />
+             </div>
 
-             <FormField
-              control={form.control}
-              name="gstin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>GSTIN (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter GSTIN" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="product"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SCF - Primary">SCF - Primary</SelectItem>
+                        <SelectItem value="SCF - Secondary">SCF - Secondary</SelectItem>
+                        <SelectItem value="BL">BL</SelectItem>
+                        <SelectItem value="LAP">LAP</SelectItem>
+                        <SelectItem value="WCDL">WCDL</SelectItem>
+                        <SelectItem value="WCTL">WCTL</SelectItem>
+                        <SelectItem value="PID">PID</SelectItem>
+                        <SelectItem value="SID">SID</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="gstin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GSTIN (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter GSTIN" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
              <FormField
               control={form.control}
               name="location"
