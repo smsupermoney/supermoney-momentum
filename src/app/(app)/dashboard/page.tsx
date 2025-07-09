@@ -74,6 +74,8 @@ export default function DashboardPage() {
     const { currentUser } = useApp();
     const { t } = useLanguage();
 
+    if (!currentUser) return null;
+
     const renderDashboard = () => {
         switch (currentUser.role) {
             case 'Area Sales Manager':

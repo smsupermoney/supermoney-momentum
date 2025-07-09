@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -20,6 +19,7 @@ import {
   ListTodo,
   Shield,
   BarChart,
+  LayoutDashboard,
 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 
@@ -30,6 +30,7 @@ function QuickNav() {
   if (!currentUser) return null;
 
   const allNavLinks = [
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
     { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
     { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
     { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
@@ -42,7 +43,7 @@ function QuickNav() {
   const visibleNavLinks = allNavLinks.filter(link => link.roles.includes(currentUser.role as UserRole));
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
       {visibleNavLinks.map(link => {
         const Icon = link.icon;
         let label = t(link.labelKey);
@@ -71,6 +72,8 @@ function QuickNav() {
 export default function DashboardPage() {
     const { currentUser } = useApp();
     const { t } = useLanguage();
+
+    if (!currentUser) return null;
 
     const renderDashboard = () => {
         switch (currentUser.role) {

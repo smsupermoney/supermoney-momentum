@@ -12,10 +12,20 @@ export function PipelineCard() {
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
-    // Business Development role does not see a pipeline view on their dashboard
     if (currentUser.role === 'Business Development') return [];
-    // All other roles see the global pipeline of approved anchors
-    return anchors.filter(a => a.status !== 'Pending Approval' && a.status !== 'Unassigned Lead');
+    
+    // Admins and Managers see the global pipeline of approved anchors
+    const managerialRoles = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    if (managerialRoles.includes(currentUser.role)) {
+        return anchors.filter(a => a.status !== 'Pending Approval' && a.status !== 'Unassigned Lead' && a.status !== 'Archived');
+    }
+    
+    // Area Sales Managers see leads assigned to them.
+    if(currentUser.role === 'Area Sales Manager') {
+        return anchors.filter(a => a.createdBy === currentUser.uid && a.status !== 'Archived');
+    }
+    
+    return [];
   }
 
   const visibleAnchors = getVisibleAnchors();
@@ -36,10 +46,14 @@ export function PipelineCard() {
 
   const getTitle = () => {
     if (!currentUser || currentUser.role === 'Business Development') return '';
-    return t('dashboard.companyPipeline');
+    const managerRoles = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'];
+    if (managerRoles.includes(currentUser.role)) {
+      return t('dashboard.companyPipeline');
+    }
+    return t('dashboard.myPipeline');
   }
 
-  if (currentUser?.role === 'Business Development') {
+  if (currentUser?.role === 'Business Development' || visibleAnchors.length === 0) {
       return null;
   }
 
