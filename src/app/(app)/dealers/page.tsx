@@ -11,15 +11,19 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles } from 'lucide-react';
-import type { Dealer, SpokeStatus } from '@/lib/types';
+import type { Dealer, SpokeStatus, LeadType } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'Invited', 'Onboarding', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Rejected', 'Not Interested', 'Inactive'];
+const leadTypes: LeadType[] = ['New', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
 
 export default function DealersPage() {
-  const { dealers, anchors, users, currentUser, updateDealer, visibleUserIds } = useApp();
+  const { dealers, anchors, users, currentUser, updateDealer, visibleUsers } = useApp();
   const { t } = useLanguage();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -29,12 +33,35 @@ export default function DealersPage() {
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'dealer' } } | null>(null);
   const { toast } = useToast();
 
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [leadTypeFilter, setLeadTypeFilter] = useState('all');
+  const [anchorFilter, setAnchorFilter] = useState('all');
+  const [assignedToFilter, setAssignedToFilter] = useState('all');
+
+  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
+  const visibleUserIds = visibleUsers.map(u => u.uid);
+
   const userDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
     // Business Development role sees all non-active dealers
-    if (currentUser.role === 'Business Development') return true;
+    if (currentUser.role === 'Business Development') {
+        // Apply filters
+        if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+        if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
+        if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
+        if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
+        return true;
+    }
     // Other roles see dealers assigned to their visible tree
-    return visibleUserIds.includes(d.assignedTo || '');
+    if (!visibleUserIds.includes(d.assignedTo || '')) return false;
+
+    // Apply filters
+    if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+    if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
+    if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
+    if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
+    
+    return true;
   });
 
   const getAnchorName = (anchorId: string | null) => {
@@ -83,14 +110,16 @@ export default function DealersPage() {
   return (
     <>
       <PageHeader title={t('dealers.title')} description={t('dealers.description')}>
-        <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
-          <Upload className="mr-2 h-4 w-4" />
-          {t('dealers.bulkUpload')}
-        </Button>
-        <Button onClick={() => setIsNewLeadOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {t('dealers.newLead')}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setIsBulkUploadOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            {t('dealers.bulkUpload')}
+            </Button>
+            <Button onClick={() => setIsNewLeadOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            {t('dealers.newLead')}
+            </Button>
+        </div>
       </PageHeader>
       
       <NewLeadDialog type="Dealer" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
@@ -110,6 +139,41 @@ export default function DealersPage() {
             entity={emailConfig.entity}
         />
       )}
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
+               <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+               </Select>
+               <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Lead Types</SelectItem>
+                     {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
+                  </SelectContent>
+               </Select>
+               <Select value={anchorFilter} onValueChange={setAnchorFilter}>
+                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Anchors</SelectItem>
+                    {anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  </SelectContent>
+               </Select>
+               {canShowAssignedToFilter && (
+                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        {visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+               )}
+          </div>
+      </div>
 
 
       {/* Desktop Table View */}
@@ -208,3 +272,5 @@ export default function DealersPage() {
     </>
   );
 }
+
+    
