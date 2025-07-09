@@ -469,7 +469,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if(firebaseEnabled) {
       await firestoreService.updateDealer(updatedDealer);
     }
-    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? updatedDealer : d));
+    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...updatedDealer, updatedAt: new Date().toISOString()} : d));
     
     if (currentUser && oldDealer) {
         if (oldDealer.status !== updatedDealer.status) {
@@ -588,7 +588,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if(firebaseEnabled) {
       await firestoreService.updateVendor(updatedVendor);
     }
-    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? updatedVendor : s));
+    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...updatedVendor, updatedAt: new Date().toISOString()} : s));
 
     if (currentUser && oldVendor) {
         if (oldVendor.status !== updatedVendor.status) {

@@ -22,6 +22,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
+import { StaleLeadsCard } from '@/components/dashboard/stale-leads-card';
 
 
 function QuickNav() {
@@ -131,10 +132,9 @@ function SalesDashboard() {
 
 // Manager Dashboard (for ZSM, RSM, NSM)
 function ManagerDashboard() {
-    // For managers, the existing components are filtered for their team's data.
-    // This is handled within the components themselves based on currentUser's visibility tree.
     return (
         <div className="grid gap-4">
+            <StaleLeadsCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -233,10 +233,11 @@ function OnboardingDashboard() {
 }
 
 
-// Admin Dashboard (can be more comprehensive, but for now re-uses sales components which show global data for admin)
+// Admin Dashboard
 function AdminDashboard() {
     return (
         <div className="grid gap-4">
+            <StaleLeadsCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
