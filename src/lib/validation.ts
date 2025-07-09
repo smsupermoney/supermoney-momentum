@@ -6,19 +6,18 @@ import { z } from 'zod';
 // to ensure data integrity before writing to the database.
 
 export const NewAnchorSchema = z.object({
-  name: z.string().min(2, "Company name is required."),
-  industry: z.string().min(2, "Industry is required."),
-  contacts: z.array(z.object({
-      id: z.string(),
-      name: z.string().min(2),
-      email: z.string().email(),
-      phone: z.string(),
-      designation: z.string().min(2),
-      isPrimary: z.boolean(),
-  })).min(1, "At least one contact is required."),
-  createdBy: z.string().min(1, "A creator must be assigned."),
-  status: z.enum(['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Onboarding', 'Active', 'Unassigned Lead', 'Assigned', 'Contacted', 'Pending Approval', 'Rejected', 'Archived']),
+  companyName: z.string().min(2, { message: 'Company name is required' }),
+  industry: z.string().min(2, { message: 'Industry is required' }),
+  annualTurnover: z.number().min(0, { message: 'Annual turnover must be a positive number.' }),
+  primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
+  primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+  leadSource: z.string().min(1, { message: 'Lead source is required' }),
+  gstin: z.string().optional(),
+  location: z.string().optional(),
 });
+
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
@@ -49,3 +48,4 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
+

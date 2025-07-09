@@ -37,20 +37,9 @@ import { Loader2 } from 'lucide-react';
 import type { Anchor, LeadStatus } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { generateLeadId } from '@/lib/utils';
+import { NewAnchorSchema } from '@/lib/validation';
 
-const formSchema = z.object({
-  companyName: z.string().min(2, { message: 'Company name is required' }),
-  industry: z.string().min(2, { message: 'Industry is required' }),
-  primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
-  primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
-  email: z.string().email({ message: 'Invalid email address' }),
-  phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
-  leadSource: z.string().min(1, { message: 'Lead source is required' }),
-  gstin: z.string().optional(),
-  location: z.string().optional(),
-});
-
-type NewAnchorFormValues = z.infer<typeof formSchema>;
+type NewAnchorFormValues = z.infer<typeof NewAnchorSchema>;
 
 interface NewAnchorDialogProps {
   open: boolean;
@@ -64,7 +53,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewAnchorFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(NewAnchorSchema),
     defaultValues: {
       companyName: '',
       industry: '',
@@ -75,6 +64,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       leadSource: '',
       gstin: '',
       location: '',
+      annualTurnover: 0,
     },
   });
 
@@ -129,6 +119,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
+        annualTurnover: values.annualTurnover,
         status: status,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
@@ -189,19 +180,34 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('anchors.newDialog.industry')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Automotive" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="industry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('anchors.newDialog.industry')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Automotive" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="annualTurnover"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Annual Turnover (INR)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 50000000" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="primaryContactName"
