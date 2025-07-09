@@ -27,8 +27,9 @@ export default function AnchorsPage() {
   const userAnchors = anchors.filter(anchor => {
     if (anchor.status === 'Archived') return false;
 
+    // Business Development role sees all non-archived anchors, with a special focus on 'Onboarding'
     if (currentUser.role === 'Business Development') {
-      return anchor.status === 'Onboarding';
+      return true;
     }
     // Admin sees all non-archived anchors.
     if (currentUser.role === 'Admin') {

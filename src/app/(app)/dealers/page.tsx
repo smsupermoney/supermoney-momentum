@@ -31,7 +31,9 @@ export default function DealersPage() {
 
   const userDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
+    // Business Development role sees all non-active dealers
     if (currentUser.role === 'Business Development') return true;
+    // Other roles see dealers assigned to their visible tree
     return visibleUserIds.includes(d.assignedTo || '');
   });
 

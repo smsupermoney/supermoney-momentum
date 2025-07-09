@@ -209,8 +209,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUsers = useMemo(() => {
       if (!currentUser || users.length === 0) return [];
-      if (currentUser.role === 'Admin') return users;
-      if (currentUser.role === 'Area Sales Manager' || currentUser.role === 'Business Development') {
+      if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') return users;
+      if (currentUser.role === 'Area Sales Manager') {
           return users.filter(u => u.uid === currentUser.uid);
       }
       const subordinates = getAllSubordinates(currentUser.uid, users);

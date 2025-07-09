@@ -32,7 +32,9 @@ export default function VendorsPage() {
 
   const userVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
+    // Business Development role sees all non-active vendors
     if (currentUser.role === 'Business Development') return true;
+    // Other roles see vendors assigned to their visible tree
     return visibleUserIds.includes(s.assignedTo || '');
   });
 
