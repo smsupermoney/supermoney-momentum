@@ -97,7 +97,7 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
     const newUser: Omit<User, 'uid' | 'id'> = {
         name: authUser.displayName || (isAdmin ? 'Nikhil Admin' : 'New User'),
         email: authUser.email,
-        role: isAdmin ? 'Admin' : 'Sales', 
+        role: isAdmin ? 'Admin' : 'Area Sales Manager', 
     };
 
     const batch = writeBatch(db);
