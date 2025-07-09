@@ -49,13 +49,14 @@ export interface BaseLead {
   createdAt: string;
   updatedAt?: string;
   leadType?: LeadType;
+  dealValue?: number;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType' | 'assignedTo'> {
+export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType' | 'assignedTo' | 'dealValue'> {
   leadId: string;
   name: string; // Anchor name is company name
   industry: string;
-  annualTurnover?: number;
+  annualTurnover?: string;
   creditRating?: string;
   address?: string;
   leadSource?: string;

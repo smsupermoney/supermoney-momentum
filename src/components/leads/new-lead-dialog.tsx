@@ -30,10 +30,9 @@ import type { Dealer, Vendor, LeadType } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2 } from 'lucide-react';
 import { generateLeadId } from '@/lib/utils';
+import { NewSpokeSchema } from '@/lib/validation';
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name is required' }),
-  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+const formSchema = NewSpokeSchema.extend({
   email: z.string().email({ message: 'A valid email is required.' }).optional().or(z.literal('')),
   gstin: z.string().optional(),
   location: z.string().optional(),
@@ -41,6 +40,7 @@ const formSchema = z.object({
   product: z.string().optional(),
   leadType: z.string().optional(),
 });
+
 
 type NewLeadFormValues = z.infer<typeof formSchema>;
 
@@ -67,6 +67,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       anchorId: '',
       product: '',
       leadType: 'New',
+      dealValue: 0,
     },
   });
   
@@ -112,6 +113,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
           leadType: (values.leadType as LeadType) || 'New',
+          dealValue: values.dealValue,
         }
 
         if (type === 'Dealer') {
@@ -218,6 +220,19 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
               />
             </div>
+             <FormField
+                control={form.control}
+                name="dealValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Potential Deal Value (INR)</FormLabel>
+                    <FormControl>
+                       <Input type="number" placeholder="e.g. 500000" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             
             {!anchorId && (
                 <FormField

@@ -64,7 +64,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       leadSource: '',
       gstin: '',
       location: '',
-      annualTurnover: 0,
+      annualTurnover: '',
     },
   });
 
@@ -199,10 +199,20 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                 name="annualTurnover"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Annual Turnover (INR)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g. 50000000" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
-                    </FormControl>
+                    <FormLabel>Annual Turnover (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select turnover range" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Below 500 Cr">Below 500 Cr</SelectItem>
+                          <SelectItem value="500-2000 Cr">500-2000 Cr</SelectItem>
+                          <SelectItem value="2000-5000 Cr">2000-5000 Cr</SelectItem>
+                          <SelectItem value="5000 Cr+">5000 Cr+</SelectItem>
+                        </SelectContent>
+                      </Select>
                     <FormMessage />
                   </FormItem>
                 )}

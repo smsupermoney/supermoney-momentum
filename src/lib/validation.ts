@@ -8,7 +8,7 @@ import { z } from 'zod';
 export const NewAnchorSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required' }),
   industry: z.string().min(2, { message: 'Industry is required' }),
-  annualTurnover: z.number().min(0, { message: 'Annual turnover must be a positive number.' }),
+  annualTurnover: z.string().optional(),
   primaryContactName: z.string().min(2, { message: 'Contact name is required' }),
   primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
   email: z.string().email({ message: 'Invalid email address' }),
@@ -24,6 +24,7 @@ export const NewSpokeSchema = z.object({
   contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
   assignedTo: z.string().nullable(),
   status: z.enum(['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Active', 'Inactive', 'Unassigned Lead', 'Rejected', 'Not Interested', 'Onboarding']),
+  dealValue: z.number().min(0, "Deal value must be a positive number.").optional(),
 });
 
 
@@ -48,4 +49,3 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
-
