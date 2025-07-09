@@ -1,72 +1,69 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { firebaseEnabled, auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
+import { firebaseEnabled, auth, GoogleAuthProvider, signInWithPopup, firebaseConfig } from '@/lib/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { t } = useApp();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<{ title: string; description: React.ReactNode } | null>(null);
+  const [isConfigValid, setIsConfigValid] = useState(true);
+
+  useEffect(() => {
+    // This check is crucial for a smooth developer experience.
+    // It verifies that the Firebase environment variables are populated.
+    if (firebaseEnabled && (!firebaseConfig.apiKey || !firebaseConfig.projectId)) {
+      setIsConfigValid(false);
+    }
+  }, []);
+
 
   const handleGoogleSignIn = async () => {
     if (!auth) {
         toast({
             variant: 'destructive',
             title: 'Firebase Not Configured',
-            description: 'Authentication is not properly configured. Please check your Firebase setup.',
+            description: 'Authentication is not properly configured. Please contact support.',
         });
         return;
     }
 
     setIsLoading(true);
-    setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      // onAuthStateChanged in AppContext will handle the redirect
+      // The onAuthStateChanged listener in AppContext will handle the redirect upon success.
+      await signInWithPopup(auth, provider);
       router.replace('/dashboard');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      let toastDescription = error.message || 'An unknown error occurred.';
-
-      if (error.code === 'auth/unauthorized-domain') {
-        const hostname = window.location.hostname;
-        const origin = window.location.origin;
-        setAuthError({
-          title: "Domain Not Authorized",
-          description: (
-            <div className="text-xs space-y-2">
-              <p>To fix this, you must authorize this app's domain in your Firebase project settings:</p>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>Go to **Firebase Console → Authentication → Settings**.</li>
-                <li>Under **Authorized domains**, add: <code className="bg-muted px-1 py-0.5 rounded">{hostname}</code></li>
-                <li>Go to **Sign-in method → Google**.</li>
-                <li>Under **Authorized redirect URIs**, add: <code className="bg-muted px-1 py-0.5 rounded">{`${origin}/__/auth/handler`}</code></li>
-              </ol>
-            </div>
-          )
-        });
-        toastDescription = "This app's domain is not authorized. See message below for instructions."
-
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        toastDescription = 'The sign-in popup was closed before completing. Please try again.';
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        toastDescription = 'Sign-in cancelled. You can try again at any time.';
-      } else if (error.code === 'auth/configuration-not-found') {
-        toastDescription = 'Google Sign-In is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method.';
-      } else if (error.message.includes('a parameter or an operation is not supported')) {
-        toastDescription = 'A browser-related issue occurred. Refreshing the page and trying again often resolves this.';
+      
+      // Provide a generic but helpful error message for various sign-in failures.
+      let toastDescription = 'An unknown error occurred. Please try again or check your network connection.';
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            toastDescription = 'The sign-in popup was closed. Please try again.';
+            break;
+          case 'auth/cancelled-popup-request':
+            toastDescription = 'Sign-in cancelled. You can try again at any time.';
+            break;
+          case 'auth/unauthorized-domain':
+            toastDescription = "This app's domain is not authorized for Google Sign-In. Please contact your administrator.";
+            break;
+           case 'auth/configuration-not-found':
+            toastDescription = 'Google Sign-In is not enabled for this project. Please contact your administrator.';
+            break;
+        }
       }
-
+      
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
@@ -87,15 +84,17 @@ export default function LoginPage() {
         </p>
       </div>
       
-      {authError && (
+      {!isConfigValid && (
           <Alert variant="destructive" className="text-left">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{authError.title}</AlertTitle>
-          <AlertDescription>{authError.description}</AlertDescription>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Firebase Configuration Error</AlertTitle>
+            <AlertDescription>
+                Your Firebase environment variables are not set correctly. Please copy the values from your Firebase project settings into your <code>.env</code> file and restart the application.
+            </AlertDescription>
           </Alert>
       )}
       
-      <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading}>
+      <Button onClick={handleGoogleSignIn} className="w-full" disabled={isLoading || !isConfigValid}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign in with Google
       </Button>

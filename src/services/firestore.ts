@@ -15,6 +15,7 @@ import {
   writeBatch,
   deleteDoc,
   getDoc,
+  setDoc,
 } from 'firebase/firestore';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
 
@@ -40,9 +41,22 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const addUser = async (user: Omit<User, 'uid' | 'id'>): Promise<User> => {
     if (!db) throw new Error("Firestore not initialized");
-    const usersCollection = collection(db, 'users');
-    const docRef = await addDoc(usersCollection, user);
-    return { uid: docRef.id, id: docRef.id, ...user };
+    
+    // Find if a user with this email already exists
+    const q = query(collection(db, 'users'), where("email", "==", user.email));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        throw new Error(`User with email ${user.email} already exists.`);
+    }
+
+    // Since we don't know the UID yet, we add the document with an auto-generated ID.
+    // The checkAndCreateUser function will handle migrating this to a UID-keyed doc on first login.
+    const docRef = await addDoc(collection(db, 'users'), user);
+    
+    // For the purpose of the calling function, we create a temporary UID/ID.
+    const tempId = docRef.id;
+    return { uid: tempId, id: tempId, ...user };
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
@@ -72,8 +86,8 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-        // A profile for this email exists, but with the wrong (auto-generated) ID.
-        // We will migrate the data to a new doc with the correct ID (the auth UID) and delete the old one.
+        // A profile for this email exists, but with a temporary, auto-generated ID.
+        // We migrate the data to a new doc with the correct ID (the auth UID) and delete the old one.
         console.log(`Migrating pre-created user profile for ${authUser.email}`);
         const oldDoc = querySnapshot.docs[0];
         const oldData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
@@ -92,17 +106,15 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
     }
 
     // This is a brand new user, not pre-created by an admin.
-    const isAdmin = authUser.email.toLowerCase() === 'nikhil@supermoney.in';
-    
+    // Assign a default role. An admin can change this later.
     const newUser: Omit<User, 'uid' | 'id'> = {
-        name: authUser.displayName || (isAdmin ? 'Nikhil Admin' : 'New User'),
+        name: authUser.displayName || 'New User',
         email: authUser.email,
-        role: isAdmin ? 'Admin' : 'Area Sales Manager', 
+        role: 'Area Sales Manager', 
     };
-
-    const batch = writeBatch(db);
-    batch.set(userDocRef, newUser);
-    await batch.commit();
+    
+    // Use setDoc with the specific UID as the document ID
+    await setDoc(userDocRef, newUser);
     
     return {
         id: authUser.uid,
