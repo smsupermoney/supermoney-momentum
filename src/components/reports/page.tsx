@@ -16,15 +16,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
-import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 
 
 // Main Page Component
 export default function ReportsPage() {
-  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities } = useApp();
-  const { t } = useLanguage();
+  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } = useApp();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = () => {
@@ -195,8 +193,7 @@ export default function ReportsPage() {
 
 // Reports for Sales Role
 function SalesReports() {
-  const { currentUser, tasks, anchors, activityLogs } = useApp();
-  const { t } = useLanguage();
+  const { currentUser, tasks, anchors, activityLogs, t } = useApp();
   const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
   const userAnchors = anchors.filter(a => a.createdBy === currentUser?.uid);
   const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
@@ -280,8 +277,7 @@ function SalesReports() {
 
 // Reports for Managers (ZSM, RSM, NSM)
 function ManagerReports() {
-    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers, tasks } = useApp();
-    const { t } = useLanguage();
+    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers, tasks, t } = useApp();
     const [period, setPeriod] = useState('this_month');
     
     const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.createdBy || ''));
@@ -408,8 +404,7 @@ function ManagerReports() {
 
 // Reports for Admin Role
 function AdminReports() {
-    const { anchors, users, dealers, vendors, activityLogs, tasks } = useApp();
-    const { t } = useLanguage();
+    const { anchors, users, dealers, vendors, activityLogs, tasks, t } = useApp();
     const [period, setPeriod] = useState('this_month');
 
     const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
@@ -561,7 +556,7 @@ function AdminReports() {
 
 // New Helper Components
 function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserType[] }) {
-    const { t } = useLanguage();
+    const { t } = useApp();
     const overdueTasks = tasks.filter(t => 
         isPast(new Date(t.dueDate)) && 
         !isToday(new Date(t.dueDate)) && 
@@ -625,7 +620,7 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
 }
 
 function KeyHighlights({ period, anchors, activityLogs, users }: { period: string, anchors: Anchor[], activityLogs: ActivityLog[], users: UserType[]}) {
-    const { t } = useLanguage();
+    const { t } = useApp();
     const [highlights, setHighlights] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 

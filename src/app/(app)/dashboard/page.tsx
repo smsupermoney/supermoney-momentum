@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/language-context';
 import {
   BookCheck,
   Building,
@@ -71,8 +70,7 @@ function QuickNav() {
 
 
 export default function DashboardPage() {
-    const { currentUser } = useApp();
-    const { t } = useLanguage();
+    const { currentUser, t } = useApp();
 
     if (!currentUser) return null;
 
@@ -148,8 +146,7 @@ function ManagerDashboard() {
 
 // Business Development Dashboard
 function OnboardingDashboard() {
-    const { anchors, dealers, vendors } = useApp();
-    const { t } = useLanguage();
+    const { anchors, dealers, vendors, t } = useApp();
     const onboardingAnchors = anchors.filter(a => a.status === 'Onboarding');
 
     return (
