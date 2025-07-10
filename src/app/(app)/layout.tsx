@@ -51,8 +51,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-            <Logo className="h-12 w-12 text-primary animate-pulse" />
-            <p className="text-muted-foreground">Loading Sales Hub...</p>
+          <Logo className="h-12 w-12 text-primary animate-pulse" />
+          <p className="text-muted-foreground">Loading Sales Hub...</p>
         </div>
       </div>
     );
@@ -69,28 +69,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
     { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
   ];
-  
+
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role)).map(item => {
-      let label = t(item.labelKey);
-      if (currentUser.role === 'Business Development' && item.href === '/anchors') {
-          label = t('sidebar.onboarding');
-      }
-      return { ...item, label };
+    let label = t(item.labelKey);
+    if (currentUser.role === 'Business Development' && item.href === '/anchors') {
+      label = t('sidebar.onboarding');
+    }
+    return { ...item, label };
   });
 
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-            <div className="flex items-center justify-between p-2">
-                 <div className="flex items-center gap-2">
-                    <Logo className="text-sidebar-foreground h-8 w-8" />
-                    <h1 className="text-xl font-headline font-bold text-sidebar-foreground group-data-[state=collapsed]:hidden">Supermoney</h1>
-                 </div>
-                 <div className="group-data-[state=collapsed]:hidden">
-                    <NotificationBell />
-                 </div>
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-2">
+              <img
+                src="/assets/images/logowhite.png" // path from public/
+                alt="Logo"
+                style={{ width: '100%', height: 'auto' }}
+              />
             </div>
+            <div className="group-data-[state=collapsed]:hidden">
+              <NotificationBell />
+            </div>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -111,21 +114,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-            <LanguageSwitcher />
-            <SidebarSeparator />
-            <UserSwitcher />
+          <LanguageSwitcher />
+          <SidebarSeparator />
+          <UserSwitcher />
         </SidebarFooter>
       </Sidebar>
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-4 md:hidden">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <div className="flex items-center gap-2 font-headline text-xl font-bold text-primary">
-                <Logo className="h-8 w-8 text-primary" />
-                Supermoney
-              </div>
+          <div className="flex items-center gap-2">
+            <SidebarTrigger />
+            <div className="flex items-center gap-2 font-headline text-xl font-bold text-primary">
+              <Logo className="h-8 w-8 text-primary" />
+              Supermoney
             </div>
-            <NotificationBell />
+          </div>
+          <NotificationBell />
         </header>
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
