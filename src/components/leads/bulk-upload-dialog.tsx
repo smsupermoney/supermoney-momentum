@@ -96,14 +96,15 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks
             ] = columns;
             
+            const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
+            const finalAnchorId = anchorId || associatedAnchor?.id || null;
+
             const contactInfo = [];
             if (contactNumber) {
                 contactInfo.push({
                     name: name || 'Primary Contact',
                     phone: contactNumber,
-                    email: email || '',
-                    designation: 'Primary Contact',
-                    isPrimary: true
+                    email: email || undefined,
                 });
             }
 
@@ -112,14 +113,11 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               dealValue: parseFloat(dealValueStr) || 0,
               leadType: leadType || '',
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
-              contacts: contactInfo,
-              gstin, city, state, zone, anchorId: anchorName, product, leadSource, lenderId: lenderName, remarks
+              contacts: contactInfo.length > 0 ? contactInfo : undefined,
+              gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, lenderId: lenderName, remarks
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
-
-            const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
-            const finalAnchorId = anchorId || associatedAnchor?.id || null;
             
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser ? targetUser.uid : null;
@@ -130,7 +128,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
               name: validatedData.name,
-              contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`})),
+              contacts: validatedData.contacts ? validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0, designation: c.designation || ''})) : [],
               gstin: validatedData.gstin,
               city: validatedData.city,
               state: validatedData.state,
