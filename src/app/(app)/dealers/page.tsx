@@ -18,7 +18,7 @@ import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatDistanceToNow } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
@@ -213,7 +213,7 @@ export default function DealersPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
-                <TableCell>{formatDistanceToNow(new Date(dealer.createdAt), { addSuffix: true })}</TableCell>
+                <TableCell>{differenceInDays(new Date(), new Date(dealer.createdAt))} days</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
@@ -261,7 +261,7 @@ export default function DealersPage() {
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
-                      <p className="text-xs text-muted-foreground">TAT: {formatDistanceToNow(new Date(dealer.createdAt), { addSuffix: true })}</p>
+                      <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(dealer.createdAt))} days</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>

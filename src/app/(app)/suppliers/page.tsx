@@ -18,7 +18,7 @@ import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatDistanceToNow } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
@@ -212,7 +212,7 @@ export default function VendorsPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(vendor.assignedTo)}</TableCell>
-                <TableCell>{formatDistanceToNow(new Date(vendor.createdAt), { addSuffix: true })}</TableCell>
+                <TableCell>{differenceInDays(new Date(), new Date(vendor.createdAt))} days</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
@@ -260,7 +260,7 @@ export default function VendorsPage() {
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone || 'N/A'}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
-                      <p className="text-xs text-muted-foreground">TAT: {formatDistanceToNow(new Date(vendor.createdAt), { addSuffix: true })}</p>
+                      <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(vendor.createdAt))} days</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
