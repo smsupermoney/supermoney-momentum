@@ -296,8 +296,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAnchor = async (anchorData: Omit<Anchor, 'id'>) => {
+    if (!currentUser) return;
+    
+    const primaryContact = anchorData.contacts[0];
+    const dataToValidate = {
+      companyName: anchorData.name,
+      industry: anchorData.industry,
+      annualTurnover: anchorData.annualTurnover,
+      primaryContactName: primaryContact.name,
+      primaryContactDesignation: primaryContact.designation,
+      email: primaryContact.email,
+      phone: primaryContact.phone,
+      leadSource: anchorData.leadSource,
+      gstin: anchorData.gstin,
+      location: anchorData.location,
+    };
+
     try {
-      NewAnchorSchema.parse(anchorData);
+      NewAnchorSchema.parse(dataToValidate);
     } catch (e) {
       if (e instanceof z.ZodError) {
         console.error("Server-side validation failed for new anchor:", e.flatten().fieldErrors);
@@ -309,7 +325,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
     }
-    if (!currentUser) return;
     
     // All new anchors, regardless of creator, will be unassigned leads.
     const anchorWithStatus = { ...anchorData, status: 'Unassigned Lead' as const };
@@ -833,3 +848,5 @@ export const useApp = () => {
   }
   return context;
 };
+
+    
