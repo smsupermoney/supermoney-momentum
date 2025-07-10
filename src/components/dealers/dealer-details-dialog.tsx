@@ -27,8 +27,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from 'lucide-react';
+import { Trash2, User } from 'lucide-react';
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { Separator } from '../ui/separator';
 
 
 interface DealerDetailsDialogProps {
@@ -37,12 +39,23 @@ interface DealerDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function DetailItem({ label, value }: { label: string, value?: string | number | null }) {
+    if (!value) return null;
+    return (
+        <div>
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p>{value}</p>
+        </div>
+    )
+}
+
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer, anchors, currentUser, deleteDealer } = useApp();
+  const { updateDealer, anchors, currentUser, deleteDealer, lenders } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const anchorName = dealer.anchorId ? anchors.find(a => a.id === dealer.anchorId)?.name : 'N/A';
+  const lenderName = dealer.lenderId ? lenders.find(l => l.id === dealer.lenderId)?.name : 'N/A';
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
     updateDealer({ ...dealer, status: newStatus });
@@ -62,25 +75,15 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   return (
     <>
         <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
             <DialogTitle>{dealer.name}</DialogTitle>
             <DialogDescription>
                 Update the status and view details for this dealer.
             </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><p className="text-muted-foreground">Lead ID</p><p>{dealer.leadId || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Contact Number</p><p>{dealer.contacts?.[0]?.phone || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Email</p><p>{dealer.contacts?.[0]?.email || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">City</p><p>{dealer.city || 'N/A'}</p></div>
-                     <div><p className="text-muted-foreground">State</p><p>{dealer.state || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">GSTIN</p><p>{dealer.gstin || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
-                    <div><p className="text-muted-foreground">Product Interest</p><p>{dealer.product || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Lead Type</p><p>{dealer.leadType || 'Fresh'}</p></div>
-                </div>
+            <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
+                
                 <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
@@ -100,6 +103,47 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                         </SelectContent>
                     </Select>
                 </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <DetailItem label="Lead ID" value={dealer.leadId} />
+                    <DetailItem label="Lead Date" value={dealer.leadDate ? format(new Date(dealer.leadDate), 'PPP') : 'N/A'} />
+                    <DetailItem label="Lead Type" value={dealer.leadType} />
+                    <DetailItem label="Lead Source" value={dealer.leadSource} />
+                    <DetailItem label="Deal Value (INR Cr)" value={dealer.dealValue} />
+                    <DetailItem label="Anchor" value={anchorName} />
+                    <DetailItem label="Product Interest" value={dealer.product} />
+                    <DetailItem label="Lender" value={lenderName} />
+                    <DetailItem label="GSTIN" value={dealer.gstin} />
+                    <DetailItem label="City" value={dealer.city} />
+                    <DetailItem label="State" value={dealer.state} />
+                    <DetailItem label="Zone" value={dealer.zone} />
+                </div>
+                
+                {dealer.remarks && (
+                    <DetailItem label="Remarks" value={dealer.remarks} />
+                )}
+
+                {(dealer.contacts || []).length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium">Contacts</h4>
+                    {(dealer.contacts || []).map((contact, index) => (
+                      <div key={contact.id || index}>
+                         {index > 0 && <Separator className="my-3" />}
+                         <div className="flex items-start gap-3">
+                            <User className="h-4 w-4 mt-1 text-muted-foreground" />
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm flex-1">
+                                <DetailItem label="Name" value={contact.name} />
+                                <DetailItem label="Designation" value={contact.designation} />
+                                <DetailItem label="Email" value={contact.email} />
+                                <DetailItem label="Phone" value={contact.phone} />
+                            </div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+
                 {dealer.leadScore && (
                     <Card className="bg-secondary">
                         <CardHeader className="p-4">
@@ -115,10 +159,10 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     </Card>
                 )}
             </div>
-            <DialogFooter className="justify-between">
+            <DialogFooter className="justify-between sm:justify-between pt-4">
                 <div>
                   {canDelete && (
-                      <Button variant="destructive" onClick={() => setIsDeleteAlertOpen(true)}>
+                      <Button variant="destructive" size="sm" onClick={() => setIsDeleteAlertOpen(true)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                       </Button>
@@ -147,3 +191,4 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     </>
   );
 }
+

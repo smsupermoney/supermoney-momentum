@@ -27,9 +27,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from 'lucide-react';
+import { Trash2, User } from 'lucide-react';
 import { useState } from 'react';
-
+import { format } from 'date-fns';
+import { Separator } from '../ui/separator';
 
 interface VendorDetailsDialogProps {
   vendor: Vendor;
@@ -37,12 +38,23 @@ interface VendorDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function DetailItem({ label, value }: { label: string, value?: string | number | null }) {
+    if (!value) return null;
+    return (
+        <div>
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p>{value}</p>
+        </div>
+    )
+}
+
 export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor, anchors, currentUser, deleteVendor } = useApp();
+  const { updateVendor, anchors, currentUser, deleteVendor, lenders } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const anchorName = vendor.anchorId ? anchors.find(a => a.id === vendor.anchorId)?.name : 'N/A';
+  const lenderName = vendor.lenderId ? lenders.find(l => l.id === vendor.lenderId)?.name : 'N/A';
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
     updateVendor({ ...vendor, status: newStatus });
@@ -62,25 +74,15 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   return (
     <>
         <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
             <DialogTitle>{vendor.name}</DialogTitle>
             <DialogDescription>
                 Update the status and view details for this vendor.
             </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><p className="text-muted-foreground">Lead ID</p><p>{vendor.leadId || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Contact Number</p><p>{vendor.contacts?.[0]?.phone || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Email</p><p>{vendor.contacts?.[0]?.email || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">City</p><p>{vendor.city || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">State</p><p>{vendor.state || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">GSTIN</p><p>{vendor.gstin || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
-                    <div><p className="text-muted-foreground">Product Interest</p><p>{vendor.product || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Lead Type</p><p>{vendor.leadType || 'Fresh'}</p></div>
-                </div>
+            <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
+                
                 <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
@@ -100,6 +102,46 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                         </SelectContent>
                     </Select>
                 </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <DetailItem label="Lead ID" value={vendor.leadId} />
+                    <DetailItem label="Lead Date" value={vendor.leadDate ? format(new Date(vendor.leadDate), 'PPP') : 'N/A'} />
+                    <DetailItem label="Lead Type" value={vendor.leadType} />
+                    <DetailItem label="Lead Source" value={vendor.leadSource} />
+                    <DetailItem label="Deal Value (INR Cr)" value={vendor.dealValue} />
+                    <DetailItem label="Anchor" value={anchorName} />
+                    <DetailItem label="Product Interest" value={vendor.product} />
+                    <DetailItem label="Lender" value={lenderName} />
+                    <DetailItem label="GSTIN" value={vendor.gstin} />
+                    <DetailItem label="City" value={vendor.city} />
+                    <DetailItem label="State" value={vendor.state} />
+                    <DetailItem label="Zone" value={vendor.zone} />
+                </div>
+
+                {vendor.remarks && (
+                    <DetailItem label="Remarks" value={vendor.remarks} />
+                )}
+
+                {(vendor.contacts || []).length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium">Contacts</h4>
+                    {(vendor.contacts || []).map((contact, index) => (
+                      <div key={contact.id || index}>
+                         {index > 0 && <Separator className="my-3" />}
+                         <div className="flex items-start gap-3">
+                            <User className="h-4 w-4 mt-1 text-muted-foreground" />
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm flex-1">
+                                <DetailItem label="Name" value={contact.name} />
+                                <DetailItem label="Designation" value={contact.designation} />
+                                <DetailItem label="Email" value={contact.email} />
+                                <DetailItem label="Phone" value={contact.phone} />
+                            </div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {vendor.leadScore && (
                     <Card className="bg-secondary">
                         <CardHeader className="p-4">
@@ -115,10 +157,10 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     </Card>
                 )}
             </div>
-            <DialogFooter className="justify-between">
-                <div>
+            <DialogFooter className="justify-between sm:justify-between pt-4">
+                 <div>
                   {canDelete && (
-                      <Button variant="destructive" onClick={() => setIsDeleteAlertOpen(true)}>
+                      <Button variant="destructive" size="sm" onClick={() => setIsDeleteAlertOpen(true)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                       </Button>
@@ -147,3 +189,4 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     </>
   );
 }
+
