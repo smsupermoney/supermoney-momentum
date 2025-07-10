@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Vendor, LeadType as LeadTypeEnum } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2, PlusCircle, Trash2, Calendar as CalendarIcon } from 'lucide-react';
-import { generateLeadId } from '@/lib/utils';
+import { generateUniqueId } from '@/lib/utils';
 import { NewSpokeSchema } from '@/lib/validation';
 import { products } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
@@ -121,7 +121,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const scoreResult = await spokeScoring(scoringInput);
         
         const commonData = {
-          leadId: generateLeadId(),
+          leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
           name: values.name,
           contacts: values.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
           gstin: values.gstin,

@@ -19,6 +19,7 @@ import type { Dealer, Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/li
 import { useLanguage } from '@/contexts/language-context';
 import { NewSpokeSchema } from '@/lib/validation';
 import { z } from 'zod';
+import { generateUniqueId } from '@/lib/utils';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -113,7 +114,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               dealValue: parseFloat(dealValueStr) || 0,
               leadType: leadType || '',
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
-              contacts: contactInfo.length > 0 ? contactInfo : undefined,
+              contacts: contactInfo,
               gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, lenderId: lenderName, remarks
             };
             
@@ -127,6 +128,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const isRevive = leadType?.toLowerCase() === 'revive';
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
+              leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
               contacts: validatedData.contacts ? validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0, designation: c.designation || ''})) : [],
               gstin: validatedData.gstin,

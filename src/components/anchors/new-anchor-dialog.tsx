@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Anchor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
-import { generateLeadId } from '@/lib/utils';
+import { generateUniqueId } from '@/lib/utils';
 import { NewAnchorSchema } from '@/lib/validation';
 
 type NewAnchorFormValues = z.infer<typeof NewAnchorSchema>;
@@ -105,7 +105,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       const scoreResult = await leadScoring(leadScoringInput);
       
       const newAnchor: Omit<Anchor, 'id'> = {
-        leadId: generateLeadId(),
+        leadId: generateUniqueId('ach'),
         name: values.companyName,
         industry: values.industry,
         contacts: [{
