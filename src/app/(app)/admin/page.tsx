@@ -197,8 +197,8 @@ export default function AdminPage() {
     }
   };
 
-  const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
+  const managerialRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  const canViewAdminPanel = currentUser && (managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
   const isTrueAdmin = currentUser && currentUser.role === 'Admin';
 
 
