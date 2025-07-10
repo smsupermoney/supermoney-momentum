@@ -86,7 +86,6 @@ export default function DashboardPage() {
             case 'National Sales Manager':
                 return <ManagerDashboard />;
             case 'Business Development':
-                return <OnboardingDashboard />;
             case 'Admin':
                 return <AdminDashboard />;
             default:
@@ -101,7 +100,7 @@ export default function DashboardPage() {
           case 'Regional Sales Manager':
           case 'National Sales Manager':
               return t('dashboard.managerDescription');
-          case 'Business Development': return t('dashboard.specialistDescription');
+          case 'Business Development':
           case 'Admin': return t('dashboard.adminDescription');
           default: return "";
       }
@@ -147,99 +146,8 @@ function ManagerDashboard() {
     );
 }
 
-// Business Development Dashboard
-function OnboardingDashboard() {
-    const { anchors, dealers, vendors, t } = useApp();
-    const onboardingAnchors = anchors.filter(a => a.status === 'Onboarding');
 
-    return (
-        <div className="space-y-4">
-            <TeamProgressCard />
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t('dashboard.onboardingAnchors')}</CardTitle>
-                    <CardDescription>{t('dashboard.onboardingDescription')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {/* Desktop Table */}
-                    <div className="hidden rounded-lg border md:block">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Anchor Name</TableHead>
-                                    <TableHead>Industry</TableHead>
-                                    <TableHead>Active/Total Dealers</TableHead>
-                                    <TableHead>Active/Total Vendors</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
-                                    const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
-                                    const activeDealers = anchorDealers.filter(d => d.status === 'Active').length;
-                                    const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
-                                    const activeVendors = anchorVendors.filter(s => s.status === 'Active').length;
-                                    return (
-                                        <TableRow key={anchor.id}>
-                                            <TableCell className="font-medium">{anchor.name}</TableCell>
-                                            <TableCell>{anchor.industry}</TableCell>
-                                            <TableCell><Badge variant="secondary">{activeDealers}/{anchorDealers.length}</Badge></TableCell>
-                                            <TableCell><Badge variant="secondary">{activeVendors}/{anchorVendors.length}</Badge></TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/anchors/${anchor.id}`}>View Details</Link>
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                }) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center">No anchors are currently in onboarding.</TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    {/* Mobile Cards */}
-                    <div className="space-y-4 md:hidden">
-                        {onboardingAnchors.length > 0 ? onboardingAnchors.map(anchor => {
-                            const anchorDealers = dealers.filter(d => d.anchorId === anchor.id);
-                            const activeDealers = anchorDealers.filter(d => d.status === 'Active').length;
-                            const anchorVendors = vendors.filter(s => s.anchorId === anchor.id);
-                            const activeVendors = anchorVendors.filter(s => s.status === 'Active').length;
-                            return (
-                                <Card key={anchor.id} className="p-0">
-                                    <CardHeader className="p-4 pb-2">
-                                        <CardTitle className="text-base">{anchor.name}</CardTitle>
-                                        <CardDescription>{anchor.industry}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-2 p-4 pt-0">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-muted-foreground">Dealers:</span>
-                                            <Badge variant="secondary">{activeDealers}/{anchorDealers.length} Active</Badge>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-muted-foreground">Vendors:</span>
-                                            <Badge variant="secondary">{activeVendors}/{anchorVendors.length} Active</Badge>
-                                        </div>
-                                        <Button variant="outline" size="sm" asChild className="w-full mt-2">
-                                            <Link href={`/anchors/${anchor.id}`}>View Details</Link>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )
-                        }) : (
-                            <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No anchors are currently in onboarding.</div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-
-// Admin Dashboard
+// Admin & BD Dashboard
 function AdminDashboard() {
     return (
         <div className="grid gap-4">
