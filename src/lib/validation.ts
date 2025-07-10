@@ -13,7 +13,6 @@ export const NewAnchorSchema = z.object({
   primaryContactDesignation: z.string().min(2, { message: 'Designation is required' }),
   email: z.string().email({ message: 'Invalid email address' }),
   phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
-  leadSource: z.string().min(1, { message: 'Lead source is required' }),
   gstin: z.string().optional(),
   location: z.string().optional(),
 });
@@ -22,11 +21,12 @@ export const NewAnchorSchema = z.object({
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
-  email: z.string().email().optional(),
+  email: z.string().email().optional().or(z.literal('')),
   gstin: z.string().optional(),
   location: z.string().optional(),
   anchorId: z.string().nullable().optional(),
   product: z.string().optional(),
+  leadSource: z.string().optional(),
   leadType: z.string().optional(),
   dealValue: z.number().min(0, "Deal value must be a positive number.").optional().or(z.nan()),
 });

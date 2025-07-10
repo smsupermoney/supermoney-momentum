@@ -18,6 +18,7 @@ import { Loader2, Upload, Download } from 'lucide-react';
 import type { Dealer, Vendor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { generateLeadId } from '@/lib/utils';
+import { NewSpokeSchema } from '@/lib/validation';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -47,10 +48,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Assigned To Email,Deal Value (Lakhs)";
+    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Lead Source,Assigned To Email,Deal Value (Lakhs)";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,asm@supermoney.in,50"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,zsm@supermoney.in,25"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,Banker Referral,asm@supermoney.in,50"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,Conference / Event,zsm@supermoney.in,25"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -85,12 +86,12 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
       rows.forEach(row => {
         const columns = row.split(',').map(c => c.trim());
-        // Name and Contact Number are mandatory
         if (columns.length >= 2 && columns[0] && columns[1]) {
           try {
             const anchorName = (columns[5] || '').trim();
-            const assignedToEmail = (columns[7] || '').trim();
-            const dealValueStr = (columns[8] || '').trim();
+            const leadSource = (columns[7] || '').trim();
+            const assignedToEmail = (columns[8] || '').trim();
+            const dealValueStr = (columns[9] || '').trim();
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
@@ -102,28 +103,36 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               name: columns[0],
               contactNumber: columns[1],
               assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? 'Invited' as const : 'Unassigned Lead' as const,
+              status: finalAssignedToId ? 'New' as const : 'Unassigned Lead' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               leadType: 'New' as const,
               leadId: generateLeadId(),
             };
-
-            // Add optional fields only if they have a value
+            
             if (columns[2]) commonData.email = columns[2];
             if (columns[3]) commonData.gstin = columns[3];
             if (columns[4]) commonData.location = columns[4];
             if (columns[6]) commonData.product = columns[6];
+            if (leadSource) commonData.leadSource = leadSource;
             if (dealValueStr) commonData.dealValue = parseInt(dealValueStr, 10);
-
+            
+            // Validate before adding
+            const validationResult = NewSpokeSchema.safeParse(commonData);
+            if (!validationResult.success) {
+                console.error("Row failed validation:", row, validationResult.error.flatten());
+                errorCount++;
+                return; // Skip this row
+            }
 
             if (type === 'Dealer') {
-              addDealer(commonData as Omit<Dealer, 'id'>);
+              addDealer(validationResult.data as Omit<Dealer, 'id'>);
             } else {
-              addVendor(commonData as Omit<Vendor, 'id'>);
+              addVendor(validationResult.data as Omit<Vendor, 'id'>);
             }
             successCount++;
           } catch (err) {
+            console.error("Error processing row:", row, err);
             errorCount++;
           }
         } else if (row.trim() !== '') {
@@ -153,7 +162,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Assigned To Email, and Deal Value (Lakhs).
+            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Lead Source, Assigned To Email, and Deal Value (Lakhs).
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">

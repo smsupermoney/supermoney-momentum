@@ -212,10 +212,10 @@ export default function AdminPage() {
 
     if (leadType === 'Dealer') {
       const dealer = dealers.find((d) => d.id === leadId);
-      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, status: 'Invited', anchorId: anchorId });
+      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, status: 'New', anchorId: anchorId });
     } else if (leadType === 'Vendor') {
       const vendor = vendors.find((s) => s.id === leadId);
-      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'Invited', anchorId: anchorId });
+      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'New', anchorId: anchorId });
     }
 
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name} for anchor ${anchor?.name}.` });

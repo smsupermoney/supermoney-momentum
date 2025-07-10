@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -49,7 +49,6 @@ export default function ReportsPage() {
                 'Annual Turnover': a.annualTurnover,
                 'Credit Rating': a.creditRating || 'N/A',
                 Address: a.address || 'N/A',
-                'Lead Source': a.leadSource || 'N/A',
                 'Lead Score': a.leadScore,
                 'Lead Score Reason': a.leadScoreReason,
                 'Primary Contact Name': primaryContact?.name || 'N/A',
@@ -71,6 +70,7 @@ export default function ReportsPage() {
             'Lead Type': spoke.leadType || 'N/A',
             'Lead Score': spoke.leadScore,
             'Lead Score Reason': spoke.leadScoreReason,
+            'Lead Source': spoke.leadSource || 'N/A',
             'Potential Deal Value (INR)': spoke.dealValue,
             'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
         });
@@ -220,7 +220,7 @@ function SalesReports() {
   // Pipeline Funnel Data
   const userLeads = [...userDealers, ...userVendors];
   const pipelineData = [
-    { name: 'Invited', value: userLeads.filter(a => a.status === 'Invited').length, fill: 'hsl(var(--chart-1))' },
+    { name: 'New', value: userLeads.filter(a => a.status === 'New').length, fill: 'hsl(var(--chart-1))' },
     { name: 'Onboarding', value: userLeads.filter(a => a.status === 'Onboarding').length, fill: 'hsl(var(--chart-2))' },
     { name: 'KYC Pending', value: userLeads.filter(a => a.status === 'KYC Pending').length, fill: 'hsl(var(--chart-3))' },
     { name: 'Agreement Pending', value: userLeads.filter(a => a.status === 'Agreement Pending').length, fill: 'hsl(var(--chart-4))' },
@@ -329,7 +329,7 @@ function ManagerReports() {
         };
     }, [period, teamLeads, teamLogs, t]);
 
-    const pipelineStages: SpokeStatus[] = ['Invited', 'Onboarding', 'KYC Pending', 'Agreement Pending'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'KYC Pending', 'Agreement Pending'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodLeads.filter(a => a.status === stage).length
@@ -459,7 +459,7 @@ function AdminReports() {
         };
     }, [period, productFilter, allSpokes, activityLogs, t]);
     
-    const pipelineStages: SpokeStatus[] = ['Invited', 'Onboarding', 'KYC Pending', 'Agreement Pending', 'Active'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'KYC Pending', 'Agreement Pending', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodSpokes
@@ -568,7 +568,7 @@ function AdminReports() {
                     <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
-                    <ConversionRateItem from="Invited" to="Onboarding" value={invitedToOnboarding} />
+                    <ConversionRateItem from="New" to="Onboarding" value={invitedToOnboarding} />
                     <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
                 </CardContent>
             </Card>

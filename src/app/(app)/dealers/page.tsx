@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'Invited', 'Onboarding', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Rejected', 'Not Interested', 'Inactive'];
+const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Rejected', 'Not Interested', 'Inactive'];
 const leadTypes: LeadType[] = ['New', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
 
 export default function DealersPage() {
@@ -80,9 +80,9 @@ export default function DealersPage() {
         case 'Inactive':
             return 'destructive';
         case 'Unassigned Lead':
+        case 'New':
             return 'outline';
         case 'Onboarding':
-        case 'Invited':
         case 'KYC Pending':
         case 'Not reachable':
         case 'Agreement Pending':

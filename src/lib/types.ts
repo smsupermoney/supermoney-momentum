@@ -12,8 +12,8 @@ export interface User {
   region?: string;
 }
 
-export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived';
-export type SpokeStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
+export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';
+export type SpokeStatus = 'New' | 'KYC Pending' | 'Not reachable' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
@@ -48,6 +48,7 @@ export interface BaseLead {
   gstin?: string;
   location?: string;
   product?: string;
+  leadSource?: string;
   assignedTo: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -63,7 +64,6 @@ export interface Anchor {
   annualTurnover?: string;
   creditRating?: string;
   address?: string;
-  leadSource?: string;
   status: LeadStatus;
   leadScore?: number;
   leadScoreReason?: string;

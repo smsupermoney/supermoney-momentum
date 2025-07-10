@@ -347,9 +347,9 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
             case 'Inactive':
                 return 'destructive';
             case 'Unassigned Lead':
+            case 'New':
                 return 'outline';
             case 'Onboarding':
-            case 'Invited':
             case 'KYC Pending':
             case 'Not reachable':
             case 'Agreement Pending':
@@ -384,7 +384,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="New">New</SelectItem>
                                             <SelectItem value="Onboarding">Onboarding</SelectItem>
                                             <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>
@@ -427,7 +427,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Invited">Invited</SelectItem>
+                                            <SelectItem value="New">New</SelectItem>
                                             <SelectItem value="Onboarding">Onboarding</SelectItem>
                                             <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>

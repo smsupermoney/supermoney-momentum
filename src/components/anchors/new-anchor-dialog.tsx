@@ -69,7 +69,6 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       primaryContactDesignation: '',
       email: '',
       phone: '',
-      leadSource: '',
       gstin: '',
       location: '',
       annualTurnover: '',
@@ -97,7 +96,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         primaryContactName: values.primaryContactName,
         email: values.email,
         phone: values.phone,
-        leadSource: values.leadSource,
+        leadSource: '', // Not used for anchor scoring anymore
         gstin: values.gstin,
         location: values.location,
         annualTurnover: numericalTurnover,
@@ -117,7 +116,6 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
             phone: values.phone,
             isPrimary: true,
         }],
-        leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
         annualTurnover: values.annualTurnover,
@@ -300,33 +298,6 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                   )}
                 />
              </div>
-            <FormField
-              control={form.control}
-              name="leadSource"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('anchors.newDialog.leadSource')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('anchors.newDialog.selectLeadSource')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Banker Referral">Banker Referral</SelectItem>
-                      <SelectItem value="CA / Financial Consultant Referral">CA / Financial Consultant Referral</SelectItem>
-                      <SelectItem value="Industry Association">Industry Association</SelectItem>
-                      <SelectItem value="Anchor Ecosystem (Cross-sell)">Anchor Ecosystem (Cross-sell)</SelectItem>
-                      <SelectItem value="Conference / Event">Conference / Event</SelectItem>
-                      <SelectItem value="Website Inquiry">Website Inquiry</SelectItem>
-                      <SelectItem value="LinkedIn Campaign">LinkedIn Campaign</SelectItem>
-                      <SelectItem value="Content Marketing">Content Marketing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
               <Button type="submit" disabled={isSubmitting}>

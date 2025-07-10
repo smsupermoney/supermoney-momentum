@@ -33,15 +33,7 @@ import { generateLeadId } from '@/lib/utils';
 import { NewSpokeSchema } from '@/lib/validation';
 import { products } from '@/lib/types';
 
-const formSchema = NewSpokeSchema.extend({
-  email: z.string().email({ message: 'A valid email is required.' }).optional().or(z.literal('')),
-  gstin: z.string().optional(),
-  location: z.string().optional(),
-  anchorId: z.string().optional(),
-  product: z.string().optional(),
-  leadType: z.string().optional(),
-});
-
+const formSchema = NewSpokeSchema;
 
 type NewLeadFormValues = z.infer<typeof formSchema>;
 
@@ -68,7 +60,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       anchorId: '',
       product: '',
       leadType: 'New',
-      dealValue: 0,
+      leadSource: '',
+      dealValue: NaN,
     },
   });
   
@@ -107,8 +100,9 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           gstin: values.gstin,
           location: values.location,
           product: values.product || undefined,
+          leadSource: values.leadSource,
           assignedTo: isSpecialist ? null : currentUser.uid,
-          status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'Invited' : 'Unassigned Lead'),
+          status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'New' : 'Unassigned Lead'),
           anchorId: finalAnchorId,
           createdAt: new Date().toISOString(),
           leadScore: scoreResult.score,
@@ -298,7 +292,33 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
               />
             </div>
-            
+             <FormField
+              control={form.control}
+              name="leadSource"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lead Source</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a lead source" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Banker Referral">Banker Referral</SelectItem>
+                      <SelectItem value="CA / Financial Consultant Referral">CA / Financial Consultant Referral</SelectItem>
+                      <SelectItem value="Industry Association">Industry Association</SelectItem>
+                      <SelectItem value="Anchor Ecosystem (Cross-sell)">Anchor Ecosystem (Cross-sell)</SelectItem>
+                      <SelectItem value="Conference / Event">Conference / Event</SelectItem>
+                      <SelectItem value="Website Inquiry">Website Inquiry</SelectItem>
+                      <SelectItem value="LinkedIn Campaign">LinkedIn Campaign</SelectItem>
+                      <SelectItem value="Content Marketing">Content Marketing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
               control={form.control}
               name="location"
@@ -325,5 +345,3 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     </Dialog>
   );
 }
-
-    
