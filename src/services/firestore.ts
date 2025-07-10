@@ -17,7 +17,7 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, UserRole } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -103,12 +103,31 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
     }
   }
 
-  const finalUserData = userDocSnap.data() as Omit<User, 'uid' | 'id'>;
-  return {
-      id: userDocSnap.id,
-      uid: userDocSnap.id,
-      ...finalUserData
+  // Final check for data integrity before returning the user profile.
+  // This handles cases where a document might exist but be malformed.
+  const userData = userDocSnap.data() as Partial<Omit<User, 'uid' | 'id'>>;
+  const finalUserData: User = {
+    id: userDocSnap.id,
+    uid: userDocSnap.id,
+    name: userData.name || authUser.displayName || 'Unnamed User',
+    email: userData.email || authUser.email,
+    role: userData.role || 'Area Sales Manager', // Default role if missing
+    managerId: userData.managerId !== undefined ? userData.managerId : null,
+    region: userData.region || 'Unassigned',
   };
+  
+  // If data was missing and we had to add defaults, update the document in Firestore.
+  if (JSON.stringify(finalUserData) !== JSON.stringify({id: userDocSnap.id, uid: userDocSnap.id, ...userData})) {
+      await setDoc(userDocRef, {
+        name: finalUserData.name,
+        email: finalUserData.email,
+        role: finalUserData.role,
+        managerId: finalUserData.managerId,
+        region: finalUserData.region,
+      }, { merge: true });
+  }
+
+  return finalUserData;
 };
 
 
