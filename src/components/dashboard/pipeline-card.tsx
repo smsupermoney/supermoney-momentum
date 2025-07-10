@@ -14,18 +14,8 @@ export function PipelineCard() {
     if (!currentUser) return [];
     if (currentUser.role === 'Business Development') return [];
     
-    // Admins and Managers see the global pipeline of approved anchors
-    const managerialRoles = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-    if (managerialRoles.includes(currentUser.role)) {
-        return anchors.filter(a => a.status !== 'Pending Approval' && a.status !== 'Unassigned Lead' && a.status !== 'Archived');
-    }
-    
-    // Area Sales Managers see leads assigned to them.
-    if(currentUser.role === 'Area Sales Manager') {
-        return anchors.filter(a => a.createdBy === currentUser.uid && a.status !== 'Archived');
-    }
-    
-    return [];
+    // All roles (except BD) see the same pipeline of non-archived anchors now
+    return anchors.filter(a => a.status !== 'Archived');
   }
 
   const visibleAnchors = getVisibleAnchors();
@@ -46,11 +36,7 @@ export function PipelineCard() {
 
   const getTitle = () => {
     if (!currentUser || currentUser.role === 'Business Development') return '';
-    const managerRoles = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'];
-    if (managerRoles.includes(currentUser.role)) {
-      return t('dashboard.companyPipeline');
-    }
-    return t('dashboard.myPipeline');
+    return t('dashboard.companyPipeline');
   }
 
   if (currentUser?.role === 'Business Development' || visibleAnchors.length === 0) {

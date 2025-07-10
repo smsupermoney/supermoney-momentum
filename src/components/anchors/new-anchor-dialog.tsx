@@ -105,7 +105,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
 
       const scoreResult = await leadScoring(leadScoringInput);
       
-      const newAnchor: Omit<Anchor, 'id' | 'status'> = {
+      const newAnchor: Omit<Anchor, 'id'> = {
         leadId: generateLeadId(),
         name: values.companyName,
         industry: values.industry,
@@ -127,16 +127,16 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         vendorIds: [],
         leadScore: scoreResult.score,
         leadScoreReason: scoreResult.reason,
+        status: 'Active', // New anchors are active immediately
       };
 
-      addAnchor(newAnchor as Omit<Anchor, 'id'>);
+      addAnchor(newAnchor);
 
       toast({
         title: 'Anchor Created & Scored!',
         description: (
           <div>
-            <p>{values.companyName} has been added as a new lead.</p>
-            <p className="font-semibold">It is now available for assignment in the Admin Panel.</p>
+            <p>{values.companyName} has been added and is now visible to all users.</p>
             <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
             <p className="text-xs">{scoreResult.reason}</p>
           </div>

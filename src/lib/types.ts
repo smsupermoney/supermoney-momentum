@@ -1,6 +1,5 @@
 
 
-
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development';
 
 export interface User {
@@ -13,7 +12,7 @@ export interface User {
   region?: string;
 }
 
-export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Pending Approval' | 'Rejected' | 'Archived';
+export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived';
 export type SpokeStatus = 'Invited' | 'KYC Pending' | 'Not reachable' | 'Agreement Pending' | 'Active' | 'Inactive' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
@@ -56,7 +55,8 @@ export interface BaseLead {
   dealValue?: number;
 }
 
-export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email' | 'product' | 'leadType' | 'assignedTo' | 'dealValue'> {
+export interface Anchor {
+  id: string;
   leadId: string;
   name: string; // Anchor name is company name
   industry: string;
@@ -72,6 +72,7 @@ export interface Anchor extends Omit<BaseLead, 'contactNumber' | 'name' | 'email
   contacts: Contact[];
   nextBestAction?: NextBestAction;
   createdBy?: string;
+  createdAt: string;
   updatedAt?: string;
 }
 

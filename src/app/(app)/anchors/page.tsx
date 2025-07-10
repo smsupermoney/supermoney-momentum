@@ -24,20 +24,8 @@ export default function AnchorsPage() {
 
   const pageTitle = currentUser.role === 'Business Development' ? t('anchors.onboardingTitle') : t('anchors.title');
 
-  const userAnchors = anchors.filter(anchor => {
-    if (anchor.status === 'Archived') return false;
-
-    // Business Development role sees all non-archived anchors, with a special focus on 'Onboarding'
-    if (currentUser.role === 'Business Development') {
-      return true;
-    }
-    // Admin sees all non-archived anchors.
-    if (currentUser.role === 'Admin') {
-        return true;
-    }
-    // Other roles see all approved anchors that are not archived
-    return anchor.status !== 'Pending Approval' && anchor.status !== 'Unassigned Lead';
-  });
+  // All users see all active anchors
+  const allActiveAnchors = anchors.filter(anchor => anchor.status !== 'Archived');
 
 
   const getStatusVariant = (status: LeadStatus): "default" | "secondary" | "outline" | "destructive" => {
@@ -91,7 +79,7 @@ export default function AnchorsPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {userAnchors.map(anchor => {
+        {allActiveAnchors.map(anchor => {
           const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
           return (
             <Link key={anchor.id} href={`/anchors/${anchor.id}`} className="block">
@@ -132,7 +120,7 @@ export default function AnchorsPage() {
           )
         })}
       </div>
-      {userAnchors.length === 0 && (
+      {allActiveAnchors.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
               <p>{t('anchors.noAnchors')}</p>
               <p className="text-sm">{t('anchors.noAnchorsDescription')}</p>

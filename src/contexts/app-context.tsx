@@ -326,31 +326,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    // All new anchors, regardless of creator, will be unassigned leads.
-    const anchorWithStatus = { ...anchorData, status: 'Unassigned Lead' as const };
+    const anchorToSave = { ...anchorData, status: 'Active' as const };
 
     if (firebaseEnabled) {
-      const docRef = await firestoreService.addAnchor(anchorWithStatus);
-      const newAnchor = { ...anchorWithStatus, id: docRef.id };
+      const docRef = await firestoreService.addAnchor(anchorToSave);
+      const newAnchor = { ...anchorToSave, id: docRef.id };
       setAnchors(prev => [newAnchor, ...prev]);
       addActivityLog({
         anchorId: newAnchor.id,
         timestamp: new Date().toISOString(),
         type: 'Creation',
-        title: 'Anchor Lead Created',
+        title: 'Anchor Created',
         outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
         userName: 'System',
         userId: currentUser.uid,
         systemGenerated: true,
       });
     } else {
-      const newAnchor = { ...anchorWithStatus, id: `anchor-${Date.now()}`};
+      const newAnchor = { ...anchorToSave, id: `anchor-${Date.now()}`};
       setAnchors(prev => [newAnchor, ...prev]);
       addActivityLog({
         anchorId: newAnchor.id,
         timestamp: new Date().toISOString(),
         type: 'Creation',
-        title: 'Anchor Lead Created',
+        title: 'Anchor Created',
         outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
         userName: 'System',
         userId: currentUser.uid,
@@ -361,7 +360,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateAnchor = async (updatedAnchor: Anchor) => {
     try {
-        NewAnchorSchema.extend({ id: z.string() }).parse(updatedAnchor);
+        const primaryContact = updatedAnchor.contacts[0] || {};
+        const dataToValidate = {
+            id: updatedAnchor.id,
+            companyName: updatedAnchor.name,
+            industry: updatedAnchor.industry,
+            annualTurnover: updatedAnchor.annualTurnover,
+            primaryContactName: primaryContact.name,
+            primaryContactDesignation: primaryContact.designation,
+            email: primaryContact.email,
+            phone: primaryContact.phone,
+            leadSource: updatedAnchor.leadSource,
+            gstin: updatedAnchor.gstin,
+            location: updatedAnchor.location,
+        };
+        NewAnchorSchema.extend({ id: z.string() }).parse(dataToValidate);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Server-side validation failed for anchor update:", e.flatten().fieldErrors);
@@ -848,5 +861,3 @@ export const useApp = () => {
   }
   return context;
 };
-
-    

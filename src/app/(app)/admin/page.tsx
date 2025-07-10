@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UnassignedAnchorsTable } from '@/components/admin/unassigned-anchors-table';
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -166,7 +165,7 @@ export default function AdminPage() {
     setAssignments((prev) => ({ ...prev, [leadId]: userId }));
   };
 
-  const handleAssign = (leadId: string, leadType: LeadType | 'Anchor') => {
+  const handleAssign = (leadId: string, leadType: LeadType) => {
     const assignedToId = assignments[leadId];
     if (!assignedToId) {
       toast({ variant: 'destructive', title: 'No user selected' });
@@ -181,9 +180,6 @@ export default function AdminPage() {
     } else if (leadType === 'Vendor') {
       const vendor = vendors.find((s) => s.id === leadId);
       if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'Invited' });
-    } else if (leadType === 'Anchor') {
-        const anchor = anchors.find((a) => a.id === leadId);
-        if (anchor) updateAnchor({ ...anchor, createdBy: assignedToId, status: 'Lead' });
     }
 
     toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });
@@ -256,17 +252,30 @@ export default function AdminPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                {/* Section for all managers to see */}
-                <UnassignedAnchorsTable
-                    assignments={assignments}
-                    onAssignmentChange={handleAssignmentChange}
-                    onAssign={(id) => handleAssign(id, 'Anchor')}
-                    assignableUsers={assignableUsers}
-                />
-
+                {/* Section for Lead Assignment - visible to all managers */}
+                <div className="mt-6">
+                    <LeadTable
+                      title={t('admin.unassignedDealers')}
+                      leads={unassignedDealers}
+                      assignableUsers={assignableUsers}
+                      assignments={assignments}
+                      onAssign={(id) => handleAssign(id, 'Dealer')}
+                      onAssignmentChange={handleAssignmentChange}
+                    />
+                    <LeadTable
+                      title={t('admin.unassignedVendors')}
+                      leads={unassignedVendors}
+                      assignableUsers={assignableUsers}
+                      assignments={assignments}
+                      onAssign={(id) => handleAssign(id, 'Vendor')}
+                      onAssignmentChange={handleAssignmentChange}
+                    />
+                </div>
+                
                 {/* Section for Admins only */}
                 {currentUser.role === 'Admin' && (
                   <>
+                    <Separator className="my-6" />
                     <ArchivedAnchorsTable />
                     <Separator className="my-6" />
                     {/* Desktop User Table */}
@@ -336,26 +345,6 @@ export default function AdminPage() {
                     </div>
                   </>
                 )}
-                
-                {/* Section for Lead Assignment - visible to all managers */}
-                <div className="mt-6">
-                    <LeadTable
-                      title={t('admin.unassignedDealers')}
-                      leads={unassignedDealers}
-                      assignableUsers={assignableUsers}
-                      assignments={assignments}
-                      onAssign={(id) => handleAssign(id, 'Dealer')}
-                      onAssignmentChange={handleAssignmentChange}
-                    />
-                    <LeadTable
-                      title={t('admin.unassignedVendors')}
-                      leads={unassignedVendors}
-                      assignableUsers={assignableUsers}
-                      assignments={assignments}
-                      onAssign={(id) => handleAssign(id, 'Vendor')}
-                      onAssignmentChange={handleAssignmentChange}
-                    />
-                </div>
             </CardContent>
         </Card>
       </div>
