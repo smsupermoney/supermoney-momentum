@@ -24,7 +24,7 @@ export const NewSpokeSchema = z.object({
   contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
   assignedTo: z.string().nullable().optional(),
   status: z.enum(['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Active', 'Inactive', 'Unassigned Lead', 'Rejected', 'Not Interested', 'Onboarding']).optional(),
-  dealValue: z.number().min(0, "Deal value must be a positive number.").optional(),
+  dealValue: z.number().min(0, "Deal value must be a positive number.").optional().or(z.nan()).or(z.undefined()),
   email: z.string().email().optional().or(z.literal('')),
   gstin: z.string().optional(),
   location: z.string().optional(),

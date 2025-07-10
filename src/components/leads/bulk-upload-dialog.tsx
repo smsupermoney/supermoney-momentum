@@ -47,10 +47,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Assigned To Email";
+    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Assigned To Email,Deal Value (Lakhs)";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,asm@supermoney.in"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,zsm@supermoney.in"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,asm@supermoney.in,50"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,zsm@supermoney.in,25"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -90,6 +90,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
           try {
             const anchorName = (columns[5] || '').trim();
             const assignedToEmail = (columns[7] || '').trim();
+            const dealValueStr = (columns[8] || '').trim();
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
@@ -98,8 +99,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const finalAssignedToId = targetUser ? targetUser.uid : null;
             
             const commonData = {
-              id: `${type.toLowerCase()}-${Date.now()}-${Math.random()}`,
-              leadId: generateLeadId(),
               name: columns[0],
               contactNumber: columns[1],
               email: columns[2] || undefined,
@@ -110,13 +109,15 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               status: finalAssignedToId ? 'Invited' as const : 'Unassigned Lead' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
-              leadType: 'New Lead' as const,
+              leadType: 'New' as const,
+              leadId: generateLeadId(),
+              dealValue: dealValueStr ? parseInt(dealValueStr, 10) : undefined,
             };
 
             if (type === 'Dealer') {
-              addDealer(commonData as Dealer);
+              addDealer(commonData as Omit<Dealer, 'id'>);
             } else {
-              addVendor(commonData as Vendor);
+              addVendor(commonData as Omit<Vendor, 'id'>);
             }
             successCount++;
           } catch (err) {
@@ -149,7 +150,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Assigned To Email.
+            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Assigned To Email, and Deal Value (Lakhs).
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
