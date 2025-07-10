@@ -46,10 +46,10 @@ export default function DealersPage() {
 
     // Admin and Business Development see all non-active leads
     if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      // Allow all non-active leads to pass this stage of filtering
+      // Pass this check, as they can see all non-active leads.
     } else {
         // Other roles only see dealers assigned within their visible tree
-        if (!visibleUserIds.includes(d.assignedTo || '')) return false;
+        if (!d.assignedTo || !visibleUserIds.includes(d.assignedTo)) return false;
     }
 
     // Apply global filters

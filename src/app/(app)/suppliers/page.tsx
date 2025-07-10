@@ -46,10 +46,10 @@ export default function VendorsPage() {
     
     // Admin and Business Development see all non-active leads
     if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      // Allow all non-active leads to pass this stage of filtering
+      // Pass this check, as they can see all non-active leads.
     } else {
         // Other roles only see vendors assigned within their visible tree
-        if (!visibleUserIds.includes(s.assignedTo || '')) return false;
+        if (!s.assignedTo || !visibleUserIds.includes(s.assignedTo)) return false;
     }
 
     if (statusFilter !== 'all' && s.status !== statusFilter) return false;
