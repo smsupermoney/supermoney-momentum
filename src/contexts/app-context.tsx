@@ -113,56 +113,53 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setIsLoading(true);
-      if (!user) {
+      if (user) {
+        try {
+          const userProfile = await firestoreService.checkAndCreateUser(user);
+          if (userProfile) {
+            setCurrentUser(userProfile);
+            sessionStorage.setItem('currentUser', JSON.stringify(userProfile));
+
+            // Fetch all other data AFTER the user profile is confirmed.
+            const allUsers = await firestoreService.getUsers();
+            setUsers(allUsers);
+    
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+              firestoreService.getAnchors(),
+              firestoreService.getDealers(),
+              firestoreService.getVendors(),
+              firestoreService.getTasks(),
+              firestoreService.getActivityLogs(),
+              firestoreService.getDailyActivities(),
+            ]);
+    
+            setAnchors(anchorsData);
+            setDealers(dealersData);
+            setVendors(vendorsData);
+            setTasks(tasksData);
+            setActivityLogs(activityLogsData);
+            setDailyActivities(dailyActivitiesData);
+          } else {
+            console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
+            await logout();
+          }
+        } catch (error: any) {
+            console.error("Firebase error during data load:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Firebase Connection Error',
+                description: 'Could not connect to the database. Using mock data.',
+                duration: 9000
+            });
+            loadMockData();
+        } finally {
+            setIsLoading(false);
+        }
+      } else {
+        // User is signed out
         setCurrentUser(null);
         sessionStorage.removeItem('currentUser');
         setIsLoading(false);
-        return;
-      }
-      
-      try {
-          const userProfile = await firestoreService.checkAndCreateUser(user);
-          if (!userProfile) {
-              console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
-              await logout();
-              setIsLoading(false);
-              return;
-          }
-
-          setCurrentUser(userProfile);
-          sessionStorage.setItem('currentUser', JSON.stringify(userProfile));
-
-          // Now fetch all other data
-          const allUsers = await firestoreService.getUsers();
-          setUsers(allUsers);
-  
-          const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
-            firestoreService.getAnchors(),
-            firestoreService.getDealers(),
-            firestoreService.getVendors(),
-            firestoreService.getTasks(),
-            firestoreService.getActivityLogs(),
-            firestoreService.getDailyActivities(),
-          ]);
-  
-          setAnchors(anchorsData);
-          setDealers(dealersData);
-          setVendors(vendorsData);
-          setTasks(tasksData);
-          setActivityLogs(activityLogsData);
-          setDailyActivities(dailyActivitiesData);
-
-      } catch (error: any) {
-          console.error("Firebase error during data load:", error);
-          toast({
-              variant: 'destructive',
-              title: 'Firebase Connection Error',
-              description: 'Could not connect to the database. Using mock data.',
-              duration: 9000
-          })
-          loadMockData();
-      } finally {
-          setIsLoading(false);
       }
     });
 
@@ -171,10 +168,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUsers = useMemo(() => {
     if (!currentUser || !users.length) return [];
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') return users;
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
+      return users;
+    }
     
     const self = users.find(u => u.uid === currentUser.uid);
-    if (!self) return []; // Should not happen if logged in
+    if (!self) return [];
 
     const subordinates = getAllSubordinates(currentUser.uid, users);
     return [self, ...subordinates];

@@ -67,53 +67,48 @@ export const deleteUser = async (userId: string): Promise<void> => {
 };
 
 export const checkAndCreateUser = async (authUser: { email: string | null; displayName: string | null; uid: string }): Promise<User | null> => {
-    if (!db || !authUser.email) return null;
+  if (!db || !authUser.email) return null;
 
-    const userDocRef = doc(db, 'users', authUser.uid);
-    const userDocSnap = await getDoc(userDocRef);
+  const userDocRef = doc(db, 'users', authUser.uid);
+  let userDocSnap = await getDoc(userDocRef);
 
-    if (userDocSnap.exists()) {
-        const userData = userDocSnap.data() as Omit<User, 'uid' | 'id'>;
-        return {
-            id: userDocSnap.id,
-            uid: userDocSnap.id,
-            ...userData
-        };
-    }
-    
+  if (!userDocSnap.exists()) {
     // If user doc with UID doesn't exist, check if a profile was pre-created by an Admin
     const q = query(collection(db, 'users'), where("email", "==", authUser.email));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-        // A profile exists, created by an admin. We need to migrate it.
-        const oldDoc = querySnapshot.docs[0];
-        const userData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
+      // A profile exists, created by an admin. We need to migrate it.
+      const oldDoc = querySnapshot.docs[0];
+      const userData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
 
-        // Create the new document with the correct UID and delete the old one in a batch.
-        const batch = writeBatch(db);
-        batch.set(userDocRef, userData);
-        batch.delete(oldDoc.ref);
-        await batch.commit();
-
-        return { id: authUser.uid, uid: authUser.uid, ...userData };
+      const batch = writeBatch(db);
+      batch.set(userDocRef, userData); // Create new doc with UID as ID
+      batch.delete(oldDoc.ref);       // Delete old doc with auto-ID
+      await batch.commit();
+      
+      userDocSnap = await getDoc(userDocRef); // Re-fetch the newly created doc
+      
+    } else {
+      // If no profile exists at all, create a brand new one with a default role.
+      const newUser: Omit<User, 'uid' | 'id'> = {
+          name: authUser.displayName || 'New User',
+          email: authUser.email,
+          role: 'Area Sales Manager', // Assign a default role
+          managerId: null,
+          region: 'Unassigned',
+      };
+      await setDoc(userDocRef, newUser);
+      userDocSnap = await getDoc(userDocRef);
     }
+  }
 
-    // If no profile exists at all, create a brand new one with a default role.
-    const newUser: Omit<User, 'uid' | 'id'> = {
-        name: authUser.displayName || 'New User',
-        email: authUser.email,
-        role: 'Area Sales Manager', // Assign a default role
-    };
-    
-    // Use setDoc with the specific UID as the document ID
-    await setDoc(userDocRef, newUser);
-    
-    return {
-        id: authUser.uid,
-        uid: authUser.uid,
-        ...newUser
-    }
+  const finalUserData = userDocSnap.data() as Omit<User, 'uid' | 'id'>;
+  return {
+      id: userDocSnap.id,
+      uid: userDocSnap.id,
+      ...finalUserData
+  };
 };
 
 
