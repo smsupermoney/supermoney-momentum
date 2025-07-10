@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PendingAnchorsTable } from '@/components/admin/pending-anchors-table';
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
+import { Separator } from '@/components/ui/separator';
 
 
 // Define a union type for the different kinds of leads
@@ -61,11 +62,8 @@ function LeadTable({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-4 pt-4">
+        <h3 className="text-lg font-semibold">{title}</h3>
         {/* Desktop Table */}
         <div className="hidden rounded-lg border md:block">
           <Table>
@@ -134,8 +132,7 @@ function LeadTable({
             </Card>
           ))}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
@@ -202,7 +199,7 @@ export default function AdminPage() {
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
-  const canViewApprovalTables = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role));
+  const isTrueAdmin = currentUser && currentUser.role === 'Admin';
 
 
   if (!canViewAdminPanel) {
@@ -240,28 +237,28 @@ export default function AdminPage() {
       </AlertDialog>
 
       <div className="grid gap-4 mt-6">
-        {canViewApprovalTables && (
-          <>
-            <PendingAnchorsTable />
-            <ArchivedAnchorsTable />
-          </>
-        )}
-        
-        {currentUser.role === 'Admin' && (
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <CardTitle>{t('admin.userManagement')}</CardTitle>
-                    <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
-                  </div>
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>{t('admin.userManagement')}</CardTitle>
+                <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
+              </div>
+              {isTrueAdmin && (
                   <Button onClick={() => setIsNewUserDialogOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     {t('admin.addNewUser')}
                   </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <PendingAnchorsTable />
+            <ArchivedAnchorsTable />
+
+            {isTrueAdmin && (
+              <>
+                <Separator className="my-6" />
                 {/* Desktop Table */}
                 <div className="hidden rounded-lg border md:block">
                   <Table>
@@ -327,25 +324,26 @@ export default function AdminPage() {
                     </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-        )}
-        <LeadTable
-          title={t('admin.unassignedDealers')}
-          leads={unassignedDealers}
-          assignableUsers={assignableUsers}
-          assignments={assignments}
-          onAssign={(id) => handleAssign(id, 'Dealer')}
-          onAssignmentChange={handleAssignmentChange}
-        />
-        <LeadTable
-          title={t('admin.unassignedVendors')}
-          leads={unassignedVendors}
-          assignableUsers={assignableUsers}
-          assignments={assignments}
-          onAssign={(id) => handleAssign(id, 'Vendor')}
-          onAssignmentChange={handleAssignmentChange}
-        />
+              </>
+            )}
+
+            <LeadTable
+              title={t('admin.unassignedDealers')}
+              leads={unassignedDealers}
+              assignableUsers={assignableUsers}
+              onAssign={(id) => handleAssign(id, 'Dealer')}
+              onAssignmentChange={handleAssignmentChange}
+            />
+            <LeadTable
+              title={t('admin.unassignedVendors')}
+              leads={unassignedVendors}
+              assignableUsers={assignableUsers}
+              onAssign={(id) => handleAssign(id, 'Vendor')}
+              onAssignmentChange={handleAssignmentChange}
+            />
+
+          </CardContent>
+        </Card>
       </div>
     </>
   );
