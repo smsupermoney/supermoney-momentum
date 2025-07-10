@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 export function TeamProgressCard() {
-    const { currentUser, visibleUsers, anchors, tasks, activityLogs } = useApp();
+    const { currentUser, visibleUsers, anchors, dealers, vendors, tasks, activityLogs } = useApp();
     const [period, setPeriod] = useState<'1d' | '7d' | '30d'>('7d');
 
     const teamMembers = useMemo(() => {
@@ -29,7 +29,15 @@ export function TeamProgressCard() {
         const startDate = subDays(new Date(), daysToSubtract);
 
         return teamMembers.map(member => {
-            const memberAnchors = anchors.filter(a => a.createdBy === member.uid && a.status !== 'Archived' && a.status !== 'Active');
+            const preOnboardingAnchorStatuses = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Pending Approval'];
+            const memberAnchors = anchors.filter(a => a.createdBy === member.uid && preOnboardingAnchorStatuses.includes(a.status)).length;
+
+            const preOnboardingSpokeStatuses = ['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending'];
+            const memberDealers = dealers.filter(d => d.assignedTo === member.uid && preOnboardingSpokeStatuses.includes(d.status)).length;
+            const memberVendors = vendors.filter(v => v.assignedTo === member.uid && preOnboardingSpokeStatuses.includes(v.status)).length;
+            
+            const totalActiveLeads = memberAnchors + memberDealers + memberVendors;
+
             const memberTasks = tasks.filter(t => t.assignedTo === member.uid);
             const memberActivities = activityLogs.filter(log => log.userId === member.uid && new Date(log.timestamp) >= startDate);
 
@@ -43,12 +51,12 @@ export function TeamProgressCard() {
                 id: member.uid,
                 name: member.name,
                 role: member.role,
-                activeLeads: memberAnchors.length,
+                activeLeads: totalActiveLeads,
                 overdueTasks,
                 activities: memberActivities.length,
             };
         });
-    }, [teamMembers, anchors, tasks, activityLogs, period]);
+    }, [teamMembers, anchors, dealers, vendors, tasks, activityLogs, period]);
 
     const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
     if (!currentUser || !managerRoles.includes(currentUser.role) || teamMembers.length === 0) {
