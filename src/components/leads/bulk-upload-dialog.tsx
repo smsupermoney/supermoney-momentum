@@ -15,11 +15,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Download } from 'lucide-react';
-import type { Dealer, Vendor, SpokeStatus } from '@/lib/types';
+import type { Dealer, Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
-import { generateLeadId } from '@/lib/utils';
+import { NewSpokeSchema } from '@/lib/validation';
 import { z } from 'zod';
-import { format } from 'date-fns';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -83,9 +82,9 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
       const text = e.target?.result as string;
       const rows = text.split('\n').slice(1); // Skip header row
       let successCount = 0;
-      let errorCount = 0;
+      const errors: { row: number; messages: string[] }[] = [];
 
-      for (const row of rows) {
+      for (const [index, row] of rows.entries()) {
         if (!row.trim()) continue;
         const columns = row.split(',').map(c => c.trim());
         
@@ -95,13 +94,21 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               anchorName, product, leadSource, leadType, leadDateStr,
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks
             ] = columns;
-
-            // Enforce mandatory fields for bulk upload
-            if (!name || !contactNumber || !dealValueStr || !leadType) {
-              console.error("Skipping row due to missing mandatory fields:", row);
-              errorCount++;
-              continue;
-            }
+            
+            const parsedDealValue = dealValueStr ? parseFloat(dealValueStr) : undefined;
+            const parsedLeadDate = leadDateStr ? new Date(leadDateStr) : new Date();
+            
+            const rawData = {
+              name,
+              contacts: [{ name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
+              dealValue: parsedDealValue,
+              leadType: leadType || '',
+              leadDate: parsedLeadDate,
+              gstin, city, state, zone, anchorId: anchorName, product, leadSource, lenderId: lenderName, remarks
+            };
+            
+            // Validate the parsed data against our schema
+            const validatedData = NewSpokeSchema.parse(rawData);
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
@@ -114,23 +121,23 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const isRevive = leadType?.toLowerCase() === 'revive';
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
-              name,
-              contacts: [{ id: `contact-${Date.now()}`, name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
-              gstin: gstin || undefined,
-              city: city || undefined,
-              state: state || undefined,
-              zone: zone || undefined,
-              product: product || undefined,
-              leadSource: leadSource || undefined,
-              remarks: remarks || undefined,
-              lenderId: targetLender?.id || undefined,
+              name: validatedData.name,
+              contacts: validatedData.contacts,
+              gstin: validatedData.gstin,
+              city: validatedData.city,
+              state: validatedData.state,
+              zone: validatedData.zone,
+              product: validatedData.product,
+              leadSource: validatedData.leadSource,
+              remarks: validatedData.remarks,
+              lenderId: targetLender?.id || validatedData.lenderId,
               assignedTo: finalAssignedToId,
               status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
               anchorId: finalAnchorId,
-              leadDate: isRevive && leadDateStr ? new Date(leadDateStr).toISOString() : new Date().toISOString(),
+              leadDate: validatedData.leadDate.toISOString(),
               createdAt: new Date().toISOString(),
-              leadType: leadType ? (leadType as Dealer['leadType']) : 'Fresh',
-              dealValue: parseFloat(dealValueStr),
+              leadType: validatedData.leadType as LeadTypeEnum,
+              dealValue: validatedData.dealValue,
             };
 
             if (type === 'Dealer') {
@@ -139,16 +146,34 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               await addVendor(commonData as Omit<Vendor, 'id'>);
             }
             successCount++;
+
           } catch (err) {
-            console.error("Error processing row:", row, err);
-            errorCount++;
+            const rowNumber = index + 2;
+            if (err instanceof z.ZodError) {
+              const errorMessages = Object.entries(err.flatten().fieldErrors).map(([field, messages]) => `${field}: ${messages.join(', ')}`);
+              errors.push({ row: rowNumber, messages: errorMessages });
+            } else {
+              console.error(`Unknown error processing row ${rowNumber}:`, row, err);
+              errors.push({ row: rowNumber, messages: ["An unexpected error occurred."] });
+            }
           }
         }
       
-      toast({
-        title: 'Bulk Upload Complete',
-        description: `${successCount} ${type.toLowerCase()}s uploaded successfully. ${errorCount} rows failed.`,
-      });
+      if (errors.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: `Bulk Upload Complete with ${errors.length} Error(s)`,
+          description: `Successfully uploaded ${successCount} leads. Check console for error details.`,
+          duration: 9000,
+        });
+        console.error("Bulk Upload Errors:", errors);
+      } else {
+         toast({
+          title: 'Bulk Upload Complete',
+          description: `${successCount} ${type.toLowerCase()}s uploaded successfully.`,
+        });
+      }
+
       setIsProcessing(false);
       handleClose();
     };
