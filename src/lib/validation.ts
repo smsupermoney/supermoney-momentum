@@ -14,21 +14,33 @@ export const NewAnchorSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
   phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
   gstin: z.string().optional(),
-  location: z.string().optional(),
+  address: z.string().optional(),
+});
+
+export const ContactSchema = z.object({
+    name: z.string().min(2, "Contact name is required."),
+    email: z.string().email("Invalid email address."),
+    phone: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
+    designation: z.string().min(2, "Designation is required."),
+    isPrimary: z.boolean(),
 });
 
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
-  email: z.string().email().optional().or(z.literal('')),
+  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
   gstin: z.string().optional(),
-  location: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zone: z.string().optional(),
   anchorId: z.string().nullable().optional(),
   product: z.string().optional(),
   leadSource: z.string().optional(),
   leadType: z.string().optional(),
   dealValue: z.number().min(0, "Deal value must be a positive number.").optional().or(z.nan()),
+  lenderId: z.string().optional(),
+  remarks: z.string().optional(),
+  leadDate: z.date(),
 });
 
 

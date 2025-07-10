@@ -20,7 +20,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Not reachable', 'Rejected', 'Not Interested'];
-const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
+const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser, updateDealer, visibleUsers } = useApp();
@@ -177,6 +177,7 @@ export default function DealersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
+              <TableHead>State</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
@@ -196,6 +197,7 @@ export default function DealersPage() {
                       </Badge>
                   )}
                 </TableCell>
+                <TableCell>{dealer.state || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                 </TableCell>
@@ -214,7 +216,7 @@ export default function DealersPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {t('dealers.noDealers')}
                 </TableCell>
               </TableRow>
@@ -247,7 +249,7 @@ export default function DealersPage() {
                         <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                         <Badge variant="outline">{dealer.leadType || 'Fresh'}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
+                      <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">

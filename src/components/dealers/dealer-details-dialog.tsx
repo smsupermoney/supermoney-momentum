@@ -71,9 +71,10 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
             <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div><p className="text-muted-foreground">Lead ID</p><p>{dealer.leadId || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Contact Number</p><p>{dealer.contactNumber}</p></div>
-                    <div><p className="text-muted-foreground">Email</p><p>{dealer.email || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Location</p><p>{dealer.location || 'N/A'}</p></div>
+                    <div><p className="text-muted-foreground">Contact Number</p><p>{dealer.contacts[0]?.phone}</p></div>
+                    <div><p className="text-muted-foreground">Email</p><p>{dealer.contacts[0]?.email || 'N/A'}</p></div>
+                    <div><p className="text-muted-foreground">City</p><p>{dealer.city || 'N/A'}</p></div>
+                     <div><p className="text-muted-foreground">State</p><p>{dealer.state || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">GSTIN</p><p>{dealer.gstin || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
                     <div><p className="text-muted-foreground">Product Interest</p><p>{dealer.product || 'N/A'}</p></div>

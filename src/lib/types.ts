@@ -17,7 +17,7 @@ export type SpokeStatus = 'New' | 'Partial Docs' | 'Not reachable' | 'Active' | 
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
-export type LeadType = 'Fresh' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell';
+export type LeadType = 'Fresh' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell' | 'Revive';
 
 export const products = ['SCF - Primary', 'SCF - Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
 export type Product = (typeof products)[number];
@@ -43,17 +43,21 @@ export interface BaseLead {
   id: string;
   leadId: string;
   name: string;
-  contactNumber: string;
-  email?: string;
+  contacts: Contact[];
   gstin?: string;
-  location?: string;
+  city?: string;
+  state?: string;
+  zone?: string;
   product?: string;
   leadSource?: string;
   assignedTo: string | null;
   createdAt: string;
+  leadDate: string;
   updatedAt?: string;
   leadType?: LeadType;
   dealValue?: number;
+  remarks?: string;
+  lenderId?: string;
 }
 
 export interface Anchor {
@@ -65,7 +69,6 @@ export interface Anchor {
   creditRating?: string;
   address?: string;
   status: LeadStatus;
-  leadSource?: string;
   leadScore?: number;
   leadScoreReason?: string;
   dealerIds: string[];
@@ -160,4 +163,9 @@ export interface Notification {
   timestamp: string;
   isRead: boolean;
   icon: string;
+}
+
+export interface Lender {
+  id: string;
+  name: string;
 }

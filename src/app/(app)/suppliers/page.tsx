@@ -20,7 +20,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Not reachable', 'Rejected', 'Not Interested'];
-const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
+const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers } = useApp();
@@ -176,6 +176,7 @@ export default function VendorsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
+              <TableHead>State</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
@@ -195,6 +196,7 @@ export default function VendorsPage() {
                       </Badge>
                   )}
                 </TableCell>
+                <TableCell>{vendor.state || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
                 </TableCell>
@@ -213,7 +215,7 @@ export default function VendorsPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {t('vendors.noVendors')}
                 </TableCell>
               </TableRow>
@@ -246,7 +248,7 @@ export default function VendorsPage() {
                         <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
                         <Badge variant="outline">{vendor.leadType || 'Fresh'}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground pt-2">{vendor.contactNumber}</p>
+                      <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">

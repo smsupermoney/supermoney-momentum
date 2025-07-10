@@ -70,7 +70,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
       email: '',
       phone: '',
       gstin: '',
-      location: '',
+      address: '',
       annualTurnover: '',
     },
   });
@@ -98,7 +98,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         phone: values.phone,
         leadSource: '', // Not used for anchor scoring anymore
         gstin: values.gstin,
-        location: values.location,
+        location: '', // Deprecated
         annualTurnover: numericalTurnover,
       };
 
@@ -117,7 +117,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
             isPrimary: true,
         }],
         gstin: values.gstin,
-        location: values.location,
+        address: values.address,
         annualTurnover: values.annualTurnover,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
@@ -286,10 +286,10 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="location"
+                  name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('anchors.newDialog.location')}</FormLabel>
+                      <FormLabel>Address (Optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. Mumbai" {...field} />
                       </FormControl>

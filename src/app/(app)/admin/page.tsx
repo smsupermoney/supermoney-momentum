@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { User, Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
   AlertDialog,
@@ -26,6 +26,7 @@ import {
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 
 // Define a union type for the different kinds of leads
@@ -129,7 +130,7 @@ function LeadTable({
             <Card key={lead.id} className="p-0">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base">{lead.name}</CardTitle>
-                <CardDescription>{lead.contactNumber || 'N/A'}</CardDescription>
+                <CardDescription>{lead.contacts?.[0]?.phone || 'N/A'}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 p-4 pt-0">
                  <Select onValueChange={(value) => onAnchorAssignmentChange(lead.id, value)}>
@@ -161,6 +162,60 @@ function LeadTable({
         </div>
     </div>
   );
+}
+
+function LenderManagement() {
+    const { lenders, addLender, deleteLender } = useApp();
+    const [newLenderName, setNewLenderName] = useState('');
+
+    const handleAddLender = () => {
+        if (newLenderName.trim()) {
+            addLender({ name: newLenderName.trim() });
+            setNewLenderName('');
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Lender Management</CardTitle>
+                <CardDescription>Add or remove lenders available for lead assignment.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex gap-2 mb-4">
+                    <Input 
+                        placeholder="New lender name" 
+                        value={newLenderName} 
+                        onChange={(e) => setNewLenderName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddLender()}
+                    />
+                    <Button onClick={handleAddLender}>Add Lender</Button>
+                </div>
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Lender Name</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {lenders.map((lender) => (
+                                <TableRow key={lender.id}>
+                                    <TableCell>{lender.name}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" onClick={() => deleteLender(lender.id)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    )
 }
 
 export default function AdminPage() {
@@ -240,6 +295,7 @@ export default function AdminPage() {
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
+  const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
 
   if (!canViewAdminPanel) {
     return (
@@ -277,54 +333,58 @@ export default function AdminPage() {
 
       <div className="grid gap-6 mt-6">
         
+        {/* Section for Lead Assignment - visible to all managers */}
         <Card>
-           <CardHeader>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <CardTitle>{t('admin.userManagement')}</CardTitle>
-                        <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
-                    </div>
-                    {currentUser.role === 'Admin' && (
+            <CardHeader>
+                <CardTitle>Lead Assignment</CardTitle>
+                <CardDescription>Assign new Dealer and Vendor leads to sales team members.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <LeadTable
+                  title={t('admin.unassignedDealers')}
+                  leads={unassignedDealers}
+                  assignableUsers={assignableUsers}
+                  allAnchors={allActiveAnchors}
+                  userAssignments={userAssignments}
+                  anchorAssignments={anchorAssignments}
+                  onAssign={(id) => handleAssign(id, 'Dealer')}
+                  onUserAssignmentChange={handleUserAssignmentChange}
+                  onAnchorAssignmentChange={handleAnchorAssignmentChange}
+                />
+                <LeadTable
+                  title={t('admin.unassignedVendors')}
+                  leads={unassignedVendors}
+                  assignableUsers={assignableUsers}
+                  allAnchors={allActiveAnchors}
+                  userAssignments={userAssignments}
+                  anchorAssignments={anchorAssignments}
+                  onAssign={(id) => handleAssign(id, 'Vendor')}
+                  onUserAssignmentChange={handleUserAssignmentChange}
+                  onAnchorAssignmentChange={handleAnchorAssignmentChange}
+                />
+            </CardContent>
+        </Card>
+        
+        {canManageLenders && <LenderManagement />}
+
+        {/* Section for Admins only */}
+        {currentUser.role === 'Admin' && (
+          <>
+            <ArchivedAnchorsTable />
+            <Card>
+               <CardHeader>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <CardTitle>{t('admin.userManagement')}</CardTitle>
+                            <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
+                        </div>
                         <Button onClick={() => setIsNewUserDialogOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             {t('admin.addNewUser')}
                         </Button>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent>
-                {/* Section for Lead Assignment - visible to all managers */}
-                <div className="mt-6">
-                    <LeadTable
-                      title={t('admin.unassignedDealers')}
-                      leads={unassignedDealers}
-                      assignableUsers={assignableUsers}
-                      allAnchors={allActiveAnchors}
-                      userAssignments={userAssignments}
-                      anchorAssignments={anchorAssignments}
-                      onAssign={(id) => handleAssign(id, 'Dealer')}
-                      onUserAssignmentChange={handleUserAssignmentChange}
-                      onAnchorAssignmentChange={handleAnchorAssignmentChange}
-                    />
-                    <LeadTable
-                      title={t('admin.unassignedVendors')}
-                      leads={unassignedVendors}
-                      assignableUsers={assignableUsers}
-                      allAnchors={allActiveAnchors}
-                      userAssignments={userAssignments}
-                      anchorAssignments={anchorAssignments}
-                      onAssign={(id) => handleAssign(id, 'Vendor')}
-                      onUserAssignmentChange={handleUserAssignmentChange}
-                      onAnchorAssignmentChange={handleAnchorAssignmentChange}
-                    />
-                </div>
-                
-                {/* Section for Admins only */}
-                {currentUser.role === 'Admin' && (
-                  <>
-                    <Separator className="my-6" />
-                    <ArchivedAnchorsTable />
-                    <Separator className="my-6" />
+                    </div>
+                </CardHeader>
+                <CardContent>
                     {/* Desktop User Table */}
                     <div className="hidden rounded-lg border md:block">
                       <Table>
@@ -390,10 +450,10 @@ export default function AdminPage() {
                         </Card>
                       ))}
                     </div>
-                  </>
-                )}
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </>
   );

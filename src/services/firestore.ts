@@ -17,7 +17,7 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, UserRole } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -254,4 +254,23 @@ export const updateDailyActivity = async (activity: DailyActivity) => {
     const { id, ...activityData } = activity;
     const activityDocRef = doc(db, 'daily_activities', id);
     await updateDoc(activityDocRef, { ...activityData, updatedAt: new Date().toISOString() });
+};
+
+// --- Lender Service ---
+export const getLenders = async (): Promise<Lender[]> => {
+    if (!db) return [];
+    const lendersCollection = collection(db, 'lenders');
+    const snapshot = await getDocs(lendersCollection);
+    return snapshotToData<Omit<Lender, 'id'>>(snapshot);
+};
+
+export const addLender = async (lender: Omit<Lender, 'id'>): Promise<Lender> => {
+    if (!db) throw new Error("Firestore not initialized");
+    const docRef = await addDoc(collection(db, 'lenders'), lender);
+    return { id: docRef.id, ...lender };
+};
+
+export const deleteLender = async (lenderId: string): Promise<void> => {
+    if (!db) throw new Error("Firestore not initialized");
+    await deleteDoc(doc(db, 'lenders', lenderId));
 };

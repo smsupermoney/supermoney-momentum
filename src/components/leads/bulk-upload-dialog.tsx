@@ -15,11 +15,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Download } from 'lucide-react';
-import type { Dealer, Vendor } from '@/lib/types';
+import type { Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { generateLeadId } from '@/lib/utils';
-import { NewSpokeSchema } from '@/lib/validation';
 import { z } from 'zod';
+import { format } from 'date-fns';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -29,7 +29,7 @@ interface BulkUploadDialogProps {
 }
 
 export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUploadDialogProps) {
-  const { addDealer, addVendor, currentUser, anchors, users } = useApp();
+  const { addDealer, addVendor, currentUser, anchors, users, lenders } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,10 +49,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Lead Source,Assigned To Email,Deal Value (Lakhs)";
+    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (YYYY-MM-DD),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,Connector,asm@supermoney.in,50"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,Conference / Event,zsm@supermoney.in,25"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,SCF - Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive."]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,2024-05-10,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months."];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -86,39 +86,54 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
       let errorCount = 0;
 
       for (const row of rows) {
+        if (!row.trim()) continue;
         const columns = row.split(',').map(c => c.trim());
-        if (columns.length >= 2 && columns[0] && columns[1]) {
-          try {
-            const anchorName = (columns[5] || '').trim();
-            const leadSource = (columns[7] || '').trim();
-            const assignedToEmail = (columns[8] || '').trim();
-            const dealValueStr = (columns[9] || '').trim();
-            const dealValue = dealValueStr ? parseInt(dealValueStr, 10) : undefined;
+        
+        try {
+            const [
+              name, contactNumber, email, gstin, city, state, zone,
+              anchorName, product, leadSource, leadType, leadDateStr,
+              statusStr, assignedToEmail, dealValueStr, lenderName, remarks
+            ] = columns;
+
+            if (!name || !contactNumber) {
+              errorCount++;
+              continue;
+            }
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
             
-            const targetUser = users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase());
+            const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser ? targetUser.uid : null;
+
+            const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
+
+            const isRevive = leadType?.toLowerCase() === 'revive';
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
-              name: columns[0],
-              contactNumber: columns[1],
+              name,
+              contactNumber,
+              email: email || undefined,
+              gstin: gstin || undefined,
+              city: city || undefined,
+              state: state || undefined,
+              zone: zone || undefined,
+              product: product || undefined,
+              leadSource: leadSource || undefined,
+              remarks: remarks || undefined,
+              lenderId: targetLender?.id || undefined,
+              contacts: [{ id: `contact-${Date.now()}`, name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
+              
               assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? 'New' as const : 'Unassigned Lead' as const,
+              status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
               anchorId: finalAnchorId,
+              leadDate: isRevive && leadDateStr ? new Date(leadDateStr).toISOString() : new Date().toISOString(),
               createdAt: new Date().toISOString(),
-              leadType: 'Fresh' as const,
+              leadType: leadType ? (leadType as Dealer['leadType']) : 'Fresh',
               leadId: generateLeadId(),
+              dealValue: dealValueStr ? parseFloat(dealValueStr) : undefined,
             };
-            
-            if (columns[2]) commonData.email = columns[2];
-            if (columns[3]) commonData.gstin = columns[3];
-            if (columns[4]) commonData.location = columns[4];
-            if (columns[6]) commonData.product = columns[6];
-            if (leadSource) commonData.leadSource = leadSource;
-            if (dealValue !== undefined && !isNaN(dealValue)) commonData.dealValue = dealValue;
-            
 
             if (type === 'Dealer') {
               await addDealer(commonData as Omit<Dealer, 'id'>);
@@ -130,10 +145,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             console.error("Error processing row:", row, err);
             errorCount++;
           }
-        } else if (row.trim() !== '') {
-            errorCount++;
         }
-      }
       
       toast({
         title: 'Bulk Upload Complete',
@@ -157,7 +169,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Lead Source, Assigned To Email, and Deal Value (Lakhs).
+            Upload a CSV file with lead details. See sample for required columns and format.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">

@@ -3,7 +3,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
 import { isPast, isToday, format } from 'date-fns';
 import { useLanguage } from './language-context';
@@ -47,6 +47,9 @@ interface AppContextType {
   addNotification: (notification: Omit<Notification, 'id' | 'isRead'>) => void;
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
+  lenders: Lender[];
+  addLender: (lender: Omit<Lender, 'id'>) => void;
+  deleteLender: (lenderId: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
@@ -77,6 +80,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [lenders, setLenders] = useState<Lender[]>([]);
 
   const loadMockData = useCallback(() => {
     setUsers(mockUsers);
@@ -86,6 +90,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setTasks(mockTasks);
     setActivityLogs(mockActivityLogs);
     setDailyActivities(mockDailyActivities);
+    setLenders([{ id: 'lender-1', name: 'HDFC Bank'}, { id: 'lender-2', name: 'ICICI Bank'}]);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -126,13 +131,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const allUsers = await firestoreService.getUsers();
             setUsers(allUsers);
     
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData] = await Promise.all([
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData] = await Promise.all([
               firestoreService.getAnchors(),
               firestoreService.getDealers(),
               firestoreService.getVendors(),
               firestoreService.getTasks(),
               firestoreService.getActivityLogs(),
               firestoreService.getDailyActivities(),
+              firestoreService.getLenders(),
             ]);
     
             setAnchors(anchorsData);
@@ -141,6 +147,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setTasks(tasksData);
             setActivityLogs(activityLogsData);
             setDailyActivities(dailyActivitiesData);
+            setLenders(lendersData);
           } else {
             console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
             await logout();
@@ -333,7 +340,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       email: primaryContact.email,
       phone: primaryContact.phone,
       gstin: anchorData.gstin,
-      location: anchorData.location,
+      address: anchorData.address,
     };
 
     try {
@@ -398,7 +405,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             email: primaryContact.email,
             phone: primaryContact.phone,
             gstin: updatedAnchor.gstin,
-            location: updatedAnchor.location,
+            address: updatedAnchor.address,
         };
         NewAnchorSchema.extend({ id: z.string() }).parse(dataToValidate);
     } catch (e) {
@@ -431,19 +438,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
     if (!currentUser) return;
     
-    const dataToValidate = {
-      name: dealerData.name,
-      contactNumber: dealerData.contactNumber,
-      email: dealerData.email,
-      gstin: dealerData.gstin,
-      location: dealerData.location,
-      product: dealerData.product,
-      leadType: dealerData.leadType,
-      leadSource: dealerData.leadSource,
-      dealValue: dealerData.dealValue
-    };
     try {
-        NewSpokeSchema.parse(dataToValidate);
+        NewSpokeSchema.parse(dealerData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new dealer:", e.flatten().fieldErrors);
@@ -574,19 +570,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
     if (!currentUser) return;
-    const dataToValidate = {
-      name: vendorData.name,
-      contactNumber: vendorData.contactNumber,
-      email: vendorData.email,
-      gstin: vendorData.gstin,
-      location: vendorData.location,
-      product: vendorData.product,
-      leadType: vendorData.leadType,
-      leadSource: vendorData.leadSource,
-      dealValue: vendorData.dealValue
-    };
     try {
-        NewSpokeSchema.parse(dataToValidate);
+        NewSpokeSchema.parse(vendorData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new vendor:", e.flatten().fieldErrors);
@@ -879,6 +864,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
     }
   }
+
+  const addLender = async (lenderData: Omit<Lender, 'id'>) => {
+    if (firebaseEnabled) {
+      const newLender = await firestoreService.addLender(lenderData);
+      setLenders(prev => [...prev, newLender]);
+    } else {
+      const newLender = { ...lenderData, id: `lender-${Date.now()}` };
+      setLenders(prev => [...prev, newLender]);
+    }
+    toast({ title: 'Lender Added', description: `${lenderData.name} has been added.` });
+  };
+  
+  const deleteLender = async (lenderId: string) => {
+    const lenderName = lenders.find(l => l.id === lenderId)?.name || 'the lender';
+    if(firebaseEnabled) {
+      await firestoreService.deleteLender(lenderId);
+    }
+    setLenders(prev => prev.filter(l => l.id !== lenderId));
+    toast({ title: 'Lender Removed', description: `${lenderName} has been removed.` });
+  };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -922,6 +927,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    lenders,
+    addLender,
+    deleteLender,
     t
   };
 
