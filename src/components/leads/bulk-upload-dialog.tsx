@@ -96,15 +96,14 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks
             ] = columns;
             
-            const parsedDealValue = dealValueStr ? parseFloat(dealValueStr) : undefined;
-            const parsedLeadDate = leadDateStr ? new Date(leadDateStr) : new Date();
+            const parsedDealValue = parseFloat(dealValueStr);
             
             const rawData = {
               name: name || '',
               contacts: [{ name: name || '', phone: contactNumber || '', email: email || '', designation: 'Primary Contact', isPrimary: true }],
-              dealValue: parsedDealValue,
+              dealValue: isNaN(parsedDealValue) ? 0 : parsedDealValue,
               leadType: leadType || '',
-              leadDate: parsedLeadDate,
+              leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
               gstin, city, state, zone, anchorId: anchorName, product, leadSource, lenderId: lenderName, remarks
             };
             
