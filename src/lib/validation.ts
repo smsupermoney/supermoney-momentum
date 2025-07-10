@@ -19,10 +19,10 @@ export const NewAnchorSchema = z.object({
 
 export const ContactSchema = z.object({
     name: z.string().optional(),
-    email: z.string().email("Invalid email address.").optional().or(z.literal('')),
-    phone: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required.").optional().or(z.literal('')),
+    email: z.string().optional(),
+    phone: z.string().optional(),
     designation: z.string().optional(),
-    isPrimary: z.boolean(),
+    isPrimary: z.boolean().optional(),
 });
 
 
@@ -37,7 +37,7 @@ export const NewSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   leadType: z.string().min(1, "Lead Type is required."),
-  dealValue: z.number({required_error: "Deal Value is required."}).min(0, "Deal value must be a positive number."),
+  dealValue: z.number().min(0, "Deal value must be a positive number."),
   lenderId: z.string().optional(),
   remarks: z.string().optional(),
   leadDate: z.date(),
@@ -65,4 +65,5 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
+
 
