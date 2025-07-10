@@ -403,12 +403,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
-    const dataToValidate = { ...dealerData };
-    // Remove fields from validation object that might be missing from a bulk upload
-    if (dataToValidate.email === undefined) delete (dataToValidate as any).email;
-    if (dataToValidate.gstin === undefined) delete (dataToValidate as any).gstin;
-    if (dataToValidate.location === undefined) delete (dataToValidate as any).location;
-
+    if (!currentUser) return;
+    const dataToValidate = {
+      name: dealerData.name,
+      contactNumber: dealerData.contactNumber,
+      email: dealerData.email,
+      gstin: dealerData.gstin,
+      location: dealerData.location,
+      anchorId: dealerData.anchorId,
+      product: dealerData.product,
+      leadType: dealerData.leadType,
+      dealValue: dealerData.dealValue
+    };
     try {
         NewSpokeSchema.parse(dataToValidate);
     } catch (e) {
@@ -418,7 +424,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    if (!currentUser) return;
 
     if(firebaseEnabled) {
       const docRef = await firestoreService.addDealer(dealerData);
@@ -529,8 +534,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
-     try {
-        NewSpokeSchema.parse(vendorData);
+    if (!currentUser) return;
+    const dataToValidate = {
+      name: vendorData.name,
+      contactNumber: vendorData.contactNumber,
+      email: vendorData.email,
+      gstin: vendorData.gstin,
+      location: vendorData.location,
+      anchorId: vendorData.anchorId,
+      product: vendorData.product,
+      leadType: vendorData.leadType,
+      dealValue: vendorData.dealValue
+    };
+    try {
+        NewSpokeSchema.parse(dataToValidate);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new vendor:", e.flatten().fieldErrors);
@@ -538,7 +555,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    if (!currentUser) return;
     if (firebaseEnabled) {
       const docRef = await firestoreService.addVendor(vendorData);
       const newVendor = { ...vendorData, id: docRef.id };
