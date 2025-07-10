@@ -221,14 +221,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             });
 
         if (['Admin'].includes(currentUser.role)) {
-            const pendingAnchors = anchors.filter(a => a.status === 'Pending Approval');
+            const pendingAnchors = anchors.filter(a => a.status === 'Unassigned Lead');
             pendingAnchors.forEach(anchor => {
                  const creator = users.find(u => u.uid === anchor.createdBy);
                  userNotifications.push({
                     id: `notif-approval-${anchor.id}`,
                     userId: currentUser.uid,
-                    title: `New Anchor for Approval`,
-                    description: `${anchor.name} created by ${creator?.name || 'BD'} is waiting for your approval.`,
+                    title: `New Anchor for Assignment`,
+                    description: `${anchor.name} created by ${creator?.name || 'BD'} is waiting for assignment.`,
                     href: `/admin`,
                     timestamp: anchor.createdAt,
                     isRead: false,
