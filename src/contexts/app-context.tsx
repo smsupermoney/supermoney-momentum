@@ -310,10 +310,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     if (!currentUser) return;
+    
+    // All new anchors, regardless of creator, will be unassigned leads.
+    const anchorWithStatus = { ...anchorData, status: 'Unassigned Lead' as const };
 
     if (firebaseEnabled) {
-      const docRef = await firestoreService.addAnchor(anchorData);
-      const newAnchor = { ...anchorData, id: docRef.id };
+      const docRef = await firestoreService.addAnchor(anchorWithStatus);
+      const newAnchor = { ...anchorWithStatus, id: docRef.id };
       setAnchors(prev => [newAnchor, ...prev]);
       addActivityLog({
         anchorId: newAnchor.id,
@@ -326,7 +329,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         systemGenerated: true,
       });
     } else {
-      const newAnchor = { ...anchorData, id: `anchor-${Date.now()}`};
+      const newAnchor = { ...anchorWithStatus, id: `anchor-${Date.now()}`};
       setAnchors(prev => [newAnchor, ...prev]);
       addActivityLog({
         anchorId: newAnchor.id,

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -34,7 +35,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { Anchor, LeadStatus } from '@/lib/types';
+import type { Anchor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { generateLeadId } from '@/lib/utils';
 import { NewAnchorSchema } from '@/lib/validation';
@@ -104,10 +105,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
 
       const scoreResult = await leadScoring(leadScoringInput);
       
-      // All new anchors, regardless of creator, will be unassigned leads.
-      const status: LeadStatus = 'Unassigned Lead';
-      
-      const newAnchor: Omit<Anchor, 'id'> = {
+      const newAnchor: Omit<Anchor, 'id' | 'status'> = {
         leadId: generateLeadId(),
         name: values.companyName,
         industry: values.industry,
@@ -123,7 +121,6 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         gstin: values.gstin,
         location: values.location,
         annualTurnover: values.annualTurnover,
-        status: status,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],
@@ -132,7 +129,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadScoreReason: scoreResult.reason,
       };
 
-      addAnchor(newAnchor);
+      addAnchor(newAnchor as Omit<Anchor, 'id'>);
 
       toast({
         title: 'Anchor Created & Scored!',
