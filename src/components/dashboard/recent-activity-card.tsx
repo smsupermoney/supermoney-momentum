@@ -30,9 +30,9 @@ export function RecentActivityCard({ className }: { className?: string }) {
   const getVisibleLogs = () => {
     if (!currentUser) return [];
     
-    // Business Development users only see their own activity.
-    if (currentUser.role === 'Business Development') {
-      return activityLogs.filter(log => log.userName === currentUser.name);
+    // Business Development and Admin see all activity
+    if (currentUser.role === 'Business Development' || currentUser.role === 'Admin') {
+      return activityLogs;
     }
     
     // All other roles see activity from users in their hierarchy.

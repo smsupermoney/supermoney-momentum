@@ -7,14 +7,12 @@ import { Handshake, Target, FileText, Bot } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
 export function PipelineCard() {
-  const { anchors, currentUser } = useApp();
+  const { anchors, currentUser } from useApp();
   const { t } = useLanguage();
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Business Development') return [];
-    
-    // All roles (except BD) see the same pipeline of non-archived anchors now
+    // All roles see the same pipeline of non-archived anchors now
     return anchors.filter(a => a.status !== 'Archived');
   }
 
@@ -35,11 +33,11 @@ export function PipelineCard() {
   ];
 
   const getTitle = () => {
-    if (!currentUser || currentUser.role === 'Business Development') return '';
+    if (!currentUser) return '';
     return t('dashboard.companyPipeline');
   }
 
-  if (currentUser?.role === 'Business Development' || visibleAnchors.length === 0) {
+  if (visibleAnchors.length === 0) {
       return null;
   }
 

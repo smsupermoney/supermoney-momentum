@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { AlertTriangle, User, Clock, Activity } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import type { Anchor, Dealer, Vendor } from '@/lib/types';
+import type { Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
 
@@ -22,7 +22,8 @@ export function StaleLeadsCard() {
     const { anchors, dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
 
     const { staleLeads, inactiveUsers } = useMemo(() => {
-        if (!currentUser || !['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser?.role || '')) {
+        const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
+        if (!currentUser || !managerRoles.includes(currentUser?.role || '')) {
             return { staleLeads: [], inactiveUsers: [] };
         }
 

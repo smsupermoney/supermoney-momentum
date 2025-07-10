@@ -50,7 +50,7 @@ export function TeamProgressCard() {
         });
     }, [teamMembers, anchors, tasks, activityLogs, period]);
 
-    const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
     if (!currentUser || !managerRoles.includes(currentUser.role) || teamMembers.length === 0) {
         return null;
     }
