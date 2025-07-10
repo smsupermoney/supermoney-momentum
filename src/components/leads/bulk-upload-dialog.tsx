@@ -96,10 +96,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               anchorName, product, leadSource, leadType, leadDateStr,
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks
             ] = columns;
-            
+
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
 
+            const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
+            const finalAssignedToId = targetUser ? targetUser.uid : null;
+            
             const contactInfo = [];
             if (contactNumber) {
                 contactInfo.push({
@@ -120,17 +123,14 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const validatedData = NewSpokeSchema.parse(rawData);
             
-            const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser ? targetUser.uid : null;
-
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
 
             const isRevive = leadType?.toLowerCase() === 'revive';
             
-            const commonData: Omit<Dealer | Vendor, 'id'> = {
+            const commonData = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
-              contacts: validatedData.contacts ? validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0, designation: c.designation || ''})) : [],
+              contacts: validatedData.contacts ? validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, phone: c.phone || '', email: c.email || '', designation: c.designation || '', isPrimary: index === 0})) : [],
               gstin: validatedData.gstin,
               city: validatedData.city,
               state: validatedData.state,
@@ -143,6 +143,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
               leadDate: validatedData.leadDate.toISOString(),
               leadType: validatedData.leadType as LeadTypeEnum,
               dealValue: validatedData.dealValue,
