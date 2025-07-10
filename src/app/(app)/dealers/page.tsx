@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Not reachable', 'Rejected', 'Not Interested'];
+const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function DealersPage() {
@@ -74,6 +74,8 @@ export default function DealersPage() {
   const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
         case 'Active':
+        case 'Already Onboarded':
+        case 'Disbursed':
             return 'default';
         case 'Rejected':
         case 'Not Interested':
@@ -83,6 +85,7 @@ export default function DealersPage() {
             return 'outline';
         case 'Onboarding':
         case 'Partial Docs':
+        case 'Follow Up':
         case 'Not reachable':
             return 'secondary';
         default:
@@ -249,7 +252,7 @@ export default function DealersPage() {
                         <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                         <Badge variant="outline">{dealer.leadType || 'Fresh'}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone}</p>
+                      <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">

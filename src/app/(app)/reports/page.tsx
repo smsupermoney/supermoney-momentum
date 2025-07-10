@@ -61,8 +61,8 @@ export default function ReportsPage() {
         
         const getSpokeData = (spoke: Dealer | Vendor) => ({
             Name: spoke.name,
-            'Contact Number': spoke.contactNumber,
-            Email: spoke.email || 'N/A',
+            'Contact Number': spoke.contacts?.[0]?.phone || 'N/A',
+            Email: spoke.contacts?.[0]?.email || 'N/A',
             'Onboarding Status': spoke.status,
             'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
             'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
@@ -328,7 +328,7 @@ function ManagerReports() {
         };
     }, [period, teamLeads, teamLogs, t]);
 
-    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Follow Up'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodLeads.filter(a => a.status === stage).length
@@ -458,7 +458,7 @@ function AdminReports() {
         };
     }, [period, productFilter, allSpokes, activityLogs, t]);
     
-    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Active'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Active', 'Disbursed'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodSpokes
@@ -780,4 +780,5 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
     
 
     
+
 

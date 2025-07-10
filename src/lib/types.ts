@@ -13,7 +13,7 @@ export interface User {
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';
-export type SpokeStatus = 'New' | 'Partial Docs' | 'Not reachable' | 'Active' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
+export type SpokeStatus = 'New' | 'Partial Docs' | 'Follow Up' | 'Already Onboarded' | 'Disbursed' | 'Not reachable' | 'Active' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';

@@ -90,8 +90,10 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                             <SelectItem value="New">New</SelectItem>
                             <SelectItem value="Onboarding">Onboarding</SelectItem>
                             <SelectItem value="Partial Docs">Partial Docs</SelectItem>
+                            <SelectItem value="Follow Up">Follow Up</SelectItem>
+                            <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
+                            <SelectItem value="Disbursed">Disbursed</SelectItem>
                             <SelectItem value="Not reachable">Not reachable</SelectItem>
-                            <SelectItem value="Active">Active</SelectItem>
                             <SelectItem value="Rejected">Rejected</SelectItem>
                             <SelectItem value="Not Interested">Not Interested</SelectItem>
                         </SelectContent>
