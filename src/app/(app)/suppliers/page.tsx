@@ -40,17 +40,30 @@ export default function VendorsPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('all');
 
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
-  const visibleUserIds = visibleUsers.map(u => u.uid);
-
+  
   const userVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
     
-    // Admin and Business Development see all non-active leads
+    // Filter based on roles
     if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      // Pass this check, as they can see all non-active leads.
+      // Admins and BD see all non-active leads
     } else {
-        // Other roles only see vendors assigned within their visible tree
-        if (!s.assignedTo || !visibleUserIds.includes(s.assignedTo)) return false;
+      // All other roles
+      const assignedUser = s.assignedTo ? users.find(u => u.uid === s.assignedTo) : null;
+      if (!assignedUser) {
+        // If unassigned, only show to managers (who can assign)
+        if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
+          return false;
+        }
+      } else {
+        // If assigned, show to the assigned user OR their manager
+        const isAssignedToMe = assignedUser.uid === currentUser.uid;
+        const isMyReport = assignedUser.managerId === currentUser.uid;
+
+        if (!isAssignedToMe && !isMyReport) {
+          return false;
+        }
+      }
     }
 
     if (statusFilter !== 'all' && s.status !== statusFilter) return false;

@@ -40,17 +40,30 @@ export default function DealersPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('all');
 
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
-  const visibleUserIds = visibleUsers.map(u => u.uid);
-
+  
   const userDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
 
-    // Admin and Business Development see all non-active leads
+    // Filter based on roles
     if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      // Pass this check, as they can see all non-active leads.
+      // Admins and BD see all non-active leads
     } else {
-        // Other roles only see dealers assigned within their visible tree
-        if (!d.assignedTo || !visibleUserIds.includes(d.assignedTo)) return false;
+      // All other roles
+      const assignedUser = d.assignedTo ? users.find(u => u.uid === d.assignedTo) : null;
+      if (!assignedUser) {
+        // If unassigned, only show to managers (who can assign)
+        if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
+          return false;
+        }
+      } else {
+        // If assigned, show to the assigned user OR their manager
+        const isAssignedToMe = assignedUser.uid === currentUser.uid;
+        const isMyReport = assignedUser.managerId === currentUser.uid;
+
+        if (!isAssignedToMe && !isMyReport) {
+          return false;
+        }
+      }
     }
 
     // Apply global filters
@@ -61,6 +74,7 @@ export default function DealersPage() {
     
     return true;
   });
+
 
   const getAnchorName = (anchorId: string | null) => {
     if (!anchorId) return 'N/A';
