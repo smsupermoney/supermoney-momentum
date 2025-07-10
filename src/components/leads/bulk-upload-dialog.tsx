@@ -102,7 +102,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser?.uid || null;
-            
+
             const contactInfo = [];
             if (contactNumber) {
                 contactInfo.push({
@@ -111,21 +111,21 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
                     email: email || undefined,
                 });
             }
-
+            
+            const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
+            
             const rawData = {
               name: name || '',
               dealValue: parseFloat(dealValueStr) || 0,
               leadType: leadType || '',
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
               contacts: contactInfo,
-              gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, lenderId: lenderName, remarks
+              gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, remarks,
+              lenderId: targetLender?.id || undefined,
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
             
-            const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
-            const isRevive = leadType?.toLowerCase() === 'revive';
-
             const commonData = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
@@ -137,7 +137,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               product: validatedData.product,
               leadSource: validatedData.leadSource,
               remarks: validatedData.remarks,
-              lenderId: targetLender?.id || validatedData.lenderId,
+              lenderId: validatedData.lenderId,
               assignedTo: finalAssignedToId,
               status: finalAssignedToId ? 'New' : 'Unassigned Lead',
               anchorId: finalAnchorId,
