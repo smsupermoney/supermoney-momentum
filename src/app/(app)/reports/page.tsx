@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -147,6 +148,7 @@ export default function ReportsPage() {
       case 'Admin': return t('reports.adminTitle');
       case 'National Sales Manager':
       case 'Regional Sales Manager':
+      case 'Business Development':
       case 'Zonal Sales Manager': return t('reports.managerTitle');
       default: return t('reports.salesTitle');
     }
@@ -157,6 +159,7 @@ export default function ReportsPage() {
       case 'Admin': return t('reports.adminDescription');
        case 'National Sales Manager':
        case 'Regional Sales Manager':
+       case 'Business Development':
        case 'Zonal Sales Manager': return t('reports.managerDescription');
       default: return t('reports.salesDescription');
     }
@@ -168,7 +171,9 @@ export default function ReportsPage() {
         case 'Admin': return <AdminReports />;
         case 'National Sales Manager':
         case 'Regional Sales Manager':
-        case 'Zonal Sales Manager': return <ManagerReports />;
+        case 'Zonal Sales Manager':
+        case 'Business Development':
+             return <ManagerReports />;
         case 'Area Sales Manager': return <SalesReports />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
