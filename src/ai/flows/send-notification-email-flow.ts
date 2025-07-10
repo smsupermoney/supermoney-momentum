@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import nodemailer from 'nodemailer';
 
 const SendNotificationEmailInputSchema = z.object({
   to: z.string().email().describe("The recipient's email address."),
@@ -72,14 +73,52 @@ const sendNotificationEmailFlow = ai.defineFlow(
     outputSchema: SendNotificationEmailOutputSchema,
   },
   async (input) => {
-    // In a real application, you would add an email sending service call here.
-    // e.g., await sendEmailWithSendGrid({ to: input.to, subject: email.subject, body: email.body });
-    const {output} = await prompt(input);
-    console.log(`--- SIMULATED EMAIL ---
+    // Generate the email content using the AI prompt
+    const {output: email} = await prompt(input);
+    if (!email) {
+      throw new Error("Failed to generate email content.");
+    }
+    
+    // Check if email credentials are configured in environment variables
+    if (process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_APP_PASSWORD) {
+        // Create a transporter object using the default SMTP transport
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true, // use SSL
+          auth: {
+            user: process.env.EMAIL_SERVER_USER,
+            pass: process.env.EMAIL_SERVER_APP_PASSWORD,
+          },
+        });
+
+        // Send mail with defined transport object
+        const mailOptions = {
+          from: `"Supermoney Sales Hub" <${process.env.EMAIL_SERVER_USER}>`,
+          to: input.to,
+          subject: email.subject,
+          text: email.body, // plain text body
+          // html: "<p>Or HTML body</p>" // You can also send HTML
+        };
+
+        try {
+          const info = await transporter.sendMail(mailOptions);
+          console.log('Email sent: ' + info.response);
+        } catch (error) {
+          console.error("Failed to send email:", error);
+          // Don't throw an error to the client, just log it.
+          // The primary function is to log the interaction.
+        }
+    } else {
+        // Fallback to simulation if credentials are not set
+        console.log(`--- SIMULATED EMAIL (credentials not configured) ---
 To: ${input.to}
-Subject: ${output!.subject}
-Body: ${output!.body}
+Subject: ${email.subject}
+Body: ${email.body}
 -----------------------`);
-    return output!;
+    }
+
+    // Return the generated email content regardless of send status
+    return email;
   }
 );
