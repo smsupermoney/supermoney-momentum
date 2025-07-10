@@ -28,7 +28,7 @@ export const ContactSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
+  contacts: z.array(ContactSchema).optional(),
   gstin: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
