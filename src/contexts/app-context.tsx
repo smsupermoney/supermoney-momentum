@@ -12,6 +12,7 @@ import * as firestoreService from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema } from '@/lib/validation';
+import { sendNotificationEmail } from '@/ai/flows/send-notification-email-flow';
 
 
 interface AppContextType {
@@ -202,6 +203,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     timestamp: task.dueDate,
                     icon: 'AlertTriangle'
                 });
+                
+                // Trigger simulated email for overdue task
+                sendNotificationEmail({
+                    to: currentUser.email,
+                    type: 'TaskOverdue',
+                    context: {
+                        taskTitle: task.title,
+                        taskDueDate: format(new Date(task.dueDate), 'PPP'),
+                    }
+                });
             });
 
         userTasks
@@ -340,35 +351,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const anchorToSave = { ...anchorData, status: 'Active' as const };
+    let newAnchor: Anchor;
 
     if (firebaseEnabled) {
       const docRef = await firestoreService.addAnchor(anchorToSave);
-      const newAnchor = { ...anchorToSave, id: docRef.id };
-      setAnchors(prev => [newAnchor, ...prev]);
-      addActivityLog({
-        anchorId: newAnchor.id,
-        timestamp: new Date().toISOString(),
-        type: 'Creation',
-        title: 'Anchor Created',
-        outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
-        userName: 'System',
-        userId: currentUser.uid,
-        systemGenerated: true,
-      });
+      newAnchor = { ...anchorToSave, id: docRef.id };
     } else {
-      const newAnchor = { ...anchorToSave, id: `anchor-${Date.now()}`};
-      setAnchors(prev => [newAnchor, ...prev]);
-      addActivityLog({
-        anchorId: newAnchor.id,
-        timestamp: new Date().toISOString(),
-        type: 'Creation',
-        title: 'Anchor Created',
-        outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
-        userName: 'System',
-        userId: currentUser.uid,
-        systemGenerated: true,
-      });
+      newAnchor = { ...anchorToSave, id: `anchor-${Date.now()}`};
     }
+    setAnchors(prev => [newAnchor, ...prev]);
+    addActivityLog({
+      anchorId: newAnchor.id,
+      timestamp: new Date().toISOString(),
+      type: 'Creation',
+      title: 'Anchor Created',
+      outcome: `New anchor '${newAnchor.name}' was created by ${currentUser.name}.`,
+      userName: 'System',
+      userId: currentUser.uid,
+      systemGenerated: true,
+    });
+
+    // Notify Admins and BD
+    const recipients = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
+    recipients.forEach(r => {
+      sendNotificationEmail({
+        to: r.email,
+        type: 'NewAnchorAdded',
+        context: {
+          anchorName: newAnchor.name,
+          creatorName: currentUser.name,
+        }
+      });
+    });
   };
 
   const updateAnchor = async (updatedAnchor: Anchor) => {
@@ -502,7 +516,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
         if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
-             const manager = users.find(u => u.uid === assignedUser?.managerId);
              if (assignedUser) {
                 const notification = {
                     userId: assignedUser.uid,
@@ -513,11 +526,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     icon: 'Users'
                 };
                 addNotification(notification);
-                if (manager) {
-                    addNotification({ ...notification, userId: manager.uid });
-                }
-                const adminAndBD = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
-                adminAndBD.forEach(u => addNotification({ ...notification, userId: u.uid }));
+
+                // Send email notification
+                sendNotificationEmail({
+                  to: assignedUser.email,
+                  type: 'NewLeadAssignment',
+                  context: {
+                    assigneeName: assignedUser.name,
+                    leadName: updatedDealer.name,
+                    leadType: 'Dealer',
+                    assignerName: currentUser.name,
+                  }
+                })
              }
         }
     }
@@ -638,7 +658,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
         if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
-             const manager = users.find(u => u.uid === assignedUser?.managerId);
              if (assignedUser) {
                 const notification = {
                     userId: assignedUser.uid,
@@ -649,11 +668,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     icon: 'Users'
                 };
                 addNotification(notification);
-                if (manager) {
-                    addNotification({ ...notification, userId: manager.uid });
-                }
-                const adminAndBD = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
-                adminAndBD.forEach(u => addNotification({ ...notification, userId: u.uid }));
+                
+                // Send email notification
+                sendNotificationEmail({
+                  to: assignedUser.email,
+                  type: 'NewLeadAssignment',
+                  context: {
+                    assigneeName: assignedUser.name,
+                    leadName: updatedVendor.name,
+                    leadType: 'Vendor',
+                    assignerName: currentUser.name,
+                  }
+                })
              }
         }
     }
