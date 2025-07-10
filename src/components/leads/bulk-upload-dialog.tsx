@@ -101,7 +101,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser ? targetUser.uid : null;
+            const finalAssignedToId = targetUser?.uid || null;
             
             const contactInfo = [];
             if (contactNumber) {
@@ -124,9 +124,8 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const validatedData = NewSpokeSchema.parse(rawData);
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
-
             const isRevive = leadType?.toLowerCase() === 'revive';
-            
+
             const commonData = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
@@ -140,13 +139,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               remarks: validatedData.remarks,
               lenderId: targetLender?.id || validatedData.lenderId,
               assignedTo: finalAssignedToId,
-              status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
+              status: finalAssignedToId ? 'New' : 'Unassigned Lead',
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               leadDate: validatedData.leadDate.toISOString(),
               leadType: validatedData.leadType as LeadTypeEnum,
-              dealValue: validatedData.dealValue,
+              dealValue: validatedData.dealValue || 0,
             };
 
             if (type === 'Dealer') {
