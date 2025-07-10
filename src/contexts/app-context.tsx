@@ -655,7 +655,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (firebaseEnabled) {
       await firestoreService.updateTask(updatedTask);
     }
-    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    setTasks(prev => prev.map(t => t.id === updatedTask.id ? {...updatedTask, updatedAt: new Date().toISOString()} : t));
 
     if (currentUser && oldTask && oldTask.status !== updatedTask.status) {
          addActivityLog({

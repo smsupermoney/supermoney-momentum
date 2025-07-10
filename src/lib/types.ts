@@ -106,6 +106,7 @@ export interface Task {
   status: TaskStatus;
   assignedTo: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ActivityLog {
@@ -158,5 +159,3 @@ export interface Notification {
   isRead: boolean;
   icon: string;
 }
-
-    

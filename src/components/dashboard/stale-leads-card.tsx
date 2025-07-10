@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -14,38 +13,68 @@ import Link from 'next/link';
 type StaleLead = (Anchor | Dealer | Vendor) & { type: 'Anchor' | 'Dealer' | 'Vendor' };
 
 export function StaleLeadsCard() {
-    const { anchors, dealers, vendors, users, currentUser, visibleUserIds } = useApp();
+    const { anchors, dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
 
     const staleLeads: StaleLead[] = useMemo(() => {
-        if (!currentUser) return [];
+        if (!currentUser || !['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser?.role || '')) {
+            return [];
+        }
 
-        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // Sunday is 0, Monday is 1, etc.
+        
+        let lastWorkingDay = new Date(now);
+        if (dayOfWeek === 0) { // Sunday
+            lastWorkingDay.setDate(now.getDate() - 2); // Check since Friday
+        } else if (dayOfWeek === 1) { // Monday
+            lastWorkingDay.setDate(now.getDate() - 3); // Check since Friday
+        } else { // Tuesday to Saturday
+            lastWorkingDay.setDate(now.getDate() - 1); // Check since yesterday
+        }
+        lastWorkingDay.setHours(0, 0, 0, 0);
 
-        const isStale = (lead: Anchor | Dealer | Vendor) => {
-            if (!lead.assignedTo || !visibleUserIds.includes(lead.assignedTo)) return false;
-            
-            const lastUpdate = lead.updatedAt ? new Date(lead.updatedAt) : new Date(lead.createdAt);
-            return lastUpdate < twentyFourHoursAgo;
-        };
+        const areaSalesManagers = users.filter(u => u.role === 'Area Sales Manager' && visibleUserIds.includes(u.uid));
 
-        const allLeads: StaleLead[] = [
-            ...anchors.filter(isStale).map(a => ({ ...a, type: 'Anchor' as const })),
-            ...dealers.filter(isStale).map(d => ({ ...d, type: 'Dealer' as const })),
-            ...vendors.filter(isStale).map(v => ({ ...v, type: 'Vendor' as const })),
-        ];
+        const allStaleLeads: StaleLead[] = [];
 
-        return allLeads.sort((a, b) => {
+        areaSalesManagers.forEach(asm => {
+            const userActivities = dailyActivities.filter(
+                act => act.userId === asm.uid && new Date(act.activityTimestamp) >= lastWorkingDay
+            );
+            const hasRecentActivity = userActivities.length > 0;
+
+            const allLeadsForUser: StaleLead[] = [
+                ...anchors.filter(a => a.createdBy === asm.uid).map(a => ({ ...a, type: 'Anchor' as const })),
+                ...dealers.filter(d => d.assignedTo === asm.uid).map(d => ({ ...d, type: 'Dealer' as const })),
+                ...vendors.filter(v => v.assignedTo === asm.uid).map(v => ({ ...v, type: 'Vendor' as const })),
+            ];
+
+            allLeadsForUser.forEach(lead => {
+                const lastUpdate = new Date(lead.updatedAt || lead.createdAt);
+                
+                if (lastUpdate < lastWorkingDay && !hasRecentActivity) {
+                    // Check if this lead was updated in any of user's recent activities
+                    const isLeadInRecentActivity = userActivities.some(act => 
+                        (act.anchorId && act.anchorId === lead.id && lead.type === 'Anchor') ||
+                        (act.dealerId && act.dealerId === lead.id && lead.type === 'Dealer') ||
+                        (act.vendorId && act.vendorId === lead.id && lead.type === 'Vendor')
+                    );
+
+                    if (!isLeadInRecentActivity) {
+                        allStaleLeads.push(lead);
+                    }
+                }
+            });
+        });
+
+        return allStaleLeads.sort((a, b) => {
             const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(a.createdAt);
             const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(b.createdAt);
             return dateA.getTime() - dateB.getTime();
         });
 
-    }, [anchors, dealers, vendors, visibleUserIds, currentUser]);
+    }, [anchors, dealers, vendors, users, dailyActivities, visibleUserIds, currentUser]);
 
-    if (!['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser?.role || '')) {
-        return null;
-    }
-    
     if (staleLeads.length === 0) {
         return null;
     }
@@ -89,7 +118,7 @@ export function StaleLeadsCard() {
                                     <TableCell>
                                         <div className="flex items-center gap-2 text-sm">
                                             <User className="h-3 w-3" />
-                                            <span>{getUserName(lead.assignedTo)}</span>
+                                            <span>{getUserName(lead.type === 'Anchor' ? lead.createdBy : lead.assignedTo)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -114,7 +143,7 @@ export function StaleLeadsCard() {
                                 <div className="text-sm text-muted-foreground">Status: <span className="font-medium">{lead.status}</span></div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <User className="h-3 w-3" />
-                                    <span>{getUserName(lead.assignedTo)}</span>
+                                    <span>{getUserName(lead.type === 'Anchor' ? lead.createdBy : lead.assignedTo)}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Clock className="h-3 w-3" />
