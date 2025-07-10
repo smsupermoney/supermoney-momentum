@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
-import { isPast, isToday, isAfter, subDays, format } from 'date-fns';
+import { isPast, isToday, format } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
 import * as firestoreService from '@/services/firestore';
@@ -112,6 +112,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoading(true);
       if (!user) {
         setCurrentUser(null);
         sessionStorage.removeItem('currentUser');
@@ -119,13 +120,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // We have an authenticated user. Start the loading process.
-      setIsLoading(true);
       try {
           const userProfile = await firestoreService.checkAndCreateUser(user);
           if (!userProfile) {
               console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
               await logout();
+              setIsLoading(false);
               return;
           }
 
@@ -170,14 +170,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [loadMockData, logout, toast]);
 
   const visibleUsers = useMemo(() => {
-      if (!currentUser || users.length === 0) return [];
-      if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') return users;
-      if (currentUser.role === 'Area Sales Manager') {
-          return users.filter(u => u.uid === currentUser.uid);
-      }
-      const subordinates = getAllSubordinates(currentUser.uid, users);
-      const self = users.find(u => u.uid === currentUser.uid);
-      return self ? [self, ...subordinates] : subordinates;
+    if (!currentUser || !users.length) return [];
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') return users;
+    
+    const self = users.find(u => u.uid === currentUser.uid);
+    if (!self) return []; // Should not happen if logged in
+
+    const subordinates = getAllSubordinates(currentUser.uid, users);
+    return [self, ...subordinates];
   }, [currentUser, users]);
 
   const visibleUserIds = useMemo(() => visibleUsers.map(u => u.uid), [visibleUsers]);
@@ -188,7 +188,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const generateNotifications = (): Notification[] => {
         const userNotifications: Notification[] = [];
-        const now = new Date();
 
         const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid && t.status !== 'Completed');
 
@@ -254,7 +253,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setNotifications(newNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
     }
 
-  }, [isLoading, currentUser, tasks, anchors, users, visibleUserIds]);
+  }, [isLoading, currentUser, tasks, anchors, users]);
   
   const markNotificationAsRead = (notificationId: string) => {
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
