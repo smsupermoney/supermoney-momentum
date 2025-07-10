@@ -111,53 +111,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Handle sign out
         setCurrentUser(null);
         sessionStorage.removeItem('currentUser');
-        setUsers(mockUsers);
-        setAnchors([]);
-        setDealers([]);
-        setVendors([]);
-        setTasks([]);
-        setActivityLogs([]);
-        setDailyActivities([]);
         setIsLoading(false);
         return;
       }
-
-      // **Optimistic UI update**
-      // Create a temporary user object from the auth data to show the UI immediately.
-      const optimisticUser: User = {
-        id: user.uid,
-        uid: user.uid,
-        name: user.displayName || 'User',
-        email: user.email || '',
-        role: 'Area Sales Manager', // Default role, will be updated shortly
-      };
-
-      // Set the optimistic user and stop the main loading screen.
-      setCurrentUser(optimisticUser);
-      setIsLoading(false);
-
-      // **Full data load in the background**
-      const loadFullUserData = async () => {
-        try {
-          // Get the full, correct user profile from Firestore.
+      
+      // We have an authenticated user. Start the loading process.
+      setIsLoading(true);
+      try {
           const userProfile = await firestoreService.checkAndCreateUser(user);
-
           if (!userProfile) {
-            console.error(`Could not get or create a user profile for ${user.email}.`);
-            await logout();
-            return;
+              console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
+              await logout();
+              return;
           }
 
-          // Update the context with the full user profile, including the correct role.
           setCurrentUser(userProfile);
           sessionStorage.setItem('currentUser', JSON.stringify(userProfile));
 
-          // Now fetch all other data based on the correct profile.
+          // Now fetch all other data
           const allUsers = await firestoreService.getUsers();
           setUsers(allUsers);
   
@@ -177,31 +152,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           setActivityLogs(activityLogsData);
           setDailyActivities(dailyActivitiesData);
 
-        } catch (error: any) {
-            console.error("Firebase error caught during full data load:", error);
-            if (error.code === 'auth/api-key-not-valid' || (error.message && error.message.includes('api-key-not-valid'))) {
-                console.warn("Firebase API key is invalid. Falling back to mock data mode. Please check your .env file.");
-                toast({
-                    variant: 'destructive',
-                    title: 'Invalid Firebase API Key',
-                    description: 'Falling back to mock data. Please check your .env file configuration.',
-                    duration: 9000
-                })
-                loadMockData();
-            } else {
-                console.error("An unexpected Firebase error occurred during data fetch:", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Firebase Connection Error',
-                    description: 'Could not connect to the database. Using mock data.',
-                    duration: 9000
-                })
-                loadMockData();
-            }
-        }
-      };
-
-      loadFullUserData();
+      } catch (error: any) {
+          console.error("Firebase error during data load:", error);
+          toast({
+              variant: 'destructive',
+              title: 'Firebase Connection Error',
+              description: 'Could not connect to the database. Using mock data.',
+              duration: 9000
+          })
+          loadMockData();
+      } finally {
+          setIsLoading(false);
+      }
     });
 
     return () => unsubscribe();
