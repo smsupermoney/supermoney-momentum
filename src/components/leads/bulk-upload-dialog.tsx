@@ -98,21 +98,24 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const targetUser = users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase());
             const finalAssignedToId = targetUser ? targetUser.uid : null;
             
-            const commonData = {
+            const commonData: Omit<Dealer | Vendor, 'id'> = {
               name: columns[0],
               contactNumber: columns[1],
-              email: columns[2] || undefined,
-              gstin: columns[3] || undefined,
-              location: columns[4] || undefined,
-              product: columns[6] || undefined,
               assignedTo: finalAssignedToId,
               status: finalAssignedToId ? 'Invited' as const : 'Unassigned Lead' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               leadType: 'New' as const,
               leadId: generateLeadId(),
-              dealValue: dealValueStr ? parseInt(dealValueStr, 10) : undefined,
             };
+
+            // Add optional fields only if they have a value
+            if (columns[2]) commonData.email = columns[2];
+            if (columns[3]) commonData.gstin = columns[3];
+            if (columns[4]) commonData.location = columns[4];
+            if (columns[6]) commonData.product = columns[6];
+            if (dealValueStr) commonData.dealValue = parseInt(dealValueStr, 10);
+
 
             if (type === 'Dealer') {
               addDealer(commonData as Omit<Dealer, 'id'>);

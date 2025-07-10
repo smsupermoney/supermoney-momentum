@@ -404,16 +404,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
     if (!currentUser) return;
+    
     const dataToValidate = {
-      name: dealerData.name,
-      contactNumber: dealerData.contactNumber,
-      email: dealerData.email,
-      gstin: dealerData.gstin,
-      location: dealerData.location,
-      anchorId: dealerData.anchorId,
-      product: dealerData.product,
-      leadType: dealerData.leadType,
-      dealValue: dealerData.dealValue
+        name: dealerData.name,
+        contactNumber: dealerData.contactNumber,
+        email: dealerData.email,
+        gstin: dealerData.gstin,
+        location: dealerData.location,
+        anchorId: dealerData.anchorId,
+        product: dealerData.product,
+        leadType: dealerData.leadType,
+        dealValue: dealerData.dealValue
     };
     try {
         NewSpokeSchema.parse(dataToValidate);

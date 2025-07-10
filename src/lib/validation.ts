@@ -22,7 +22,7 @@ export const NewAnchorSchema = z.object({
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email().optional(),
   gstin: z.string().optional(),
   location: z.string().optional(),
   anchorId: z.string().nullable().optional(),
