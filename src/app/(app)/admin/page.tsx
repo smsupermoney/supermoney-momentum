@@ -154,7 +154,7 @@ export default function AdminPage() {
       return users.filter(u => u.role !== 'Admin' && u.role !== 'Business Development');
     }
     if(currentUser.role === 'Business Development') {
-      return users.filter(u => ['Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
+      return users.filter(u => ['Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
     }
     // Managers can assign to their direct or indirect subordinates.
     // 'visibleUsers' includes the manager themselves, so filter them out.
