@@ -18,6 +18,7 @@ import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatDistanceToNow } from 'date-fns';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
@@ -180,11 +181,14 @@ export default function DealersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('dealers.table.name')}</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>State</TableHead>
-              <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
+              <TableHead>{t('dealers.table.status')}</TableHead>
               <TableHead>{t('dealers.table.anchor')}</TableHead>
               <TableHead>{t('dealers.table.assignedTo')}</TableHead>
+              <TableHead>TAT</TableHead>
               <TableHead className="text-right">{t('dealers.table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -200,13 +204,16 @@ export default function DealersPage() {
                       </Badge>
                   )}
                 </TableCell>
+                <TableCell>{dealer.contacts?.[0]?.phone || 'N/A'}</TableCell>
+                <TableCell>{dealer.contacts?.[0]?.email || 'N/A'}</TableCell>
                 <TableCell>{dealer.state || 'N/A'}</TableCell>
+                <TableCell>{dealer.leadType || 'Fresh'}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                 </TableCell>
-                <TableCell>{dealer.leadType || 'Fresh'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
+                <TableCell>{formatDistanceToNow(new Date(dealer.createdAt), { addSuffix: true })}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
@@ -219,7 +226,7 @@ export default function DealersPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={10} className="h-24 text-center">
                   {t('dealers.noDealers')}
                 </TableCell>
               </TableRow>
@@ -254,6 +261,7 @@ export default function DealersPage() {
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
+                      <p className="text-xs text-muted-foreground">TAT: {formatDistanceToNow(new Date(dealer.createdAt), { addSuffix: true })}</p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">
                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
