@@ -296,6 +296,7 @@ export default function AdminPage() {
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
 
   if (!canViewAdminPanel) {
     return (
@@ -367,8 +368,8 @@ export default function AdminPage() {
         
         {canManageLenders && <LenderManagement />}
 
-        {/* Section for Admins only */}
-        {currentUser.role === 'Admin' && (
+        {/* Section for Admins & BD */}
+        {canManageUsers && (
           <>
             <ArchivedAnchorsTable />
             <Card>
