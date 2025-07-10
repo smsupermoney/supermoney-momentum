@@ -50,9 +50,6 @@ function QuickNav() {
       {visibleNavLinks.map(link => {
         const Icon = link.icon;
         let label = t(link.labelKey);
-        if (currentUser.role === 'Business Development' && link.href === '/anchors') {
-          label = t('sidebar.onboarding');
-        }
         return (
           <Button
             asChild

@@ -19,6 +19,7 @@ import type { Dealer, Vendor } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import { generateLeadId } from '@/lib/utils';
 import { NewSpokeSchema } from '@/lib/validation';
+import { z } from 'zod';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -50,7 +51,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   const handleDownloadSample = () => {
     const headers = "Name,Contact Number,Email,GSTIN,Location,Anchor Name,Product,Lead Source,Assigned To Email,Deal Value (Lakhs)";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,Banker Referral,asm@supermoney.in,50"]
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Reliance Retail,SCF - Primary,Connector,asm@supermoney.in,50"]
       : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Tata Motors,BL,Conference / Event,zsm@supermoney.in,25"];
     
     const csvContent = [headers, ...sampleData].join("\n");
@@ -78,13 +79,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     setIsProcessing(true);
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const text = e.target?.result as string;
       const rows = text.split('\n').slice(1); // Skip header row
       let successCount = 0;
       let errorCount = 0;
 
-      rows.forEach(row => {
+      for (const row of rows) {
         const columns = row.split(',').map(c => c.trim());
         if (columns.length >= 2 && columns[0] && columns[1]) {
           try {
@@ -92,6 +93,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const leadSource = (columns[7] || '').trim();
             const assignedToEmail = (columns[8] || '').trim();
             const dealValueStr = (columns[9] || '').trim();
+            const dealValue = dealValueStr ? parseInt(dealValueStr, 10) : undefined;
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
@@ -115,20 +117,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             if (columns[4]) commonData.location = columns[4];
             if (columns[6]) commonData.product = columns[6];
             if (leadSource) commonData.leadSource = leadSource;
-            if (dealValueStr) commonData.dealValue = parseInt(dealValueStr, 10);
+            if (dealValue !== undefined && !isNaN(dealValue)) commonData.dealValue = dealValue;
             
-            // Validate before adding
-            const validationResult = NewSpokeSchema.safeParse(commonData);
-            if (!validationResult.success) {
-                console.error("Row failed validation:", row, validationResult.error.flatten());
-                errorCount++;
-                return; // Skip this row
-            }
 
             if (type === 'Dealer') {
-              addDealer(validationResult.data as Omit<Dealer, 'id'>);
+              await addDealer(commonData as Omit<Dealer, 'id'>);
             } else {
-              addVendor(validationResult.data as Omit<Vendor, 'id'>);
+              await addVendor(commonData as Omit<Vendor, 'id'>);
             }
             successCount++;
           } catch (err) {
@@ -138,7 +133,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         } else if (row.trim() !== '') {
             errorCount++;
         }
-      });
+      }
       
       toast({
         title: 'Bulk Upload Complete',

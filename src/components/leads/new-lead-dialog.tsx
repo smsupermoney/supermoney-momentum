@@ -61,7 +61,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       product: '',
       leadType: 'New',
       leadSource: '',
-      dealValue: NaN,
+      dealValue: undefined,
     },
   });
   
@@ -78,7 +78,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         return;
     }
     try {
-        const isSpecialist = currentUser.role === 'Onboarding Specialist';
+        const isSpecialist = currentUser.role === 'Business Development';
         const finalAnchorId = anchorId || values.anchorId || null;
         const associatedAnchor = finalAnchorId ? anchors.find(a => a.id === finalAnchorId) : null;
 
@@ -305,7 +305,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Banker Referral">Banker Referral</SelectItem>
+                      <SelectItem value="Connector">Connector</SelectItem>
                       <SelectItem value="CA / Financial Consultant Referral">CA / Financial Consultant Referral</SelectItem>
                       <SelectItem value="Industry Association">Industry Association</SelectItem>
                       <SelectItem value="Anchor Ecosystem (Cross-sell)">Anchor Ecosystem (Cross-sell)</SelectItem>

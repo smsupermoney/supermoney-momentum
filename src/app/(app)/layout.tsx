@@ -72,9 +72,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role)).map(item => {
     let label = t(item.labelKey);
-    if (currentUser.role === 'Business Development' && item.href === '/anchors') {
-      label = t('sidebar.onboarding');
-    }
     return { ...item, label };
   });
 
