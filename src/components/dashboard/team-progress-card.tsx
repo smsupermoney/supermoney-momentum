@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { isPast, isToday, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { User, Activity, AlertCircle, Building } from 'lucide-react';
+import { User, Activity, AlertCircle, Building, Handshake } from 'lucide-react';
 import { UserRole } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -29,14 +29,11 @@ export function TeamProgressCard() {
         const startDate = subDays(new Date(), daysToSubtract);
 
         return teamMembers.map(member => {
-            const preOnboardingAnchorStatuses = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation', 'Pending Approval'];
-            const memberAnchors = anchors.filter(a => a.createdBy === member.uid && preOnboardingAnchorStatuses.includes(a.status)).length;
-
-            const preOnboardingSpokeStatuses = ['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending'];
-            const memberDealers = dealers.filter(d => d.assignedTo === member.uid && preOnboardingSpokeStatuses.includes(d.status)).length;
-            const memberVendors = vendors.filter(v => v.assignedTo === member.uid && preOnboardingSpokeStatuses.includes(v.status)).length;
             
-            const totalActiveLeads = memberAnchors + memberDealers + memberVendors;
+            const memberDealers = dealers.filter(d => d.assignedTo === member.uid && d.status === 'New').length;
+            const memberVendors = vendors.filter(v => v.assignedTo === member.uid && v.status === 'New').length;
+            
+            const totalNewLeads = memberDealers + memberVendors;
 
             const memberTasks = tasks.filter(t => t.assignedTo === member.uid);
             const memberActivities = activityLogs.filter(log => log.userId === member.uid && new Date(log.timestamp) >= startDate);
@@ -51,12 +48,12 @@ export function TeamProgressCard() {
                 id: member.uid,
                 name: member.name,
                 role: member.role,
-                activeLeads: totalActiveLeads,
+                newLeads: totalNewLeads,
                 overdueTasks,
                 activities: memberActivities.length,
             };
         });
-    }, [teamMembers, anchors, dealers, vendors, tasks, activityLogs, period]);
+    }, [teamMembers, dealers, vendors, tasks, activityLogs, period]);
 
     const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
     if (!currentUser || !managerRoles.includes(currentUser.role) || teamMembers.length === 0) {
@@ -88,7 +85,7 @@ export function TeamProgressCard() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead><User className="inline-block h-4 w-4 mr-2" />Member</TableHead>
-                                <TableHead><Building className="inline-block h-4 w-4 mr-2" />Active Leads</TableHead>
+                                <TableHead><Handshake className="inline-block h-4 w-4 mr-2" />New Leads</TableHead>
                                 <TableHead><AlertCircle className="inline-block h-4 w-4 mr-2" />Overdue Tasks</TableHead>
                                 <TableHead><Activity className="inline-block h-4 w-4 mr-2" />{activityColumnTitle}</TableHead>
                             </TableRow>
@@ -101,7 +98,7 @@ export function TeamProgressCard() {
                                         <div className="text-xs text-muted-foreground">{member.role}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="secondary">{member.activeLeads}</Badge>
+                                        <Badge variant="secondary">{member.newLeads}</Badge>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={member.overdueTasks > 0 ? 'destructive' : 'default'}>{member.overdueTasks}</Badge>
@@ -123,8 +120,8 @@ export function TeamProgressCard() {
                             </CardHeader>
                             <CardContent className="p-3 pt-0 text-sm space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">Active Leads</span>
-                                    <Badge variant="secondary">{member.activeLeads}</Badge>
+                                    <span className="text-muted-foreground">New Leads</span>
+                                    <Badge variant="secondary">{member.newLeads}</Badge>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Overdue Tasks</span>
