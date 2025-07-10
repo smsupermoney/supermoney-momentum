@@ -117,11 +117,11 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const rawData = {
               name: name || '',
               dealValue: parseFloat(dealValueStr) || 0,
-              leadType: leadType || '',
+              leadType: leadType || 'Fresh',
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
               contacts: contactInfo,
               gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, remarks,
-              lenderId: targetLender?.id || undefined,
+              lenderId: targetLender?.id || null, // Ensure null instead of undefined
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
