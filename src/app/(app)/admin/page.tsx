@@ -43,8 +43,11 @@ interface LeadTableProps {
   title: string;
   leads: DisplayLead[];
   assignableUsers: User[];
-  assignments: Record<string, string>;
-  onAssignmentChange: (leadId: string, userId: string) => void;
+  allAnchors: Anchor[];
+  userAssignments: Record<string, string>;
+  anchorAssignments: Record<string, string>;
+  onUserAssignmentChange: (leadId: string, userId: string) => void;
+  onAnchorAssignmentChange: (leadId: string, anchorId: string) => void;
   onAssign: (leadId: string) => void;
 }
 
@@ -52,8 +55,11 @@ function LeadTable({
   title,
   leads,
   assignableUsers,
-  assignments,
-  onAssignmentChange,
+  allAnchors,
+  userAssignments,
+  anchorAssignments,
+  onUserAssignmentChange,
+  onAnchorAssignmentChange,
   onAssign,
 }: LeadTableProps) {
   const { t } = useLanguage();
@@ -70,7 +76,7 @@ function LeadTable({
             <TableHeader>
               <TableRow>
                 <TableHead>{t('admin.table.name')}</TableHead>
-                <TableHead>{t('admin.table.contactIndustry')}</TableHead>
+                <TableHead>Assign Anchor</TableHead>
                 <TableHead>{t('admin.table.assignTo')}</TableHead>
                 <TableHead className="text-right">{t('admin.table.action')}</TableHead>
               </TableRow>
@@ -79,9 +85,22 @@ function LeadTable({
               {leads.map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>{lead.contactNumber || lead.industry || 'N/A'}</TableCell>
+                   <TableCell>
+                    <Select onValueChange={(value) => onAnchorAssignmentChange(lead.id, value)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select anchor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allAnchors.map((anchor) => (
+                          <SelectItem key={anchor.id} value={anchor.id}>
+                            {anchor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell>
-                    <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
+                    <Select onValueChange={(value) => onUserAssignmentChange(lead.id, value)}>
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder={t('admin.selectUser')} />
                       </SelectTrigger>
@@ -95,7 +114,7 @@ function LeadTable({
                     </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]}>
+                    <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!userAssignments[lead.id] || !anchorAssignments[lead.id]}>
                       {t('admin.assign')}
                     </Button>
                   </TableCell>
@@ -110,10 +129,18 @@ function LeadTable({
             <Card key={lead.id} className="p-0">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base">{lead.name}</CardTitle>
-                <CardDescription>{lead.contactNumber || lead.industry || 'N/A'}</CardDescription>
+                <CardDescription>{lead.contactNumber || 'N/A'}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 p-4 pt-0">
-                <Select onValueChange={(value) => onAssignmentChange(lead.id, value)}>
+                 <Select onValueChange={(value) => onAnchorAssignmentChange(lead.id, value)}>
+                    <SelectTrigger><SelectValue placeholder="Assign Anchor" /></SelectTrigger>
+                    <SelectContent>
+                        {allAnchors.map((anchor) => (
+                            <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                 </Select>
+                <Select onValueChange={(value) => onUserAssignmentChange(lead.id, value)}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('admin.selectUser')} />
                   </SelectTrigger>
@@ -125,7 +152,7 @@ function LeadTable({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!assignments[lead.id]} className="w-full">
+                <Button size="sm" onClick={() => onAssign(lead.id)} disabled={!userAssignments[lead.id] || !anchorAssignments[lead.id]} className="w-full">
                   {t('admin.assign')}
                 </Button>
               </CardContent>
@@ -141,7 +168,8 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
-  const [assignments, setAssignments] = useState<Record<string, string>>({});
+  const [userAssignments, setUserAssignments] = useState<Record<string, string>>({});
+  const [anchorAssignments, setAnchorAssignments] = useState<Record<string, string>>({});
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const assignableUsers = useMemo(() => {
@@ -160,30 +188,43 @@ export default function AdminPage() {
 
   const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.status === 'Unassigned Lead');
   const unassignedVendors = vendors.filter((s) => s.assignedTo === null || s.status === 'Unassigned Lead');
+  const allActiveAnchors = useMemo(() => anchors.filter(a => a.status === 'Active'), [anchors]);
 
-  const handleAssignmentChange = (leadId: string, userId: string) => {
-    setAssignments((prev) => ({ ...prev, [leadId]: userId }));
+
+  const handleUserAssignmentChange = (leadId: string, userId: string) => {
+    setUserAssignments((prev) => ({ ...prev, [leadId]: userId }));
+  };
+
+  const handleAnchorAssignmentChange = (leadId: string, anchorId: string) => {
+    setAnchorAssignments((prev) => ({ ...prev, [leadId]: anchorId }));
   };
 
   const handleAssign = (leadId: string, leadType: LeadType) => {
-    const assignedToId = assignments[leadId];
-    if (!assignedToId) {
-      toast({ variant: 'destructive', title: 'No user selected' });
+    const assignedToId = userAssignments[leadId];
+    const anchorId = anchorAssignments[leadId];
+    if (!assignedToId || !anchorId) {
+      toast({ variant: 'destructive', title: 'Selection Missing', description: 'Please select both an anchor and a user to assign.' });
       return;
     }
 
     const user = users.find((u) => u.uid === assignedToId);
+    const anchor = anchors.find((a) => a.id === anchorId);
 
     if (leadType === 'Dealer') {
       const dealer = dealers.find((d) => d.id === leadId);
-      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, status: 'Invited' });
+      if (dealer) updateDealer({ ...dealer, assignedTo: assignedToId, status: 'Invited', anchorId: anchorId });
     } else if (leadType === 'Vendor') {
       const vendor = vendors.find((s) => s.id === leadId);
-      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'Invited' });
+      if (vendor) updateVendor({ ...vendor, assignedTo: assignedToId, status: 'Invited', anchorId: anchorId });
     }
 
-    toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name}.` });
-    setAssignments((prev) => {
+    toast({ title: 'Lead Assigned', description: `Lead assigned to ${user?.name} for anchor ${anchor?.name}.` });
+    setUserAssignments((prev) => {
+      const newAssignments = { ...prev };
+      delete newAssignments[leadId];
+      return newAssignments;
+    });
+    setAnchorAssignments((prev) => {
       const newAssignments = { ...prev };
       delete newAssignments[leadId];
       return newAssignments;
@@ -258,17 +299,23 @@ export default function AdminPage() {
                       title={t('admin.unassignedDealers')}
                       leads={unassignedDealers}
                       assignableUsers={assignableUsers}
-                      assignments={assignments}
+                      allAnchors={allActiveAnchors}
+                      userAssignments={userAssignments}
+                      anchorAssignments={anchorAssignments}
                       onAssign={(id) => handleAssign(id, 'Dealer')}
-                      onAssignmentChange={handleAssignmentChange}
+                      onUserAssignmentChange={handleUserAssignmentChange}
+                      onAnchorAssignmentChange={handleAnchorAssignmentChange}
                     />
                     <LeadTable
                       title={t('admin.unassignedVendors')}
                       leads={unassignedVendors}
                       assignableUsers={assignableUsers}
-                      assignments={assignments}
+                      allAnchors={allActiveAnchors}
+                      userAssignments={userAssignments}
+                      anchorAssignments={anchorAssignments}
                       onAssign={(id) => handleAssign(id, 'Vendor')}
-                      onAssignmentChange={handleAssignmentChange}
+                      onUserAssignmentChange={handleUserAssignmentChange}
+                      onAnchorAssignmentChange={handleAnchorAssignmentChange}
                     />
                 </div>
                 
@@ -351,3 +398,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
