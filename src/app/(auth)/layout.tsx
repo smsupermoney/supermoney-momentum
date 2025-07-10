@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
            <Logo className="text-primary h-10 w-10" />
            <h1 className="text-3xl font-headline font-bold text-primary">Supermoney</h1>
       </div>
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm" autoComplete="off">
         {children}
       </div>
     </main>

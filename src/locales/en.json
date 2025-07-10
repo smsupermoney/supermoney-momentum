@@ -21,12 +21,12 @@
   },
   "login": {
     "title": "Sign In",
-    "description": "Use a demo account and password `test123` to sign in.",
+    "description": "Use your company Google account to sign in. There is no separate password.",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "button": "Sign In",
     "demoAccounts": "Demo Accounts",
-    "demoDescription": "Use password `test123` for all accounts."
+    "demoDescription": "All access is handled via your company's Google account."
   },
   "dashboard": {
     "welcome": "Welcome back, {name}!",

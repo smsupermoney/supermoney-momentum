@@ -50,7 +50,7 @@ export default function LoginPage() {
       if (error.code) {
         switch (error.code) {
           case 'auth/popup-closed-by-user':
-            toastDescription = 'The sign-in popup was closed. Please try again.';
+            toastDescription = 'The sign-in popup was closed. Please try again. If this persists, ensure your domain is authorized in Firebase.';
             break;
           case 'auth/cancelled-popup-request':
             toastDescription = 'Sign-in cancelled. You can try again at any time.';
@@ -76,11 +76,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full space-y-6 rounded-lg border bg-card p-6 text-center shadow-sm">
+    <div className="w-full space-y-6 rounded-lg border bg-card p-6 text-center shadow-sm" autoComplete="off">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">{t('login.title')}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Sign In to Supermoney</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-            Use your company Google account to sign in. There is no separate password.
+            Use your company Google account to sign in.
         </p>
       </div>
       
