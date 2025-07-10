@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2 } from 'lucide-react';
 import type { Vendor, SpokeStatus, LeadType } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,12 +19,24 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { differenceInDays } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function VendorsPage() {
-  const { vendors, anchors, users, currentUser, updateVendor, visibleUsers } = useApp();
+  const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor } = useApp();
   const { t } = useLanguage();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -39,9 +51,14 @@ export default function VendorsPage() {
   const [anchorFilter, setAnchorFilter] = useState('all');
   const [assignedToFilter, setAssignedToFilter] = useState('all');
 
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
+  const canBulkDelete = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
+
   
-  const userVendors = vendors.filter(s => {
+  const filteredVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
     
     // Filter based on roles
@@ -71,6 +88,35 @@ export default function VendorsPage() {
     return true;
   });
 
+  const numSelected = Object.values(selectedRows).filter(Boolean).length;
+
+  const handleSelectAll = (checked: boolean) => {
+    const newSelectedRows: Record<string, boolean> = {};
+    if (checked) {
+      filteredVendors.forEach(v => {
+        newSelectedRows[v.id] = true;
+      });
+    }
+    setSelectedRows(newSelectedRows);
+  };
+
+  const handleRowSelect = (vendorId: string, checked: boolean) => {
+    setSelectedRows(prev => ({
+      ...prev,
+      [vendorId]: checked,
+    }));
+  };
+
+  const handleDeleteSelected = () => {
+    const idsToDelete = Object.keys(selectedRows).filter(id => selectedRows[id]);
+    idsToDelete.forEach(id => deleteVendor(id));
+    toast({
+        title: `${idsToDelete.length} Vendor(s) Deleted`,
+        description: 'The selected vendors have been removed from the system.',
+    });
+    setSelectedRows({});
+    setIsDeleteConfirmOpen(false);
+  };
 
   const getAnchorName = (anchorId: string | null) => {
     if (!anchorId) return 'N/A';
@@ -148,8 +194,32 @@ export default function VendorsPage() {
             entity={emailConfig.entity}
         />
       )}
+       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete {numSelected} vendor lead(s).
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4">
+          <div className="w-full">
+            {canBulkDelete && numSelected > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4"/>
+                Delete ({numSelected}) Selected
+              </Button>
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
@@ -189,6 +259,15 @@ export default function VendorsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              {canBulkDelete && (
+                <TableHead padding="checkbox">
+                  <Checkbox
+                    checked={numSelected === filteredVendors.length && filteredVendors.length > 0}
+                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+              )}
               <TableHead>{t('dealers.table.name')}</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
@@ -202,9 +281,18 @@ export default function VendorsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userVendors.length > 0 ? userVendors.map(vendor => (
-              <TableRow key={vendor.id} onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
-                <TableCell className="font-medium">
+            {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
+              <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"}>
+                 {canBulkDelete && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRows[vendor.id] || false}
+                      onCheckedChange={(checked) => handleRowSelect(vendor.id, checked as boolean)}
+                      aria-label="Select row"
+                    />
+                  </TableCell>
+                )}
+                <TableCell className="font-medium cursor-pointer" onClick={() => setSelectedVendor(vendor)}>
                   <div>{vendor.name}</div>
                   {vendor.nextBestAction && (
                       <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
@@ -235,7 +323,7 @@ export default function VendorsPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
+                <TableCell colSpan={canBulkDelete ? 11 : 10} className="h-24 text-center">
                   {t('vendors.noVendors')}
                 </TableCell>
               </TableRow>
@@ -246,39 +334,51 @@ export default function VendorsPage() {
 
       {/* Mobile Card View */}
       <div className="grid gap-4 md:hidden">
-          {userVendors.length > 0 ? userVendors.map(vendor => (
-              <Card key={vendor.id} onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
-                  <CardHeader>
-                      <CardTitle>{vendor.name}</CardTitle>
-                      <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {vendor.nextBestAction && (
-                      <div className="mb-2">
-                        <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
-                          <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
-                          <div className="flex flex-col">
-                              <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
-                              <span className="text-sm">{vendor.nextBestAction.recommendedAction}</span>
-                          </div>
-                        </Badge>
+          {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
+              <Card key={vendor.id} className="relative">
+                  {canBulkDelete && (
+                      <div className="absolute top-2 right-2">
+                          <Checkbox
+                              className="h-5 w-5"
+                              checked={selectedRows[vendor.id] || false}
+                              onCheckedChange={(checked) => handleRowSelect(vendor.id, checked as boolean)}
+                              aria-label="Select row"
+                            />
                       </div>
-                    )}
-                     <div className="flex items-center gap-2">
-                        <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
-                        <Badge variant="outline">{vendor.leadType || 'Fresh'}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone || 'N/A'}</p>
-                      <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
-                      <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(vendor.createdAt))} days</p>
-                  </CardContent>
-                  <CardFooter className="flex justify-end gap-2">
-                       <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
-                            <Link href="https://supermoney.in/onboarding" target="_blank">
-                                Onboarding
-                            </Link>
-                        </Button>
-                  </CardFooter>
+                  )}
+                  <div onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
+                    <CardHeader>
+                        <CardTitle>{vendor.name}</CardTitle>
+                        <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {vendor.nextBestAction && (
+                        <div className="mb-2">
+                          <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
+                            <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
+                                <span className="text-sm">{vendor.nextBestAction.recommendedAction}</span>
+                            </div>
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                          <Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge>
+                          <Badge variant="outline">{vendor.leadType || 'Fresh'}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
+                        <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(vendor.createdAt))} days</p>
+                    </CardContent>
+                    <CardFooter className="flex justify-end gap-2">
+                        <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
+                              <Link href="https://supermoney.in/onboarding" target="_blank">
+                                  Onboarding
+                              </Link>
+                          </Button>
+                    </CardFooter>
+                  </div>
               </Card>
           )) : (
               <div className="h-24 flex items-center justify-center text-center text-muted-foreground">
