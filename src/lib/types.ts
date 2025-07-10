@@ -17,7 +17,7 @@ export type SpokeStatus = 'New' | 'KYC Pending' | 'Not reachable' | 'Agreement P
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
-export type LeadType = 'New' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell';
+export type LeadType = 'Fresh' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell';
 
 export const products = ['SCF - Primary', 'SCF - Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
 export type Product = (typeof products)[number];

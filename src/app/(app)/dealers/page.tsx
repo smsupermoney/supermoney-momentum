@@ -20,7 +20,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Rejected', 'Not Interested', 'Inactive'];
-const leadTypes: LeadType[] = ['New', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
+const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell'];
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser, updateDealer, visibleUsers } = useApp();
@@ -201,7 +201,7 @@ export default function DealersPage() {
                 <TableCell>
                   <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                 </TableCell>
-                <TableCell>{dealer.leadType || 'New'}</TableCell>
+                <TableCell>{dealer.leadType || 'Fresh'}</TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
                 <TableCell className="text-right">
@@ -247,7 +247,7 @@ export default function DealersPage() {
                       )}
                       <div className="flex items-center gap-2">
                         <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
-                        <Badge variant="outline">{dealer.leadType || 'New'}</Badge>
+                        <Badge variant="outline">{dealer.leadType || 'Fresh'}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber}</p>
                       <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>

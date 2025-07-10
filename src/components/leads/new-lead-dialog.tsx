@@ -59,7 +59,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       location: '',
       anchorId: '',
       product: '',
-      leadType: 'New',
+      leadType: 'Fresh',
       leadSource: '',
       dealValue: undefined,
     },
@@ -107,7 +107,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           createdAt: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
-          leadType: (values.leadType as LeadType) || 'New',
+          leadType: (values.leadType as LeadType) || 'Fresh',
           dealValue: values.dealValue,
         }
 
@@ -163,7 +163,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="New">New</SelectItem>
+                      <SelectItem value="Fresh">Fresh</SelectItem>
                       <SelectItem value="Renewal">Renewal</SelectItem>
                       <SelectItem value="Adhoc">Adhoc</SelectItem>
                       <SelectItem value="Enhancement">Enhancement</SelectItem>

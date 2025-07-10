@@ -77,7 +77,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     <div><p className="text-muted-foreground">GSTIN</p><p>{dealer.gstin || 'N/A'}</p></div>
                     <div><p className="text-muted-foreground">Anchor</p><p>{anchorName}</p></div>
                     <div><p className="text-muted-foreground">Product Interest</p><p>{dealer.product || 'N/A'}</p></div>
-                    <div><p className="text-muted-foreground">Lead Type</p><p>{dealer.leadType || 'New'}</p></div>
+                    <div><p className="text-muted-foreground">Lead Type</p><p>{dealer.leadType || 'Fresh'}</p></div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
@@ -86,7 +86,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Invited">Invited</SelectItem>
+                            <SelectItem value="New">New</SelectItem>
                             <SelectItem value="Onboarding">Onboarding</SelectItem>
                             <SelectItem value="KYC Pending">KYC Pending</SelectItem>
                             <SelectItem value="Not reachable">Not reachable</SelectItem>

@@ -321,7 +321,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       primaryContactDesignation: primaryContact.designation,
       email: primaryContact.email,
       phone: primaryContact.phone,
-      leadSource: anchorData.leadSource,
       gstin: anchorData.gstin,
       location: anchorData.location,
     };
@@ -384,7 +383,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             primaryContactDesignation: primaryContact.designation,
             email: primaryContact.email,
             phone: primaryContact.phone,
-            leadSource: updatedAnchor.leadSource,
             gstin: updatedAnchor.gstin,
             location: updatedAnchor.location,
         };
@@ -427,6 +425,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       location: dealerData.location,
       product: dealerData.product,
       leadType: dealerData.leadType,
+      leadSource: dealerData.leadSource,
       dealValue: dealerData.dealValue
     };
     try {
@@ -563,6 +562,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       location: vendorData.location,
       product: vendorData.product,
       leadType: vendorData.leadType,
+      leadSource: vendorData.leadSource,
       dealValue: vendorData.dealValue
     };
     try {

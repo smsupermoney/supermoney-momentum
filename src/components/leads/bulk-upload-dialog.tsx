@@ -108,7 +108,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               status: finalAssignedToId ? 'New' as const : 'Unassigned Lead' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
-              leadType: 'New' as const,
+              leadType: 'Fresh' as const,
               leadId: generateLeadId(),
             };
             

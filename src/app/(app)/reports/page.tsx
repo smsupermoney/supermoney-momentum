@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -66,10 +66,10 @@ export default function ReportsPage() {
             'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
             'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
             'Product Interest': spoke.product || 'N/A',
-            'Lead Type': spoke.leadType || 'N/A',
+            'Lead Type': spoke.leadType || 'Fresh',
+            'Lead Source': spoke.leadSource || 'N/A',
             'Lead Score': spoke.leadScore,
             'Lead Score Reason': spoke.leadScoreReason,
-            'Lead Source': spoke.leadSource || 'N/A',
             'Potential Deal Value (INR)': spoke.dealValue,
             'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
         });
