@@ -31,6 +31,7 @@ import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2 } from 'lucide-react';
 import { generateLeadId } from '@/lib/utils';
 import { NewSpokeSchema } from '@/lib/validation';
+import { products } from '@/lib/types';
 
 const formSchema = NewSpokeSchema.extend({
   email: z.string().email({ message: 'A valid email is required.' }).optional().or(z.literal('')),
@@ -274,15 +275,9 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="SCF - Primary">SCF - Primary</SelectItem>
-                        <SelectItem value="SCF - Secondary">SCF - Secondary</SelectItem>
-                        <SelectItem value="BL">BL</SelectItem>
-                        <SelectItem value="LAP">LAP</SelectItem>
-                        <SelectItem value="WCDL">WCDL</SelectItem>
-                        <SelectItem value="WCTL">WCTL</SelectItem>
-                        <SelectItem value="PID">PID</SelectItem>
-                        <SelectItem value="SID">SID</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {products.map(p => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -330,3 +325,5 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     </Dialog>
   );
 }
+
+    

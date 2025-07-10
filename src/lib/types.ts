@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development';
 
 export interface User {
@@ -18,6 +19,9 @@ export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
 export type LeadType = 'New' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell';
+
+export const products = ['SCF - Primary', 'SCF - Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
+export type Product = (typeof products)[number];
 
 
 export interface Contact {
@@ -154,3 +158,5 @@ export interface Notification {
   isRead: boolean;
   icon: string;
 }
+
+    

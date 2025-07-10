@@ -13,11 +13,13 @@ import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Ven
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
 import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
+import { products } from '@/lib/types';
 
 
 // Main Page Component
@@ -407,6 +409,7 @@ function ManagerReports() {
 function AdminReports() {
     const { anchors, users, dealers, vendors, activityLogs, tasks, t } = useApp();
     const [period, setPeriod] = useState('this_month');
+    const [productFilter, setProductFilter] = useState('all');
 
     const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
     const allSpokes = useMemo(() => [...dealers, ...vendors], [dealers, vendors]);
@@ -435,12 +438,18 @@ function AdminReports() {
                 interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
+
+        let filteredSpokes = allSpokes.filter(s => isWithinInterval(new Date(s.createdAt), interval));
+        if (productFilter !== 'all') {
+          filteredSpokes = filteredSpokes.filter(s => s.product === productFilter);
+        }
+
         return {
-          periodSpokes: allSpokes.filter(s => isWithinInterval(new Date(s.createdAt), interval)),
+          periodSpokes: filteredSpokes,
           periodLogs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
           periodLabel: label
         };
-    }, [period, allSpokes, activityLogs, t]);
+    }, [period, productFilter, allSpokes, activityLogs, t]);
     
     const pipelineStages: SpokeStatus[] = ['Invited', 'Onboarding', 'KYC Pending', 'Agreement Pending', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
@@ -482,13 +491,22 @@ function AdminReports() {
                   <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
                   <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
                 </div>
-                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
-                        <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
-                        <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={productFilter} onValueChange={setProductFilter}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Products</SelectItem>
+                        {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
+                            <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
+                            <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
              </div>
           </CardHeader>
           <CardContent>
@@ -751,3 +769,5 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+    
