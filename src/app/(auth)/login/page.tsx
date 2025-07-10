@@ -56,7 +56,7 @@ export default function LoginPage() {
             toastDescription = 'Sign-in cancelled. You can try again at any time.';
             break;
           case 'auth/unauthorized-domain':
-            toastDescription = "This app's domain is not authorized for Google Sign-In. Please contact your administrator.";
+            toastDescription = "This app's domain is not authorized. Please go to your Firebase Console -> Authentication -> Sign-in method -> Google and add this domain to the list of authorized domains.";
             break;
            case 'auth/configuration-not-found':
             toastDescription = 'Google Sign-In is not enabled for this project. Please contact your administrator.';

@@ -81,9 +81,25 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         };
     }
     
-    // If user doc with UID doesn't exist, we assume this is their first login.
-    // We create a new user profile with a default role.
-    // An admin can change this role later in the Admin Panel.
+    // If user doc with UID doesn't exist, check if a profile was pre-created by an Admin
+    const q = query(collection(db, 'users'), where("email", "==", authUser.email));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        // A profile exists, created by an admin. We need to migrate it.
+        const oldDoc = querySnapshot.docs[0];
+        const userData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
+
+        // Create the new document with the correct UID and delete the old one in a batch.
+        const batch = writeBatch(db);
+        batch.set(userDocRef, userData);
+        batch.delete(oldDoc.ref);
+        await batch.commit();
+
+        return { id: authUser.uid, uid: authUser.uid, ...userData };
+    }
+
+    // If no profile exists at all, create a brand new one with a default role.
     const newUser: Omit<User, 'uid' | 'id'> = {
         name: authUser.displayName || 'New User',
         email: authUser.email,
