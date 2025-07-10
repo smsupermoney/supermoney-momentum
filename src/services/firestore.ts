@@ -50,7 +50,8 @@ export const addUser = async (user: Omit<User, 'uid' | 'id'>): Promise<User> => 
         throw new Error(`User with email ${user.email} already exists.`);
     }
 
-    // Since we don't know the UID yet, we add the document with an auto-generated ID.
+    // This function is for admins creating users BEFORE they log in.
+    // The document will have an auto-generated ID.
     // The checkAndCreateUser function will handle migrating this to a UID-keyed doc on first login.
     const docRef = await addDoc(collection(db, 'users'), user);
     
@@ -80,37 +81,13 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         };
     }
     
-    // If user doc with UID doesn't exist, check if an admin has pre-created a profile for this email.
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where("email", "==", authUser.email));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-        // A profile for this email exists, but with a temporary, auto-generated ID.
-        // We migrate the data to a new doc with the correct ID (the auth UID) and delete the old one.
-        console.log(`Migrating pre-created user profile for ${authUser.email}`);
-        const oldDoc = querySnapshot.docs[0];
-        const oldData = oldDoc.data() as Omit<User, 'uid' | 'id'>;
-        
-        const batch = writeBatch(db);
-        
-        // Create the new document with the correct UID as the ID
-        batch.set(userDocRef, oldData);
-        
-        // Delete the old document with the incorrect, auto-generated ID
-        batch.delete(oldDoc.ref);
-        
-        await batch.commit();
-
-        return { id: authUser.uid, uid: authUser.uid, ...oldData };
-    }
-
-    // This is a brand new user, not pre-created by an admin.
-    // Assign a default role. An admin can change this later.
+    // If user doc with UID doesn't exist, we assume this is their first login.
+    // We create a new user profile with a default role.
+    // An admin can change this role later in the Admin Panel.
     const newUser: Omit<User, 'uid' | 'id'> = {
         name: authUser.displayName || 'New User',
         email: authUser.email,
-        role: 'Area Sales Manager', 
+        role: 'Area Sales Manager', // Assign a default role
     };
     
     // Use setDoc with the specific UID as the document ID
