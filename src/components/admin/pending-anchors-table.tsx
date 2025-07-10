@@ -6,14 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import type { Anchor } from '@/lib/types';
+import type { Anchor, UserRole } from '@/lib/types';
 import { format } from 'date-fns';
 
 export function PendingAnchorsTable() {
   const { anchors, users, updateAnchor, currentUser } = useApp();
   const { toast } = useToast();
+  
+  const managerialRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  const canViewTable = currentUser && managerialRoles.includes(currentUser.role);
 
-  if (currentUser?.role !== 'Admin') {
+  if (!canViewTable) {
     return null;
   }
 

@@ -201,7 +201,11 @@ export default function AdminPage() {
   };
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  if (!currentUser || (currentUser.role !== 'Admin' && !managerialRoles.includes(currentUser.role) && currentUser.role !== 'Business Development')) {
+  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
+  const canViewApprovalTables = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role));
+
+
+  if (!canViewAdminPanel) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">You do not have permission to view this page.</p>
@@ -236,10 +240,14 @@ export default function AdminPage() {
       </AlertDialog>
 
       <div className="grid gap-4 mt-6">
-        {currentUser.role === 'Admin' && (
+        {canViewApprovalTables && (
           <>
             <PendingAnchorsTable />
             <ArchivedAnchorsTable />
+          </>
+        )}
+        
+        {currentUser.role === 'Admin' && (
             <Card>
               <CardHeader>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -321,7 +329,6 @@ export default function AdminPage() {
                 </div>
               </CardContent>
             </Card>
-          </>
         )}
         <LeadTable
           title={t('admin.unassignedDealers')}
