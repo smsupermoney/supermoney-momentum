@@ -104,16 +104,8 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
 
       const scoreResult = await leadScoring(leadScoringInput);
       
-      const isBusinessDevelopment = currentUser.role === 'Business Development';
-
-      let status: LeadStatus;
-
-      if (isBusinessDevelopment) {
-        status = 'Pending Approval';
-      } else {
-        // Admin or other roles
-        status = 'Unassigned Lead';
-      }
+      // All new anchors, regardless of creator, will be unassigned leads.
+      const status: LeadStatus = 'Unassigned Lead';
       
       const newAnchor: Omit<Anchor, 'id'> = {
         leadId: generateLeadId(),
@@ -147,7 +139,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         description: (
           <div>
             <p>{values.companyName} has been added as a new lead.</p>
-            {isBusinessDevelopment && <p className="font-semibold">It is now pending Admin approval.</p>}
+            <p className="font-semibold">It is now available for assignment in the Admin Panel.</p>
             <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
             <p className="text-xs">{scoreResult.reason}</p>
           </div>
