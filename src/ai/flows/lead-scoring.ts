@@ -22,6 +22,7 @@ const LeadScoringInputSchema = z.object({
   leadSource: z.string().describe('The source of the lead.'),
   gstin: z.string().optional().describe('The GSTIN of the company.'),
   location: z.string().optional().describe('The location of the company.'),
+  annualTurnover: z.string().optional().describe('The annual turnover range of the company.'),
 });
 
 export type LeadScoringInput = z.infer<typeof LeadScoringInputSchema>;
@@ -51,11 +52,12 @@ Consider the following factors:
 
 - Industry: Some industries are more likely to need supply chain finance than others.
 - Lead Source: Some lead sources are more likely to be qualified than others.
-- Company Size: Larger companies are more likely to need supply chain finance.
+- Company Size: Larger companies are more likely to need supply chain finance. A higher annual turnover range is a strong positive signal.
 - Contact Information: Leads with complete contact information are more likely to be qualified.
 
 Company Name: {{{companyName}}}
 Industry: {{{industry}}}
+Annual Turnover: {{{annualTurnover}}}
 Primary Contact Name: {{{primaryContactName}}}
 Email: {{{email}}}
 Phone: {{{phone}}}

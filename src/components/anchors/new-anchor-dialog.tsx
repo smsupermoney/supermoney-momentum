@@ -89,6 +89,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
+        annualTurnover: values.annualTurnover,
       };
 
       const scoreResult = await leadScoring(leadScoringInput);
