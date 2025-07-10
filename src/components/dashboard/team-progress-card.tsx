@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,10 +9,12 @@ import { isPast, isToday, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User, Activity, AlertCircle, Building } from 'lucide-react';
 import { UserRole } from '@/lib/types';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 export function TeamProgressCard() {
     const { currentUser, visibleUsers, anchors, tasks, activityLogs } = useApp();
+    const [period, setPeriod] = useState<'1d' | '7d' | '30d'>('7d');
 
     const teamMembers = useMemo(() => {
         if (!currentUser) return [];
@@ -20,12 +22,16 @@ export function TeamProgressCard() {
     }, [currentUser, visibleUsers]);
 
     const teamProgressData = useMemo(() => {
-        const sevenDaysAgo = subDays(new Date(), 7);
+        let daysToSubtract = 7;
+        if (period === '1d') daysToSubtract = 1;
+        if (period === '30d') daysToSubtract = 30;
+        
+        const startDate = subDays(new Date(), daysToSubtract);
 
         return teamMembers.map(member => {
             const memberAnchors = anchors.filter(a => a.createdBy === member.uid && a.status !== 'Archived' && a.status !== 'Active');
             const memberTasks = tasks.filter(t => t.assignedTo === member.uid);
-            const memberActivities = activityLogs.filter(log => log.userId === member.uid && new Date(log.timestamp) >= sevenDaysAgo);
+            const memberActivities = activityLogs.filter(log => log.userId === member.uid && new Date(log.timestamp) >= startDate);
 
             const overdueTasks = memberTasks.filter(t => 
                 isPast(new Date(t.dueDate)) && 
@@ -39,21 +45,34 @@ export function TeamProgressCard() {
                 role: member.role,
                 activeLeads: memberAnchors.length,
                 overdueTasks,
-                activitiesLast7Days: memberActivities.length,
+                activities: memberActivities.length,
             };
         });
-    }, [teamMembers, anchors, tasks, activityLogs]);
+    }, [teamMembers, anchors, tasks, activityLogs, period]);
 
     const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
     if (!currentUser || !managerRoles.includes(currentUser.role) || teamMembers.length === 0) {
         return null;
     }
+    
+    const activityColumnTitle = `Activities (${period})`;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Team Progress Summary</CardTitle>
-                <CardDescription>An overview of your team's key performance indicators.</CardDescription>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <CardTitle>Team Progress Summary</CardTitle>
+                        <CardDescription>An overview of your team's key performance indicators.</CardDescription>
+                    </div>
+                    <Tabs value={period} onValueChange={(value) => setPeriod(value as '1d' | '7d' | '30d')} className="w-full sm:w-auto">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="1d">1D</TabsTrigger>
+                            <TabsTrigger value="7d">7D</TabsTrigger>
+                            <TabsTrigger value="30d">30D</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
             </CardHeader>
             <CardContent>
                  <div className="hidden rounded-lg border md:block">
@@ -63,7 +82,7 @@ export function TeamProgressCard() {
                                 <TableHead><User className="inline-block h-4 w-4 mr-2" />Member</TableHead>
                                 <TableHead><Building className="inline-block h-4 w-4 mr-2" />Active Leads</TableHead>
                                 <TableHead><AlertCircle className="inline-block h-4 w-4 mr-2" />Overdue Tasks</TableHead>
-                                <TableHead><Activity className="inline-block h-4 w-4 mr-2" />Activities (7d)</TableHead>
+                                <TableHead><Activity className="inline-block h-4 w-4 mr-2" />{activityColumnTitle}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -80,7 +99,7 @@ export function TeamProgressCard() {
                                         <Badge variant={member.overdueTasks > 0 ? 'destructive' : 'default'}>{member.overdueTasks}</Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{member.activitiesLast7Days}</Badge>
+                                        <Badge variant="outline">{member.activities}</Badge>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -104,8 +123,8 @@ export function TeamProgressCard() {
                                     <Badge variant={member.overdueTasks > 0 ? 'destructive' : 'default'}>{member.overdueTasks}</Badge>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground">Activities (7d)</span>
-                                    <Badge variant="outline">{member.activitiesLast7Days}</Badge>
+                                    <span className="text-muted-foreground">{activityColumnTitle}</span>
+                                    <Badge variant="outline">{member.activities}</Badge>
                                 </div>
                             </CardContent>
                         </Card>
