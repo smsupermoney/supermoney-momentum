@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -48,6 +48,7 @@ export default function ReportsPage() {
                 'Annual Turnover': a.annualTurnover,
                 'Credit Rating': a.creditRating || 'N/A',
                 Address: a.address || 'N/A',
+                'Lead Source': a.leadSource || 'N/A',
                 'Lead Score': a.leadScore,
                 'Lead Score Reason': a.leadScoreReason,
                 'Primary Contact Name': primaryContact?.name || 'N/A',
@@ -221,8 +222,7 @@ function SalesReports() {
   const pipelineData = [
     { name: 'New', value: userLeads.filter(a => a.status === 'New').length, fill: 'hsl(var(--chart-1))' },
     { name: 'Onboarding', value: userLeads.filter(a => a.status === 'Onboarding').length, fill: 'hsl(var(--chart-2))' },
-    { name: 'KYC Pending', value: userLeads.filter(a => a.status === 'KYC Pending').length, fill: 'hsl(var(--chart-3))' },
-    { name: 'Agreement Pending', value: userLeads.filter(a => a.status === 'Agreement Pending').length, fill: 'hsl(var(--chart-4))' },
+    { name: 'Partial Docs', value: userLeads.filter(a => a.status === 'Partial Docs').length, fill: 'hsl(var(--chart-3))' },
   ].filter(d => d.value > 0);
 
   // Weekly Activity Data
@@ -328,7 +328,7 @@ function ManagerReports() {
         };
     }, [period, teamLeads, teamLogs, t]);
 
-    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'KYC Pending', 'Agreement Pending'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodLeads.filter(a => a.status === stage).length
@@ -458,7 +458,7 @@ function AdminReports() {
         };
     }, [period, productFilter, allSpokes, activityLogs, t]);
     
-    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'KYC Pending', 'Agreement Pending', 'Active'];
+    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Active'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
         value: periodSpokes
@@ -476,7 +476,7 @@ function AdminReports() {
         
     const getCount = (status: SpokeStatus) => periodSpokes.filter(s => s.status === status).length;
     const allLeadsCount = periodSpokes.length;
-    const allOnboardingCount = getCount('Onboarding') + getCount('KYC Pending') + getCount('Agreement Pending') + getCount('Active');
+    const allOnboardingCount = getCount('Onboarding') + getCount('Partial Docs') + getCount('Active');
     const allActiveCount = getCount('Active');
     
     const invitedToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
@@ -780,3 +780,4 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
     
 
     
+

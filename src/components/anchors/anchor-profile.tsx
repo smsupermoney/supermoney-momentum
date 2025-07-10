@@ -344,15 +344,13 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                 return 'default';
             case 'Rejected':
             case 'Not Interested':
-            case 'Inactive':
                 return 'destructive';
             case 'Unassigned Lead':
             case 'New':
                 return 'outline';
             case 'Onboarding':
-            case 'KYC Pending':
+            case 'Partial Docs':
             case 'Not reachable':
-            case 'Agreement Pending':
                 return 'secondary';
             default:
                 return 'outline';
@@ -386,11 +384,9 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         <SelectContent>
                                             <SelectItem value="New">New</SelectItem>
                                             <SelectItem value="Onboarding">Onboarding</SelectItem>
-                                            <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                            <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
                                             <SelectItem value="Active">Active</SelectItem>
-                                            <SelectItem value="Inactive">Inactive</SelectItem>
                                             <SelectItem value="Rejected">Rejected</SelectItem>
                                             <SelectItem value="Not Interested">Not Interested</SelectItem>
                                         </SelectContent>
@@ -429,11 +425,9 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                         <SelectContent>
                                             <SelectItem value="New">New</SelectItem>
                                             <SelectItem value="Onboarding">Onboarding</SelectItem>
-                                            <SelectItem value="KYC Pending">KYC Pending</SelectItem>
+                                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
                                             <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                            <SelectItem value="Agreement Pending">Agreement Pending</SelectItem>
                                             <SelectItem value="Active">Active</SelectItem>
-                                            <SelectItem value="Inactive">Inactive</SelectItem>
                                             <SelectItem value="Rejected">Rejected</SelectItem>
                                             <SelectItem value="Not Interested">Not Interested</SelectItem>
                                         </SelectContent>
