@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format, differenceInDays } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, differenceInDays, endOfMonth } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -747,7 +747,8 @@ function StatCard({ title, value, icon: Icon, description, isPlaceholder }: { ti
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        {isPlaceholder && <Badge variant="outline" className="mt-2">Mock Data</Badge></CardContent>
+        {isPlaceholder && <Badge variant="outline" className="mt-2">Mock Data</Badge>}
+      </CardContent>
     </Card>
   );
 }
@@ -782,5 +783,7 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
 
 
 
+
+    
 
     
