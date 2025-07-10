@@ -340,4 +340,3 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
     </Dialog>
   );
 }
-

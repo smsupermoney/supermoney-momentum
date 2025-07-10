@@ -202,9 +202,10 @@ export default function ReportsPage() {
 
 // Reports for Sales Role
 function SalesReports() {
-  const { currentUser, tasks, anchors, activityLogs, t } = useApp();
+  const { currentUser, tasks, anchors, activityLogs, t, dealers, vendors } = useApp();
   const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
-  const userAnchors = anchors.filter(a => a.createdBy === currentUser?.uid);
+  const userDealers = dealers.filter(d => d.assignedTo === currentUser?.uid);
+  const userVendors = vendors.filter(v => v.assignedTo === currentUser?.uid);
   const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
 
   // Task Summary Calculation
@@ -217,11 +218,12 @@ function SalesReports() {
   }).length;
 
   // Pipeline Funnel Data
+  const userLeads = [...userDealers, ...userVendors];
   const pipelineData = [
-    { name: 'Lead', value: userAnchors.filter(a => a.status === 'Lead').length, fill: 'hsl(var(--chart-1))' },
-    { name: 'Initial Contact', value: userAnchors.filter(a => a.status === 'Initial Contact').length, fill: 'hsl(var(--chart-2))' },
-    { name: 'Proposal', value: userAnchors.filter(a => a.status === 'Proposal').length, fill: 'hsl(var(--chart-3))' },
-    { name: 'Negotiation', value: userAnchors.filter(a => a.status === 'Negotiation').length, fill: 'hsl(var(--chart-4))' },
+    { name: 'Invited', value: userLeads.filter(a => a.status === 'Invited').length, fill: 'hsl(var(--chart-1))' },
+    { name: 'Onboarding', value: userLeads.filter(a => a.status === 'Onboarding').length, fill: 'hsl(var(--chart-2))' },
+    { name: 'KYC Pending', value: userLeads.filter(a => a.status === 'KYC Pending').length, fill: 'hsl(var(--chart-3))' },
+    { name: 'Agreement Pending', value: userLeads.filter(a => a.status === 'Agreement Pending').length, fill: 'hsl(var(--chart-4))' },
   ].filter(d => d.value > 0);
 
   // Weekly Activity Data
@@ -286,10 +288,10 @@ function SalesReports() {
 
 // Reports for Managers (ZSM, RSM, NSM)
 function ManagerReports() {
-    const { currentUser, anchors, activityLogs, visibleUserIds, visibleUsers, tasks, t } = useApp();
+    const { currentUser, anchors, dealers, vendors, activityLogs, visibleUserIds, visibleUsers, tasks, t } = useApp();
     const [period, setPeriod] = useState('this_month');
     
-    const teamAnchors = anchors.filter(a => visibleUserIds.includes(a.createdBy || ''));
+    const teamLeads = [...dealers, ...vendors].filter(a => visibleUserIds.includes(a.assignedTo || ''));
     const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
     const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
     const teamUsers = visibleUsers.filter(u => u.uid !== currentUser?.uid);
@@ -301,7 +303,7 @@ function ManagerReports() {
         return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
     }
 
-    const { periodAnchors, periodLogs, periodLabel } = useMemo(() => {
+    const { periodLeads, periodLogs, periodLabel } = useMemo(() => {
         const now = new Date();
         let interval: Interval;
         let label = t('reports.month');
@@ -321,16 +323,16 @@ function ManagerReports() {
                 break;
         }
         return {
-            periodAnchors: teamAnchors.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
+            periodLeads: teamLeads.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
             periodLogs: teamLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
             periodLabel: label
         };
-    }, [period, teamAnchors, teamLogs, t]);
+    }, [period, teamLeads, teamLogs, t]);
 
-    const pipelineStages = ['Lead', 'Initial Contact', 'Proposal', 'Negotiation'];
+    const pipelineStages: SpokeStatus[] = ['Invited', 'Onboarding', 'KYC Pending', 'Agreement Pending'];
     const pipelineValueData = pipelineStages.map(stage => ({
         name: stage,
-        value: periodAnchors.filter(a => a.status === stage).length
+        value: periodLeads.filter(a => a.status === stage).length
     }));
 
     const activityCounts = teamUsers
@@ -378,7 +380,7 @@ function ManagerReports() {
                     <OverdueTasksByExecutive tasks={teamTasks} users={teamUsers} />
                 </div>
                 <div className="lg:col-span-2 space-y-4">
-                    <KeyHighlights period={periodLabel} anchors={periodAnchors} activityLogs={periodLogs} users={teamUsers} />
+                    <KeyHighlights period={periodLabel} anchors={anchors} activityLogs={periodLogs} users={teamUsers} />
                     <Card>
                         <CardHeader><CardTitle>{t('reports.activityLeaderboard', { period: periodLabel })}</CardTitle></CardHeader>
                         <CardContent>
@@ -403,7 +405,7 @@ function ManagerReports() {
                             </Table>
                         </CardContent>
                     </Card>
-                    <StatCard title={t('reports.totalTeamLeads')} value={teamAnchors.length} description={t('reports.totalTeamLeadsDescription')} icon={Users} />
+                    <StatCard title={t('reports.totalTeamLeads')} value={teamLeads.length} description={t('reports.totalTeamLeadsDescription')} icon={Users} />
                 </div>
             </div>
         </div>
@@ -655,7 +657,7 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
 
             try {
                 const wonDeals = anchors.filter(a => a.status === 'Active');
-                const totalDealValue = wonDeals.reduce((sum, a) => sum + (a.annualTurnover || 0), 0);
+                const totalDealValue = wonDeals.reduce((sum, a) => sum + (parseInt(a.annualTurnover || '0', 10) || 0), 0);
                 const totalLeads = anchors.length;
                 const totalActivities = activityLogs.length;
 

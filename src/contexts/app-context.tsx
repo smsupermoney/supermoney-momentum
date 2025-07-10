@@ -218,15 +218,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             });
 
         if (['Admin'].includes(currentUser.role)) {
-            const pendingAnchors = anchors.filter(a => a.status === 'Unassigned Lead');
-            pendingAnchors.forEach(anchor => {
-                 const creator = users.find(u => u.uid === anchor.createdBy);
+            const pendingDealers = dealers.filter(a => a.status === 'Unassigned Lead');
+            pendingDealers.forEach(lead => {
                  userNotifications.push({
                     userId: currentUser.uid,
-                    title: `New Anchor for Assignment`,
-                    description: `${anchor.name} created by ${creator?.name || 'BD'} is waiting for assignment.`,
+                    title: `New Dealer for Assignment`,
+                    description: `${lead.name} is waiting for assignment.`,
                     href: `/admin`,
-                    timestamp: anchor.createdAt,
+                    timestamp: lead.createdAt,
                     icon: 'Star'
                 });
             })
@@ -257,7 +256,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setNotifications(sortedNotifications);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, currentUser, tasks, anchors, users]);
+  }, [isLoading, currentUser, tasks, dealers, users]);
 
   const addNotification = (notificationData: Omit<Notification, 'id' | 'isRead'>) => {
     const newNotification: Notification = {

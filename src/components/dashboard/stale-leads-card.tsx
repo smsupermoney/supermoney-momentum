@@ -11,7 +11,7 @@ import type { Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
 
-type StaleLead = (Anchor | Dealer | Vendor) & { type: 'Anchor' | 'Dealer' | 'Vendor' };
+type StaleLead = (Dealer | Vendor) & { type: 'Dealer' | 'Vendor' };
 type InactiveUser = {
     id: string;
     name: string;
@@ -19,7 +19,7 @@ type InactiveUser = {
 }
 
 export function StaleLeadsCard() {
-    const { anchors, dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
+    const { dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
 
     const { staleLeads, inactiveUsers } = useMemo(() => {
         const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
@@ -57,7 +57,6 @@ export function StaleLeadsCard() {
             } else {
                 // If the user HAS been active, check for stale leads.
                 const allLeadsForUser: StaleLead[] = [
-                    ...anchors.filter(a => a.createdBy === asm.uid).map(a => ({ ...a, type: 'Anchor' as const })),
                     ...dealers.filter(d => d.assignedTo === asm.uid).map(d => ({ ...d, type: 'Dealer' as const })),
                     ...vendors.filter(v => v.assignedTo === asm.uid).map(v => ({ ...v, type: 'Vendor' as const })),
                 ];
@@ -67,7 +66,6 @@ export function StaleLeadsCard() {
                     
                     if (lastUpdate < lastWorkingDay) {
                         const isLeadInRecentActivity = userActivities.some(act => 
-                            (act.anchorId && act.anchorId === lead.id && lead.type === 'Anchor') ||
                             (act.dealerId && act.dealerId === lead.id && lead.type === 'Dealer') ||
                             (act.vendorId && act.vendorId === lead.id && lead.type === 'Vendor')
                         );
@@ -89,7 +87,7 @@ export function StaleLeadsCard() {
             inactiveUsers: allInactiveUsers
         };
 
-    }, [anchors, dealers, vendors, users, dailyActivities, visibleUserIds, currentUser]);
+    }, [dealers, vendors, users, dailyActivities, visibleUserIds, currentUser]);
 
     if (staleLeads.length === 0 && inactiveUsers.length === 0) {
         return null;
@@ -102,7 +100,6 @@ export function StaleLeadsCard() {
     
     const getLeadLink = (lead: StaleLead) => {
         switch(lead.type) {
-            case 'Anchor': return `/anchors/${lead.id}`;
             case 'Dealer': return `/dealers`;
             case 'Vendor': return `/suppliers`;
             default: return '/dashboard';
@@ -148,7 +145,7 @@ export function StaleLeadsCard() {
                                     <TableCell>
                                         <div className="flex items-center gap-2 text-sm">
                                             <User className="h-3 w-3" />
-                                            <span>{getUserName(lead.type === 'Anchor' ? lead.createdBy : lead.assignedTo)}</span>
+                                            <span>{getUserName(lead.assignedTo)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
