@@ -43,16 +43,14 @@ export default function VendorsPage() {
 
   const userVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
-    // Business Development role sees all non-active vendors
+    
+    // Business Development role sees all non-active vendors they created, even if unassigned.
     if (currentUser.role === 'Business Development') {
-        if (statusFilter !== 'all' && s.status !== statusFilter) return false;
-        if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
-        if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
-        if (assignedToFilter !== 'all' && s.assignedTo !== assignedToFilter) return false;
-        return true;
+        if (s.assignedTo !== currentUser.uid && s.status !== 'Unassigned Lead') return false;
+    } else {
+        // Other roles see vendors assigned to their visible tree
+        if (!visibleUserIds.includes(s.assignedTo || '')) return false;
     }
-    // Other roles see vendors assigned to their visible tree
-    if (!visibleUserIds.includes(s.assignedTo || '')) return false;
 
     if (statusFilter !== 'all' && s.status !== statusFilter) return false;
     if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
@@ -270,5 +268,7 @@ export default function VendorsPage() {
     </>
   );
 }
+
+    
 
     

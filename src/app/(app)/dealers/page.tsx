@@ -43,17 +43,14 @@ export default function DealersPage() {
 
   const userDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
-    // Business Development role sees all non-active dealers
+    
+    // Business Development role sees all non-active dealers they created, even if unassigned.
     if (currentUser.role === 'Business Development') {
-        // Apply filters
-        if (statusFilter !== 'all' && d.status !== statusFilter) return false;
-        if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
-        if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
-        if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
-        return true;
+        if (d.assignedTo !== currentUser.uid && d.status !== 'Unassigned Lead') return false;
+    } else {
+        // Other roles see dealers assigned to their visible tree
+        if (!visibleUserIds.includes(d.assignedTo || '')) return false;
     }
-    // Other roles see dealers assigned to their visible tree
-    if (!visibleUserIds.includes(d.assignedTo || '')) return false;
 
     // Apply filters
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
@@ -272,5 +269,7 @@ export default function DealersPage() {
     </>
   );
 }
+
+    
 
     

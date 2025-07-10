@@ -94,15 +94,8 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
             
-            let finalAssignedToId = currentUser.uid;
-            if (assignedToEmail) {
-                const targetUser = users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase());
-                if(targetUser) {
-                    finalAssignedToId = targetUser.uid;
-                } else {
-                    console.warn(`Bulk Upload: User with email "${assignedToEmail}" not found. Assigning to current user ${currentUser.name}.`);
-                }
-            }
+            const targetUser = users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase());
+            const finalAssignedToId = targetUser ? targetUser.uid : null;
             
             const commonData = {
               id: `${type.toLowerCase()}-${Date.now()}-${Math.random()}`,
@@ -114,7 +107,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               location: columns[4] || undefined,
               product: columns[6] || undefined,
               assignedTo: finalAssignedToId,
-              status: 'Invited' as const,
+              status: finalAssignedToId ? 'Invited' as const : 'Unassigned Lead' as const,
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               leadType: 'New Lead' as const,
@@ -180,3 +173,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     </Dialog>
   );
 }
+
+
+    
