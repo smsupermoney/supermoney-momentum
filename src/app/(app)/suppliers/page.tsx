@@ -45,10 +45,7 @@ export default function VendorsPage() {
     if (s.status === 'Active') return false;
     
     // Filter based on roles
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
-      // Admins and BD see all non-active leads
-    } else {
-      // All other roles
+    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development') {
       const assignedUser = s.assignedTo ? users.find(u => u.uid === s.assignedTo) : null;
       if (!assignedUser) {
         // If unassigned, only show to managers (who can assign)
