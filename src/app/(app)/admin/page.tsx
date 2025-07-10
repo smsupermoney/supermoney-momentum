@@ -200,8 +200,6 @@ export default function AdminPage() {
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
-  const isTrueAdmin = currentUser && currentUser.role === 'Admin';
-
 
   if (!canViewAdminPanel) {
     return (
@@ -246,7 +244,7 @@ export default function AdminPage() {
                         <CardTitle>{t('admin.userManagement')}</CardTitle>
                         <CardDescription>{t('admin.userManagementDescription')}</CardDescription>
                     </div>
-                    {isTrueAdmin && (
+                    {currentUser.role === 'Admin' && (
                         <Button onClick={() => setIsNewUserDialogOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             {t('admin.addNewUser')}
@@ -255,11 +253,11 @@ export default function AdminPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                {/* Section for all managers */}
+                {/* Section for all managers to see */}
                 <PendingAnchorsTable />
 
                 {/* Section for Admins only */}
-                {isTrueAdmin && (
+                {currentUser.role === 'Admin' && (
                   <>
                     <ArchivedAnchorsTable />
                     <Separator className="my-6" />
@@ -332,7 +330,7 @@ export default function AdminPage() {
                 )}
                 
                 {/* Section for Lead Assignment - visible to all managers */}
-                <div className={cn(isTrueAdmin && "mt-6")}>
+                <div className="mt-6">
                     <LeadTable
                       title={t('admin.unassignedDealers')}
                       leads={unassignedDealers}
