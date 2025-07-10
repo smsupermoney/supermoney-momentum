@@ -50,7 +50,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   const handleDownloadSample = () => {
     const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (YYYY-MM-DD),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,SCF - Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive."]
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive."]
       : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,2024-05-10,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months."];
     
     const csvContent = [headers, ...sampleData].join("\n");
@@ -87,6 +87,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
       for (const [index, row] of rows.entries()) {
         if (!row.trim()) continue;
         const columns = row.split(',').map(c => c.trim());
+        const rowNumber = index + 2;
         
         try {
             const [
@@ -99,15 +100,14 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = leadDateStr ? new Date(leadDateStr) : new Date();
             
             const rawData = {
-              name,
-              contacts: [{ name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
+              name: name || '',
+              contacts: [{ name: name || '', phone: contactNumber || '', email: email || '', designation: 'Primary Contact', isPrimary: true }],
               dealValue: parsedDealValue,
               leadType: leadType || '',
               leadDate: parsedLeadDate,
               gstin, city, state, zone, anchorId: anchorName, product, leadSource, lenderId: lenderName, remarks
             };
             
-            // Validate the parsed data against our schema
             const validatedData = NewSpokeSchema.parse(rawData);
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
@@ -122,7 +122,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
               name: validatedData.name,
-              contacts: validatedData.contacts,
+              contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`})),
               gstin: validatedData.gstin,
               city: validatedData.city,
               state: validatedData.state,
@@ -134,8 +134,8 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               assignedTo: finalAssignedToId,
               status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
               anchorId: finalAnchorId,
-              leadDate: validatedData.leadDate.toISOString(),
               createdAt: new Date().toISOString(),
+              leadDate: validatedData.leadDate.toISOString(),
               leadType: validatedData.leadType as LeadTypeEnum,
               dealValue: validatedData.dealValue,
             };
@@ -148,7 +148,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             successCount++;
 
           } catch (err) {
-            const rowNumber = index + 2;
             if (err instanceof z.ZodError) {
               const errorMessages = Object.entries(err.flatten().fieldErrors).map(([field, messages]) => `${field}: ${messages.join(', ')}`);
               errors.push({ row: rowNumber, messages: errorMessages });
@@ -166,7 +165,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
           description: `Successfully uploaded ${successCount} leads. Check console for error details.`,
           duration: 9000,
         });
-        console.error("Bulk Upload Errors:", errors);
+        console.error("Bulk Upload Errors:", errors.map(e => `Row ${e.row}: ${e.messages.join('; ')}`).join('\n'));
       } else {
          toast({
           title: 'Bulk Upload Complete',
