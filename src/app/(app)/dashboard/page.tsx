@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import { StaleLeadsCard } from '@/components/dashboard/stale-leads-card';
+import { TeamProgressCard } from '@/components/dashboard/team-progress-card';
 
 
 function QuickNav() {
@@ -136,6 +137,7 @@ function ManagerDashboard() {
     return (
         <div className="grid gap-4">
             <StaleLeadsCard />
+            <TeamProgressCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -239,6 +241,7 @@ function AdminDashboard() {
     return (
         <div className="grid gap-4">
             <StaleLeadsCard />
+            <TeamProgressCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
