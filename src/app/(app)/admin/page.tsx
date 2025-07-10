@@ -253,13 +253,15 @@ export default function AdminPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Section for all managers */}
             <PendingAnchorsTable />
-            <ArchivedAnchorsTable />
-
+            
+            {/* Section for Admins only */}
             {isTrueAdmin && (
               <>
+                <ArchivedAnchorsTable />
                 <Separator className="my-6" />
-                {/* Desktop Table */}
+                {/* Desktop User Table */}
                 <div className="hidden rounded-lg border md:block">
                   <Table>
                     <TableHeader>
@@ -292,7 +294,7 @@ export default function AdminPage() {
                     </TableBody>
                   </Table>
                 </div>
-                {/* Mobile Cards */}
+                {/* Mobile User Cards */}
                 <div className="space-y-4 md:hidden">
                   {users.map((user) => (
                     <Card key={user.uid} className="p-0">
@@ -326,21 +328,26 @@ export default function AdminPage() {
                 </div>
               </>
             )}
-
-            <LeadTable
-              title={t('admin.unassignedDealers')}
-              leads={unassignedDealers}
-              assignableUsers={assignableUsers}
-              onAssign={(id) => handleAssign(id, 'Dealer')}
-              onAssignmentChange={handleAssignmentChange}
-            />
-            <LeadTable
-              title={t('admin.unassignedVendors')}
-              leads={unassignedVendors}
-              assignableUsers={assignableUsers}
-              onAssign={(id) => handleAssign(id, 'Vendor')}
-              onAssignmentChange={handleAssignmentChange}
-            />
+            
+            {/* Section for Lead Assignment - visible to all managers */}
+            <div className="mt-6">
+                <LeadTable
+                  title={t('admin.unassignedDealers')}
+                  leads={unassignedDealers}
+                  assignableUsers={assignableUsers}
+                  assignments={assignments}
+                  onAssign={(id) => handleAssign(id, 'Dealer')}
+                  onAssignmentChange={handleAssignmentChange}
+                />
+                <LeadTable
+                  title={t('admin.unassignedVendors')}
+                  leads={unassignedVendors}
+                  assignableUsers={assignableUsers}
+                  assignments={assignments}
+                  onAssign={(id) => handleAssign(id, 'Vendor')}
+                  onAssignmentChange={handleAssignmentChange}
+                />
+            </div>
 
           </CardContent>
         </Card>
