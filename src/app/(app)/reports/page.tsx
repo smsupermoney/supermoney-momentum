@@ -168,11 +168,12 @@ export default function ReportsPage() {
   const renderReports = () => {
     if (!currentUser) return null;
     switch(currentUser.role) {
-        case 'Admin': return <AdminReports />;
+        case 'Admin':
+        case 'Business Development':
+             return <AdminReports />;
         case 'National Sales Manager':
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager':
-        case 'Business Development':
              return <ManagerReports />;
         case 'Area Sales Manager': return <SalesReports />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>

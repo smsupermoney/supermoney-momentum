@@ -5,15 +5,23 @@ import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Handshake, Target, FileText, Bot } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
+import type { UserRole } from '@/lib/types';
 
 export function PipelineCard() {
-  const { anchors, currentUser } from useApp();
+  const { anchors, currentUser, visibleUserIds } = useApp();
   const { t } = useLanguage();
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
-    // All roles see the same pipeline of non-archived anchors now
-    return anchors.filter(a => a.status !== 'Archived');
+
+    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    if (managerRoles.includes(currentUser.role)) {
+      // Managers and above see all non-archived anchors created by anyone in their visibility tree
+      return anchors.filter(a => a.status !== 'Archived' && visibleUserIds.includes(a.createdBy || ''));
+    }
+    
+    // Sales role sees only anchors they created
+    return anchors.filter(a => a.status !== 'Archived' && a.createdBy === currentUser.uid);
   }
 
   const visibleAnchors = getVisibleAnchors();
@@ -34,7 +42,11 @@ export function PipelineCard() {
 
   const getTitle = () => {
     if (!currentUser) return '';
-    return t('dashboard.companyPipeline');
+    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    if (managerRoles.includes(currentUser.role)) {
+        return t('dashboard.teamPipeline');
+    }
+    return t('dashboard.myPipeline');
   }
 
   if (visibleAnchors.length === 0) {

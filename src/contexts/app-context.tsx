@@ -43,6 +43,7 @@ interface AppContextType {
   visibleUserIds: string[];
   visibleUsers: User[];
   notifications: Notification[];
+  addNotification: (notification: Omit<Notification, 'id' | 'isRead'>) => void;
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
   t: (key: string, params?: Record<string, string | number>) => string;
@@ -185,8 +186,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isLoading || !currentUser || !tasks.length || !anchors.length) return;
 
-    const generateNotifications = (): Notification[] => {
-        const userNotifications: Notification[] = [];
+    const generateNotifications = (): Omit<Notification, 'id' | 'isRead'>[] => {
+        const userNotifications: Omit<Notification, 'id' | 'isRead'>[] = [];
 
         const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid && t.status !== 'Completed');
 
@@ -194,13 +195,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             .filter(t => isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate)))
             .forEach(task => {
                 userNotifications.push({
-                    id: `notif-overdue-${task.id}`,
                     userId: currentUser.uid,
                     title: 'Task Overdue',
                     description: `Your task "${task.title}" was due on ${format(new Date(task.dueDate), 'MMM d')}.`,
                     href: `/tasks`,
                     timestamp: task.dueDate,
-                    isRead: false,
                     icon: 'AlertTriangle'
                 });
             });
@@ -209,13 +208,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             .filter(t => isToday(new Date(t.dueDate)))
             .forEach(task => {
                  userNotifications.push({
-                    id: `notif-today-${task.id}`,
                     userId: currentUser.uid,
                     title: `Task Due Today`,
                     description: `Your task "${task.title}" is due today. Priority: ${task.priority}.`,
                     href: `/tasks`,
                     timestamp: new Date().toISOString(),
-                    isRead: false,
                     icon: 'CalendarClock'
                 });
             });
@@ -225,13 +222,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             pendingAnchors.forEach(anchor => {
                  const creator = users.find(u => u.uid === anchor.createdBy);
                  userNotifications.push({
-                    id: `notif-approval-${anchor.id}`,
                     userId: currentUser.uid,
                     title: `New Anchor for Assignment`,
                     description: `${anchor.name} created by ${creator?.name || 'BD'} is waiting for assignment.`,
                     href: `/admin`,
                     timestamp: anchor.createdAt,
-                    isRead: false,
                     icon: 'Star'
                 });
             })
@@ -240,19 +235,39 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return userNotifications;
     };
 
-    const newNotifications = generateNotifications();
+    const generatedNotifications = generateNotifications().map((n, index) => ({
+      ...n,
+      id: `generated-${n.timestamp}-${index}`,
+      isRead: false
+    }));
+
     try {
         const readNotifications = JSON.parse(sessionStorage.getItem(`readNotifications_${currentUser.uid}`) || '[]');
-        const finalNotifications = newNotifications.map(n => ({
-            ...n,
-            isRead: readNotifications.includes(n.id)
-        })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        setNotifications(finalNotifications);
+        const updatedNotifications = [...notifications.filter(n => !n.id.startsWith('generated-')), ...generatedNotifications]
+          .map(n => ({
+              ...n,
+              isRead: readNotifications.includes(n.id)
+          }))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          
+        setNotifications(updatedNotifications);
     } catch (e) {
-        setNotifications(newNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        const sortedNotifications = [...notifications.filter(n => !n.id.startsWith('generated-')), ...generatedNotifications]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setNotifications(sortedNotifications);
     }
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, currentUser, tasks, anchors, users]);
+
+  const addNotification = (notificationData: Omit<Notification, 'id' | 'isRead'>) => {
+    const newNotification: Notification = {
+      ...notificationData,
+      id: `notif-${Date.now()}-${Math.random()}`,
+      isRead: false,
+    };
+    
+    setNotifications(prev => [newNotification, ...prev].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+  };
   
   const markNotificationAsRead = (notificationId: string) => {
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
@@ -406,15 +421,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!currentUser) return;
     
     const dataToValidate = {
-        name: dealerData.name,
-        contactNumber: dealerData.contactNumber,
-        email: dealerData.email,
-        gstin: dealerData.gstin,
-        location: dealerData.location,
-        anchorId: dealerData.anchorId,
-        product: dealerData.product,
-        leadType: dealerData.leadType,
-        dealValue: dealerData.dealValue
+      name: dealerData.name,
+      contactNumber: dealerData.contactNumber,
+      email: dealerData.email,
+      gstin: dealerData.gstin,
+      location: dealerData.location,
+      product: dealerData.product,
+      leadType: dealerData.leadType,
+      dealValue: dealerData.dealValue
     };
     try {
         NewSpokeSchema.parse(dataToValidate);
@@ -488,19 +502,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 systemGenerated: true,
             });
         }
-        if (oldDealer.assignedTo !== updatedDealer.assignedTo) {
+        if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
-             addActivityLog({
-                dealerId: updatedDealer.id,
-                anchorId: updatedDealer.anchorId || undefined,
-                timestamp: new Date().toISOString(),
-                type: 'Assignment',
-                title: `Dealer reassigned`,
-                outcome: `Dealer '${updatedDealer.name}' was assigned to ${assignedUser?.name || 'Unassigned'} by ${currentUser.name}.`,
-                userName: 'System',
-                userId: currentUser.uid,
-                systemGenerated: true,
-            });
+             const manager = users.find(u => u.uid === assignedUser?.managerId);
+             if (assignedUser) {
+                const notification = {
+                    userId: assignedUser.uid,
+                    title: 'New Lead Assignment',
+                    description: `${currentUser.name} assigned you a new dealer lead: ${updatedDealer.name}.`,
+                    href: '/dealers',
+                    timestamp: new Date().toISOString(),
+                    icon: 'Users'
+                };
+                addNotification(notification);
+                if (manager) {
+                    addNotification({ ...notification, userId: manager.uid });
+                }
+                const adminAndBD = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
+                adminAndBD.forEach(u => addNotification({ ...notification, userId: u.uid }));
+             }
         }
     }
   };
@@ -542,7 +562,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       email: vendorData.email,
       gstin: vendorData.gstin,
       location: vendorData.location,
-      anchorId: vendorData.anchorId,
       product: vendorData.product,
       leadType: vendorData.leadType,
       dealValue: vendorData.dealValue
@@ -618,19 +637,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 systemGenerated: true,
             });
         }
-        if (oldVendor.assignedTo !== updatedVendor.assignedTo) {
+        if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
-             addActivityLog({
-                vendorId: updatedVendor.id,
-                anchorId: updatedVendor.anchorId || undefined,
-                timestamp: new Date().toISOString(),
-                type: 'Assignment',
-                title: `Vendor reassigned`,
-                outcome: `Vendor '${updatedVendor.name}' was assigned to ${assignedUser?.name || 'Unassigned'} by ${currentUser.name}.`,
-                userName: 'System',
-                userId: currentUser.uid,
-                systemGenerated: true,
-            });
+             const manager = users.find(u => u.uid === assignedUser?.managerId);
+             if (assignedUser) {
+                const notification = {
+                    userId: assignedUser.uid,
+                    title: 'New Lead Assignment',
+                    description: `${currentUser.name} assigned you a new vendor lead: ${updatedVendor.name}.`,
+                    href: '/suppliers',
+                    timestamp: new Date().toISOString(),
+                    icon: 'Users'
+                };
+                addNotification(notification);
+                if (manager) {
+                    addNotification({ ...notification, userId: manager.uid });
+                }
+                const adminAndBD = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
+                adminAndBD.forEach(u => addNotification({ ...notification, userId: u.uid }));
+             }
         }
     }
   };
@@ -869,6 +894,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     visibleUsers,
     visibleUserIds,
     notifications,
+    addNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     t
