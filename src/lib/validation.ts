@@ -20,7 +20,7 @@ export const NewAnchorSchema = z.object({
 export const ContactSchema = z.object({
     name: z.string().optional(),
     email: z.string().email("Invalid email address.").optional().or(z.literal('')),
-    phone: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
+    phone: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required.").optional().or(z.literal('')),
     designation: z.string().optional(),
     isPrimary: z.boolean(),
 });
@@ -65,3 +65,4 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
+
