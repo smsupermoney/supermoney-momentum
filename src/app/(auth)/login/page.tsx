@@ -50,7 +50,7 @@ export default function LoginPage() {
       if (error.code) {
         switch (error.code) {
           case 'auth/popup-closed-by-user':
-            toastDescription = 'The sign-in popup was closed. Please try again. If this persists, ensure your user is registered on Firebase and your domain is authorized in Firebase console.';
+            toastDescription = 'The sign-in popup was closed before completing. If this happens instantly, please ensure your domain is authorized in the Firebase console and the user account exists in the CRM.';
             break;
           case 'auth/cancelled-popup-request':
             toastDescription = 'Sign-in cancelled. You can try again at any time.';
