@@ -19,7 +19,7 @@ export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
 export type LeadType = 'Fresh' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell' | 'Revive';
 
-export const products = ['SCF - Primary', 'SCF - Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
+export const products = ['Primary', 'Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
 export type Product = (typeof products)[number];
 
 
@@ -41,7 +41,7 @@ export interface NextBestAction {
 
 export interface BaseLead {
   id: string;
-  leadId: string;
+  leadId?: string;
   name: string;
   contacts: Contact[];
   gstin?: string;
