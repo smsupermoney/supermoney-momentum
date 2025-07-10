@@ -40,7 +40,7 @@ export const NewSpokeSchema = z.object({
   leadSource: z.string().optional(),
   lenderId: z.string().optional(),
   remarks: z.string().optional(),
-  leadDate: z.date(),
+  leadDate: z.coerce.date(),
 });
 
 
@@ -65,7 +65,3 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
-
-
-
-
