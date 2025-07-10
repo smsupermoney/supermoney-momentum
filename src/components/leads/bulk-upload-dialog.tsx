@@ -96,7 +96,9 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks
             ] = columns;
 
-            if (!name || !contactNumber) {
+            // Enforce mandatory fields for bulk upload
+            if (!name || !contactNumber || !dealValueStr || !leadType) {
+              console.error("Skipping row due to missing mandatory fields:", row);
               errorCount++;
               continue;
             }
@@ -113,8 +115,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const commonData: Omit<Dealer | Vendor, 'id'> = {
               name,
-              contactNumber,
-              email: email || undefined,
+              contacts: [{ id: `contact-${Date.now()}`, name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
               gstin: gstin || undefined,
               city: city || undefined,
               state: state || undefined,
@@ -123,16 +124,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               leadSource: leadSource || undefined,
               remarks: remarks || undefined,
               lenderId: targetLender?.id || undefined,
-              contacts: [{ id: `contact-${Date.now()}`, name, phone: contactNumber, email: email || '', designation: 'Primary Contact', isPrimary: true }],
-              
               assignedTo: finalAssignedToId,
               status: isRevive && statusStr ? statusStr as SpokeStatus : (finalAssignedToId ? 'New' : 'Unassigned Lead'),
               anchorId: finalAnchorId,
               leadDate: isRevive && leadDateStr ? new Date(leadDateStr).toISOString() : new Date().toISOString(),
               createdAt: new Date().toISOString(),
               leadType: leadType ? (leadType as Dealer['leadType']) : 'Fresh',
-              leadId: generateLeadId(),
-              dealValue: dealValueStr ? parseFloat(dealValueStr) : undefined,
+              dealValue: parseFloat(dealValueStr),
             };
 
             if (type === 'Dealer') {

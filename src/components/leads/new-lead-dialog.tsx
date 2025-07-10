@@ -67,7 +67,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       product: '',
       leadType: 'Fresh',
       leadSource: '',
-      dealValue: undefined,
       lenderId: '',
       remarks: '',
       leadDate: new Date(),
@@ -356,6 +355,28 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
               />
             </div>
+
+            {!anchorId && (
+              <FormField
+                control={form.control}
+                name="anchorId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Anchor (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select an anchor" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {anchors.map(anchor => (
+                                    <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+              />
+            )}
+
              <FormField
               control={form.control}
               name="leadSource"
@@ -394,27 +415,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
               )}
             />
              
-            {!anchorId && (
-              <FormField
-                control={form.control}
-                name="anchorId"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Anchor (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select an anchor" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {anchors.map(anchor => (
-                                    <SelectItem key={anchor.id} value={anchor.id}>{anchor.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-              />
-            )}
-
             <DialogFooter>
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
