@@ -25,6 +25,12 @@ export const NewSpokeSchema = z.object({
   assignedTo: z.string().nullable(),
   status: z.enum(['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Active', 'Inactive', 'Unassigned Lead', 'Rejected', 'Not Interested', 'Onboarding']),
   dealValue: z.number().min(0, "Deal value must be a positive number.").optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  gstin: z.string().optional(),
+  location: z.string().optional(),
+  anchorId: z.string().nullable().optional(),
+  product: z.string().optional(),
+  leadType: z.string().optional(),
 });
 
 
