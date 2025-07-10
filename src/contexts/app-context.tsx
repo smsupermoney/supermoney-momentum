@@ -403,8 +403,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
+    const dataToValidate = { ...dealerData };
+    // Remove fields from validation object that might be missing from a bulk upload
+    if (dataToValidate.email === undefined) delete (dataToValidate as any).email;
+    if (dataToValidate.gstin === undefined) delete (dataToValidate as any).gstin;
+    if (dataToValidate.location === undefined) delete (dataToValidate as any).location;
+
     try {
-        NewSpokeSchema.parse(dealerData);
+        NewSpokeSchema.parse(dataToValidate);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new dealer:", e.flatten().fieldErrors);

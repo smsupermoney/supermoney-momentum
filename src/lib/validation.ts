@@ -22,8 +22,8 @@ export const NewAnchorSchema = z.object({
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   contactNumber: z.string().regex(/^\d{10}$/, "A valid 10-digit phone number is required."),
-  assignedTo: z.string().nullable(),
-  status: z.enum(['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Active', 'Inactive', 'Unassigned Lead', 'Rejected', 'Not Interested', 'Onboarding']),
+  assignedTo: z.string().nullable().optional(),
+  status: z.enum(['Invited', 'KYC Pending', 'Not reachable', 'Agreement Pending', 'Active', 'Inactive', 'Unassigned Lead', 'Rejected', 'Not Interested', 'Onboarding']).optional(),
   dealValue: z.number().min(0, "Deal value must be a positive number.").optional(),
   email: z.string().email().optional().or(z.literal('')),
   gstin: z.string().optional(),

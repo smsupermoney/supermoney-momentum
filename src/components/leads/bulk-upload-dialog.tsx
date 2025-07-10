@@ -85,7 +85,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
       rows.forEach(row => {
         const columns = row.split(',').map(c => c.trim());
-        // Expected format: Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email
+        // Name and Contact Number are mandatory
         if (columns.length >= 2 && columns[0] && columns[1]) {
           try {
             const anchorName = (columns[5] || '').trim();
@@ -149,7 +149,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: <b>Name, Contact Number, Email, GSTIN, Location, Anchor Name, Product, Assigned To Email</b>. Download our sample file to ensure the format is correct.
+            Upload a CSV file. Only <b>Name</b> and <b>Contact Number</b> are mandatory. Optional columns include: Email, GSTIN, Location, Anchor Name, Product, Assigned To Email.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -173,6 +173,3 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     </Dialog>
   );
 }
-
-
-    
