@@ -41,6 +41,13 @@ import { NewAnchorSchema } from '@/lib/validation';
 
 type NewAnchorFormValues = z.infer<typeof NewAnchorSchema>;
 
+const turnoverMap: { [key: string]: number } = {
+  'Below 500 Cr': 2500000000,
+  '500-2000 Cr': 12500000000,
+  '2000-5000 Cr': 35000000000,
+  '5000 Cr+': 75000000000,
+};
+
 interface NewAnchorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -80,6 +87,9 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
     }
     setIsSubmitting(true);
     try {
+      
+      const numericalTurnover = values.annualTurnover ? turnoverMap[values.annualTurnover] : undefined;
+
       const leadScoringInput: LeadScoringInput = {
         companyName: values.companyName,
         industry: values.industry,
@@ -89,7 +99,7 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         leadSource: values.leadSource,
         gstin: values.gstin,
         location: values.location,
-        annualTurnover: values.annualTurnover,
+        annualTurnover: numericalTurnover,
       };
 
       const scoreResult = await leadScoring(leadScoringInput);
