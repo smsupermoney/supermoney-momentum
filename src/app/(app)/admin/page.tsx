@@ -26,6 +26,7 @@ import {
 import { PendingAnchorsTable } from '@/components/admin/pending-anchors-table';
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 
 // Define a union type for the different kinds of leads
@@ -197,8 +198,8 @@ export default function AdminPage() {
     }
   };
 
-  const managerialRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  const canViewAdminPanel = currentUser && (managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
+  const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
   const isTrueAdmin = currentUser && currentUser.role === 'Admin';
 
 
@@ -237,9 +238,7 @@ export default function AdminPage() {
       </AlertDialog>
 
       <div className="grid gap-6 mt-6">
-        {/* Section for all managers */}
-        <PendingAnchorsTable />
-
+        
         <Card>
            <CardHeader>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -256,6 +255,9 @@ export default function AdminPage() {
                 </div>
             </CardHeader>
             <CardContent>
+                {/* Section for all managers */}
+                <PendingAnchorsTable />
+
                 {/* Section for Admins only */}
                 {isTrueAdmin && (
                   <>
