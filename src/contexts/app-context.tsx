@@ -454,7 +454,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setDealers(prev => [newDealer, ...prev]);
       addActivityLog({
         dealerId: newDealer.id,
-        anchorId: newDealer.anchorId || undefined,
+        ...(newDealer.anchorId && { anchorId: newDealer.anchorId }),
         timestamp: new Date().toISOString(),
         type: 'Creation',
         title: 'Dealer Lead Created',
@@ -468,7 +468,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setDealers(prev => [newDealer, ...prev]);
         addActivityLog({
             dealerId: newDealer.id,
-            anchorId: newDealer.anchorId || undefined,
+            ...(newDealer.anchorId && { anchorId: newDealer.anchorId }),
             timestamp: new Date().toISOString(),
             type: 'Creation',
             title: 'Dealer Lead Created',
@@ -500,7 +500,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (oldDealer.status !== updatedDealer.status) {
             addActivityLog({
                 dealerId: updatedDealer.id,
-                anchorId: updatedDealer.anchorId || undefined,
+                ...(updatedDealer.anchorId && { anchorId: updatedDealer.anchorId }),
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Dealer status changed`,
@@ -556,7 +556,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (dealerToDelete && currentUser) {
         addActivityLog({
             dealerId: dealerId,
-            anchorId: dealerToDelete.anchorId || undefined,
+            ...(dealerToDelete.anchorId && { anchorId: dealerToDelete.anchorId }),
             timestamp: new Date().toISOString(),
             type: 'Deletion',
             title: `Dealer Deleted`,
@@ -585,7 +585,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setVendors(prev => [newVendor, ...prev]);
        addActivityLog({
           vendorId: newVendor.id,
-          anchorId: newVendor.anchorId || undefined,
+          ...(newVendor.anchorId && { anchorId: newVendor.anchorId }),
           timestamp: new Date().toISOString(),
           type: 'Creation',
           title: 'Vendor Lead Created',
@@ -599,7 +599,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setVendors(prev => [newVendor, ...prev]);
          addActivityLog({
           vendorId: newVendor.id,
-          anchorId: newVendor.anchorId || undefined,
+          ...(newVendor.anchorId && { anchorId: newVendor.anchorId }),
           timestamp: new Date().toISOString(),
           type: 'Creation',
           title: 'Vendor Lead Created',
@@ -631,7 +631,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (oldVendor.status !== updatedVendor.status) {
             addActivityLog({
                 vendorId: updatedVendor.id,
-                anchorId: updatedVendor.anchorId || undefined,
+                ...(updatedVendor.anchorId && { anchorId: updatedVendor.anchorId }),
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Vendor status changed`,
@@ -687,7 +687,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (vendorToDelete && currentUser) {
         addActivityLog({
             vendorId: vendorId,
-            anchorId: vendorToDelete.anchorId || undefined,
+            ...(vendorToDelete.anchorId && { anchorId: vendorToDelete.anchorId }),
             timestamp: new Date().toISOString(),
             type: 'Deletion',
             title: `Vendor Deleted`,
