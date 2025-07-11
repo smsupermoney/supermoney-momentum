@@ -59,18 +59,20 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      contacts: [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+      contacts: [{ name: '', email: '', phone: '', designation: '' }],
       gstin: '',
       city: '',
       state: '',
       zone: '',
-      anchorId: '',
+      anchorId: anchorId || '',
       product: '',
       leadType: 'Fresh',
       leadSource: '',
       lenderId: '',
-      remarks: '',
+      remarks: [],
       leadDate: new Date(),
+      spoc: '',
+      initialLeadDate: undefined,
     },
   });
 
@@ -78,23 +80,27 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     control: form.control,
     name: "contacts",
   });
+
+  const watchLeadType = form.watch('leadType');
   
   const handleClose = () => {
     form.reset({
         name: '',
-        contacts: [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+        contacts: [{ name: '', email: '', phone: '', designation: '' }],
         gstin: '',
         city: '',
         state: '',
         zone: '',
-        anchorId: '',
+        anchorId: anchorId || '',
         product: '',
         leadType: 'Fresh',
         leadSource: '',
         dealValue: undefined,
         lenderId: '',
-        remarks: '',
+        remarks: [],
         leadDate: new Date(),
+        spoc: '',
+        initialLeadDate: undefined,
     });
     onOpenChange(false);
   }
@@ -142,6 +148,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadScoreReason: scoreResult.reason,
           leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
           dealValue: values.dealValue,
+          spoc: values.spoc,
+          initialLeadDate: values.initialLeadDate?.toISOString(),
         }
 
         if (type === 'Dealer') {
@@ -201,7 +209,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
 
              <FormField
                 control={form.control}
-                name="contacts.0.phone"
+                name={`contacts.0.phone`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contact Number</FormLabel>
@@ -212,6 +220,69 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   </FormItem>
                 )}
               />
+
+            <FormField
+              control={form.control}
+              name="spoc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{type} SPOC</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Single Point of Contact name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="leadType"
+                  render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lead Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                <SelectItem value="Fresh">Fresh</SelectItem>
+                                <SelectItem value="Renewal">Renewal</SelectItem>
+                                <SelectItem value="Adhoc">Adhoc</SelectItem>
+                                <SelectItem value="Enhancement">Enhancement</SelectItem>
+                                <SelectItem value="Cross sell">Cross sell</SelectItem>
+                                <SelectItem value="Revive">Revive</SelectItem>
+                              </SelectContent>
+                          </Select>
+                        <FormMessage />
+                      </FormItem>
+                  )}
+                />
+              {watchLeadType === 'Revive' && (
+                <FormField
+                  control={form.control}
+                  name="initialLeadDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Initial Lead Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal',!field.value && 'text-muted-foreground')}>
+                              {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
             
             <DialogFooter>
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>

@@ -39,6 +39,12 @@ export interface NextBestAction {
     justification: string;
 }
 
+export interface Remark {
+  text: string;
+  timestamp: string;
+  userName: string;
+}
+
 export interface BaseLead {
   id: string;
   leadId?: string;
@@ -56,8 +62,10 @@ export interface BaseLead {
   updatedAt?: string;
   leadType?: LeadType;
   dealValue?: number;
-  remarks?: string;
+  remarks?: Remark[];
   lenderId?: string;
+  spoc?: string; // Single Point of Contact
+  initialLeadDate?: string; // For 'Revive' lead type
 }
 
 export interface Anchor {

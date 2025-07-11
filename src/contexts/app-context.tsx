@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
-import { isPast, isToday, format } from 'date-fns';
+import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
 import * as firestoreService from '@/services/firestore';
@@ -190,9 +190,43 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUserIds = useMemo(() => visibleUsers.map(u => u.uid), [visibleUsers]);
 
-  // --- Notification Generation ---
+  // --- Notification and Automatic Task Generation ---
   useEffect(() => {
     if (isLoading || !currentUser || !tasks.length || !anchors.length) return;
+
+    // Automatic Re-assignment Logic
+    const AUTOMATED_USER_EMAIL = "harshita.nagpal@supermoney.in";
+    const STALE_LEAD_THRESHOLD_DAYS = 60;
+    const STALE_STATUSES: (typeof dealers[0]['status'])[] = ['New', 'Partial Docs', 'Follow Up'];
+    
+    const harshitaUser = users.find(u => u.email === AUTOMATED_USER_EMAIL);
+
+    if (harshitaUser) {
+        const leadsToReassign = [...dealers, ...vendors].filter(lead => 
+            lead.product === 'Primary' &&
+            STALE_STATUSES.includes(lead.status) &&
+            lead.assignedTo !== harshitaUser.uid &&
+            differenceInDays(new Date(), new Date(lead.createdAt)) > STALE_LEAD_THRESHOLD_DAYS
+        );
+
+        leadsToReassign.forEach(lead => {
+            const leadType = 'anchorId' in lead ? 'Dealer' : 'Vendor'; // Simple type check
+            const updateFunction = leadType === 'Dealer' ? updateDealer : updateVendor;
+            updateFunction({...lead, assignedTo: harshitaUser.uid});
+            addActivityLog({
+                dealerId: leadType === 'Dealer' ? lead.id : undefined,
+                vendorId: leadType === 'Vendor' ? lead.id : undefined,
+                timestamp: new Date().toISOString(),
+                type: 'Assignment',
+                title: 'Lead Automatically Re-assigned',
+                outcome: `Lead '${lead.name}' was automatically re-assigned to ${harshitaUser.name} due to inactivity (TAT > ${STALE_LEAD_THRESHOLD_DAYS} days).`,
+                userName: 'System',
+                userId: 'system',
+                systemGenerated: true,
+            });
+        });
+    }
+
 
     const generateNotifications = (): Omit<Notification, 'id' | 'isRead'>[] => {
         const userNotifications: Omit<Notification, 'id' | 'isRead'>[] = [];
@@ -274,7 +308,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setNotifications(sortedNotifications);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, currentUser, tasks, dealers, users]);
+  }, [isLoading, currentUser, tasks, dealers, vendors, users]);
 
   const addNotification = (notificationData: Omit<Notification, 'id' | 'isRead'>) => {
     const newNotification: Notification = {
@@ -321,7 +355,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
     if (firebaseEnabled) {
-      await firestoreService.addActivityLog(logData);
+      const dataToSave = {
+        ...logData,
+        anchorId: logData.anchorId || null,
+        dealerId: logData.dealerId || null,
+        vendorId: logData.vendorId || null,
+        taskId: logData.taskId || null,
+      };
+      await firestoreService.addActivityLog(dataToSave);
     }
     const newLog = { ...logData, id: `log-${Date.now()}` };
     setActivityLogs(prev => [newLog, ...prev]);
@@ -454,7 +495,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setDealers(prev => [newDealer, ...prev]);
       addActivityLog({
         dealerId: newDealer.id,
-        ...(newDealer.anchorId && { anchorId: newDealer.anchorId }),
+        anchorId: newDealer.anchorId || undefined,
         timestamp: new Date().toISOString(),
         type: 'Creation',
         title: 'Dealer Lead Created',
@@ -468,7 +509,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setDealers(prev => [newDealer, ...prev]);
         addActivityLog({
             dealerId: newDealer.id,
-            ...(newDealer.anchorId && { anchorId: newDealer.anchorId }),
+            anchorId: newDealer.anchorId || undefined,
             timestamp: new Date().toISOString(),
             type: 'Creation',
             title: 'Dealer Lead Created',
@@ -497,19 +538,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...updatedDealer, updatedAt: new Date().toISOString()} : d));
     
     if (currentUser && oldDealer) {
+        let logMessage = '';
         if (oldDealer.status !== updatedDealer.status) {
+            logMessage = `Status changed from '${oldDealer.status}' to '${updatedDealer.status}'.`;
+        }
+        if (oldDealer.assignedTo !== updatedDealer.assignedTo) {
+             const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
+             logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
+        }
+
+        if (logMessage) {
             addActivityLog({
                 dealerId: updatedDealer.id,
-                ...(updatedDealer.anchorId && { anchorId: updatedDealer.anchorId }),
+                anchorId: updatedDealer.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
-                title: `Dealer status changed`,
-                outcome: `Dealer '${updatedDealer.name}' status changed from '${oldDealer.status}' to '${updatedDealer.status}' by ${currentUser.name}.`,
+                title: `Dealer Lead Updated`,
+                outcome: `Dealer '${updatedDealer.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
             });
         }
+
         if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
              if (assignedUser) {
@@ -556,7 +607,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (dealerToDelete && currentUser) {
         addActivityLog({
             dealerId: dealerId,
-            ...(dealerToDelete.anchorId && { anchorId: dealerToDelete.anchorId }),
+            anchorId: dealerToDelete.anchorId || undefined,
             timestamp: new Date().toISOString(),
             type: 'Deletion',
             title: `Dealer Deleted`,
@@ -585,7 +636,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setVendors(prev => [newVendor, ...prev]);
        addActivityLog({
           vendorId: newVendor.id,
-          ...(newVendor.anchorId && { anchorId: newVendor.anchorId }),
+          anchorId: newVendor.anchorId || undefined,
           timestamp: new Date().toISOString(),
           type: 'Creation',
           title: 'Vendor Lead Created',
@@ -599,7 +650,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setVendors(prev => [newVendor, ...prev]);
          addActivityLog({
           vendorId: newVendor.id,
-          ...(newVendor.anchorId && { anchorId: newVendor.anchorId }),
+          anchorId: newVendor.anchorId || undefined,
           timestamp: new Date().toISOString(),
           type: 'Creation',
           title: 'Vendor Lead Created',
@@ -628,19 +679,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...updatedVendor, updatedAt: new Date().toISOString()} : s));
 
     if (currentUser && oldVendor) {
+        let logMessage = '';
         if (oldVendor.status !== updatedVendor.status) {
+            logMessage = `Status changed from '${oldVendor.status}' to '${updatedVendor.status}'.`;
+        }
+        if (oldVendor.assignedTo !== updatedVendor.assignedTo) {
+             const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
+             logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
+        }
+
+        if (logMessage) {
             addActivityLog({
                 vendorId: updatedVendor.id,
-                ...(updatedVendor.anchorId && { anchorId: updatedVendor.anchorId }),
+                anchorId: updatedVendor.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
-                title: `Vendor status changed`,
-                outcome: `Vendor '${updatedVendor.name}' status changed from '${oldVendor.status}' to '${updatedVendor.status}' by ${currentUser.name}.`,
+                title: `Vendor Lead Updated`,
+                outcome: `Vendor '${updatedVendor.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
             });
         }
+        
         if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
              if (assignedUser) {
@@ -687,7 +748,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (vendorToDelete && currentUser) {
         addActivityLog({
             vendorId: vendorId,
-            ...(vendorToDelete.anchorId && { anchorId: vendorToDelete.anchorId }),
+            anchorId: vendorToDelete.anchorId || undefined,
             timestamp: new Date().toISOString(),
             type: 'Deletion',
             title: `Vendor Deleted`,

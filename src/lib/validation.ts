@@ -31,8 +31,15 @@ export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
-  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
-  gstin: z.string().optional(),
+  contacts: z.array(
+    z.object({
+      phone: z.string().min(10, "Contact number must be at least 10 digits."),
+      name: z.string().optional(),
+      email: z.string().email().optional().or(z.literal('')),
+      designation: z.string().optional(),
+    })
+  ).min(1, "At least one contact with a number is required."),
+  gstin: z.string().optional().or(z.literal('')),
   city: z.string().optional(),
   state: z.string().optional(),
   zone: z.string().optional(),
@@ -40,8 +47,14 @@ export const NewSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.string().optional(),
+  remarks: z.array(z.object({
+    text: z.string(),
+    timestamp: z.string(),
+    userName: z.string(),
+  })).optional(),
   leadDate: z.coerce.date().optional(),
+  spoc: z.string().optional(),
+  initialLeadDate: z.coerce.date().optional(),
 });
 
 

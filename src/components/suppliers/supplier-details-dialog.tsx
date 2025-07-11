@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
+import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum, Remark } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -46,9 +46,10 @@ import { products } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
+import { Separator } from '../ui/separator';
 
-
-type FormValues = Zod.infer<typeof NewSpokeSchema>;
+type FormValues = z.infer<typeof NewSpokeSchema>;
 
 interface VendorDetailsDialogProps {
   vendor: Vendor;
@@ -57,16 +58,17 @@ interface VendorDetailsDialogProps {
 }
 
 export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor, currentUser, deleteVendor, lenders } = useApp();
+  const { updateVendor, currentUser, deleteVendor, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newRemark, setNewRemark] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
         name: vendor.name || '',
-        contacts: vendor.contacts || [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+        contacts: vendor.contacts || [{ name: '', email: '', phone: '', designation: '' }],
         gstin: vendor.gstin || '',
         city: vendor.city || '',
         state: vendor.state || '',
@@ -74,17 +76,21 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         product: vendor.product || '',
         leadSource: vendor.leadSource || '',
         lenderId: vendor.lenderId || '',
-        remarks: vendor.remarks || '',
+        remarks: vendor.remarks || [],
         leadType: vendor.leadType || 'Fresh',
         dealValue: vendor.dealValue || 0,
         leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+        spoc: vendor.spoc || '',
+        initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
     },
   });
+
+  const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
     form.reset({
         name: vendor.name || '',
-        contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+        contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '' }],
         gstin: vendor.gstin || '',
         city: vendor.city || '',
         state: vendor.state || '',
@@ -92,10 +98,12 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         product: vendor.product || '',
         leadSource: vendor.leadSource || '',
         lenderId: vendor.lenderId || '',
-        remarks: vendor.remarks || '',
+        remarks: vendor.remarks || [],
         leadType: vendor.leadType || 'Fresh',
         dealValue: vendor.dealValue || 0,
         leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+        spoc: vendor.spoc || '',
+        initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
     });
   }, [vendor, form]);
 
@@ -107,9 +115,29 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     });
   };
 
+  const handleAssignmentChange = (newUserId: string) => {
+    updateVendor({ ...vendor, assignedTo: newUserId });
+    toast({
+      title: 'Lead Re-assigned',
+      description: `${vendor.name} has been assigned to a new user.`,
+    });
+  }
+
   const handleDelete = () => {
     deleteVendor(vendor.id);
     onOpenChange(false);
+  };
+
+   const handleAddRemark = () => {
+    if (!newRemark.trim() || !currentUser) return;
+    const remark: Remark = {
+        text: newRemark.trim(),
+        timestamp: new Date().toISOString(),
+        userName: currentUser.name,
+    };
+    const currentRemarks = form.getValues('remarks') || [];
+    form.setValue('remarks', [...currentRemarks, remark]);
+    setNewRemark('');
   };
   
   const onSubmit = (values: FormValues) => {
@@ -118,6 +146,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       ...vendor,
       ...values,
       leadDate: values.leadDate.toISOString(),
+      initialLeadDate: values.initialLeadDate?.toISOString(),
       updatedAt: new Date().toISOString(),
     };
     updateVendor(updatedVendorData);
@@ -131,6 +160,8 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
   const canDelete = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
+  const canReassign = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
+
 
   return (
     <>
@@ -145,22 +176,37 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-                <div className="space-y-2">
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="New">New</SelectItem>
-                            <SelectItem value="Onboarding">Onboarding</SelectItem>
-                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
-                            <SelectItem value="Follow Up">Follow Up</SelectItem>
-                            <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
-                            <SelectItem value="Disbursed">Disbursed</SelectItem>
-                            <SelectItem value="Not reachable">Not reachable</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                            <SelectItem value="Not Interested">Not Interested</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="New">New</SelectItem>
+                                <SelectItem value="Onboarding">Onboarding</SelectItem>
+                                <SelectItem value="Partial Docs">Partial Docs</SelectItem>
+                                <SelectItem value="Follow Up">Follow Up</SelectItem>
+                                <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
+                                <SelectItem value="Disbursed">Disbursed</SelectItem>
+                                <SelectItem value="Not reachable">Not reachable</SelectItem>
+                                <SelectItem value="Rejected">Rejected</SelectItem>
+                                <SelectItem value="Not Interested">Not Interested</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     {canReassign && (
+                        <div className="space-y-2">
+                            <FormLabel>Assigned To</FormLabel>
+                            <Select onValueChange={handleAssignmentChange} defaultValue={vendor.assignedTo || ''}>
+                                <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
+                                <SelectContent>
+                                    {users.filter(u => u.role === 'Area Sales Manager').map(user => (
+                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
 
                 <FormField control={form.control} name="name" render={({ field }) => (
@@ -171,6 +217,10 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                 )}/>
                 <FormField control={form.control} name={`contacts.0.email`} render={({ field }) => (
                     <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+
+                 <FormField control={form.control} name="spoc" render={({ field }) => (
+                    <FormItem><FormLabel>Vendor SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
 
 
@@ -206,6 +256,35 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
               </div>
+
+               {watchLeadType === 'Revive' && (
+                    <FormField
+                      control={form.control}
+                      name="initialLeadDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Initial Lead Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={'outline'}
+                                  className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                                >
+                                  {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                    <FormField control={form.control} name="city" render={({ field }) => (
@@ -257,9 +336,29 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                 )}/>
               </div>
 
-              <FormField control={form.control} name="remarks" render={({ field }) => (
-                  <FormItem><FormLabel>Remarks</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <div className="space-y-2">
+                    <FormLabel>Remarks</FormLabel>
+                    <Card>
+                        <CardContent className="p-2 space-y-2">
+                            <ScrollArea className="h-24 pr-4">
+                                {(form.getValues('remarks') || []).map((remark, index) => (
+                                    <div key={index} className="text-xs p-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold">{remark.userName}</span>
+                                            <span className="text-muted-foreground">{format(new Date(remark.timestamp), 'PP p')}</span>
+                                        </div>
+                                        <p className="text-muted-foreground">{remark.text}</p>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                            <Separator />
+                            <div className="flex gap-2">
+                                <Textarea value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder="Add a new remark..."/>
+                                <Button type="button" onClick={handleAddRemark}>Add</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+              </div>
                 
               {vendor.leadScore && (
                   <Card className="bg-secondary">

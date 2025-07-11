@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
+import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum, Remark } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -47,8 +47,9 @@ import { products } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
-type FormValues = Zod.infer<typeof NewSpokeSchema>;
+type FormValues = z.infer<typeof NewSpokeSchema>;
 
 interface DealerDetailsDialogProps {
   dealer: Dealer;
@@ -57,16 +58,17 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer, currentUser, deleteDealer, lenders } = useApp();
+  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newRemark, setNewRemark] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: dealer.name || '',
-      contacts: dealer.contacts || [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+      contacts: dealer.contacts || [{ name: '', email: '', phone: '', designation: '' }],
       gstin: dealer.gstin || '',
       city: dealer.city || '',
       state: dealer.state || '',
@@ -74,17 +76,21 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       product: dealer.product || '',
       leadSource: dealer.leadSource || '',
       lenderId: dealer.lenderId || '',
-      remarks: dealer.remarks || '',
+      remarks: dealer.remarks || [],
       leadType: dealer.leadType || 'Fresh',
       dealValue: dealer.dealValue || 0,
       leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
+      spoc: dealer.spoc || '',
+      initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
     },
   });
+
+  const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
     form.reset({
       name: dealer.name || '',
-      contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+      contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', email: '', phone: '', designation: '' }],
       gstin: dealer.gstin || '',
       city: dealer.city || '',
       state: dealer.state || '',
@@ -92,10 +98,12 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       product: dealer.product || '',
       leadSource: dealer.leadSource || '',
       lenderId: dealer.lenderId || '',
-      remarks: dealer.remarks || '',
+      remarks: dealer.remarks || [],
       leadType: dealer.leadType || 'Fresh',
       dealValue: dealer.dealValue || 0,
       leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
+      spoc: dealer.spoc || '',
+      initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
     });
   }, [dealer, form]);
 
@@ -107,9 +115,29 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     });
   };
 
+  const handleAssignmentChange = (newUserId: string) => {
+    updateDealer({ ...dealer, assignedTo: newUserId });
+    toast({
+      title: 'Lead Re-assigned',
+      description: `${dealer.name} has been assigned to a new user.`,
+    });
+  }
+
   const handleDelete = () => {
     deleteDealer(dealer.id);
     onOpenChange(false);
+  };
+
+  const handleAddRemark = () => {
+    if (!newRemark.trim() || !currentUser) return;
+    const remark: Remark = {
+        text: newRemark.trim(),
+        timestamp: new Date().toISOString(),
+        userName: currentUser.name,
+    };
+    const currentRemarks = form.getValues('remarks') || [];
+    form.setValue('remarks', [...currentRemarks, remark]);
+    setNewRemark('');
   };
   
   const onSubmit = (values: FormValues) => {
@@ -118,6 +146,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       ...dealer,
       ...values,
       leadDate: values.leadDate.toISOString(),
+      initialLeadDate: values.initialLeadDate?.toISOString(),
       updatedAt: new Date().toISOString(),
     };
     updateDealer(updatedDealerData);
@@ -131,6 +160,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const canDelete = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
+  const canReassign = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
 
   return (
     <>
@@ -145,22 +175,37 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-                <div className="space-y-2">
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="New">New</SelectItem>
-                            <SelectItem value="Onboarding">Onboarding</SelectItem>
-                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
-                            <SelectItem value="Follow Up">Follow Up</SelectItem>
-                            <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
-                            <SelectItem value="Disbursed">Disbursed</SelectItem>
-                            <SelectItem value="Not reachable">Not reachable</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                            <SelectItem value="Not Interested">Not Interested</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="New">New</SelectItem>
+                                <SelectItem value="Onboarding">Onboarding</SelectItem>
+                                <SelectItem value="Partial Docs">Partial Docs</SelectItem>
+                                <SelectItem value="Follow Up">Follow Up</SelectItem>
+                                <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
+                                <SelectItem value="Disbursed">Disbursed</SelectItem>
+                                <SelectItem value="Not reachable">Not reachable</SelectItem>
+                                <SelectItem value="Rejected">Rejected</SelectItem>
+                                <SelectItem value="Not Interested">Not Interested</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {canReassign && (
+                        <div className="space-y-2">
+                            <FormLabel>Assigned To</FormLabel>
+                            <Select onValueChange={handleAssignmentChange} defaultValue={dealer.assignedTo || ''}>
+                                <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
+                                <SelectContent>
+                                    {users.filter(u => u.role === 'Area Sales Manager').map(user => (
+                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
 
                 <FormField control={form.control} name="name" render={({ field }) => (
@@ -174,6 +219,9 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
 
+                <FormField control={form.control} name="spoc" render={({ field }) => (
+                    <FormItem><FormLabel>Dealer SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
@@ -206,7 +254,36 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
                       <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
-              </div>
+                </div>
+                
+                {watchLeadType === 'Revive' && (
+                    <FormField
+                      control={form.control}
+                      name="initialLeadDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Initial Lead Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={'outline'}
+                                  className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                                >
+                                  {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                    <FormField control={form.control} name="city" render={({ field }) => (
@@ -258,9 +335,29 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                 )}/>
               </div>
 
-              <FormField control={form.control} name="remarks" render={({ field }) => (
-                  <FormItem><FormLabel>Remarks</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <div className="space-y-2">
+                    <FormLabel>Remarks</FormLabel>
+                    <Card>
+                        <CardContent className="p-2 space-y-2">
+                            <ScrollArea className="h-24 pr-4">
+                                {(form.getValues('remarks') || []).map((remark, index) => (
+                                    <div key={index} className="text-xs p-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold">{remark.userName}</span>
+                                            <span className="text-muted-foreground">{format(new Date(remark.timestamp), 'PP p')}</span>
+                                        </div>
+                                        <p className="text-muted-foreground">{remark.text}</p>
+                                    </div>
+                                ))}
+                            </ScrollArea>
+                            <Separator />
+                            <div className="flex gap-2">
+                                <Textarea value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder="Add a new remark..."/>
+                                <Button type="button" onClick={handleAddRemark}>Add</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+              </div>
                 
               {dealer.leadScore && (
                   <Card className="bg-secondary">

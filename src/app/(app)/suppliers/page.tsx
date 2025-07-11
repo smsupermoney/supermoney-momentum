@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -270,7 +271,7 @@ export default function VendorsPage() {
               )}
               <TableHead>{t('dealers.table.name')}</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead>Deal Value (Cr)</TableHead>
               <TableHead>State</TableHead>
               <TableHead>{t('dealers.table.leadType')}</TableHead>
               <TableHead>{t('dealers.table.status')}</TableHead>
@@ -282,9 +283,9 @@ export default function VendorsPage() {
           </TableHeader>
           <TableBody>
             {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
-              <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"}>
+              <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"} onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
                  {canBulkDelete && (
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRows[vendor.id] || false}
                       onCheckedChange={(checked) => handleRowSelect(vendor.id, checked as boolean)}
@@ -292,7 +293,7 @@ export default function VendorsPage() {
                     />
                   </TableCell>
                 )}
-                <TableCell className="font-medium cursor-pointer hover:text-primary" onClick={() => setSelectedVendor(vendor)}>
+                <TableCell className="font-medium hover:text-primary">
                   <div>{vendor.name}</div>
                   {vendor.nextBestAction && (
                       <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
@@ -302,7 +303,7 @@ export default function VendorsPage() {
                   )}
                 </TableCell>
                 <TableCell>{vendor.contacts?.[0]?.phone || 'N/A'}</TableCell>
-                <TableCell>{vendor.contacts?.[0]?.email || 'N/A'}</TableCell>
+                <TableCell>{vendor.dealValue ? vendor.dealValue.toFixed(2) : 'N/A'}</TableCell>
                 <TableCell>{vendor.state || 'N/A'}</TableCell>
                 <TableCell>{vendor.leadType || 'Fresh'}</TableCell>
                 <TableCell>
@@ -311,7 +312,7 @@ export default function VendorsPage() {
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(vendor.assignedTo)}</TableCell>
                 <TableCell>{differenceInDays(new Date(), new Date(vendor.createdAt))} days</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
                         <Link href="https://supermoney.in/onboarding" target="_blank">
@@ -337,7 +338,7 @@ export default function VendorsPage() {
           {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
               <Card key={vendor.id} className="relative">
                   {canBulkDelete && (
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                               className="h-5 w-5"
                               checked={selectedRows[vendor.id] || false}
@@ -348,7 +349,7 @@ export default function VendorsPage() {
                   )}
                   <div onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
                     <CardHeader>
-                        <CardTitle className="hover:text-primary">{vendor.name}</CardTitle>
+                        <CardTitle className="hover:text-primary pr-8">{vendor.name}</CardTitle>
                         <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -368,10 +369,11 @@ export default function VendorsPage() {
                           <Badge variant="outline">{vendor.leadType || 'Fresh'}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">Deal Value: {vendor.dealValue ? `${vendor.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                         <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
                         <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(vendor.createdAt))} days</p>
                     </CardContent>
-                    <CardFooter className="flex justify-end gap-2">
+                    <CardFooter className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
                               <Link href="https://supermoney.in/onboarding" target="_blank">
                                   Onboarding
