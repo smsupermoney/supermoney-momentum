@@ -39,9 +39,7 @@ import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-const formSchema = NewSpokeSchema;
-
-type NewLeadFormValues = z.infer<typeof formSchema>;
+type NewLeadFormValues = z.infer<typeof NewSpokeSchema>;
 
 interface NewLeadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -56,7 +54,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewLeadFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: '',
       contacts: [{ name: '', email: '', phone: '', designation: '' }],
