@@ -293,7 +293,7 @@ export default function DealersPage() {
                     />
                   </TableCell>
                 )}
-                <TableCell className="font-medium cursor-pointer" onClick={() => setSelectedDealer(dealer)}>
+                <TableCell className="font-medium cursor-pointer hover:text-primary" onClick={() => setSelectedDealer(dealer)}>
                   <div>{dealer.name}</div>
                   {dealer.nextBestAction && (
                       <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
@@ -349,7 +349,7 @@ export default function DealersPage() {
                   )}
                   <div onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                       <CardHeader>
-                          <CardTitle>{dealer.name}</CardTitle>
+                          <CardTitle className="hover:text-primary">{dealer.name}</CardTitle>
                           <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">

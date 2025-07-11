@@ -292,7 +292,7 @@ export default function VendorsPage() {
                     />
                   </TableCell>
                 )}
-                <TableCell className="font-medium cursor-pointer" onClick={() => setSelectedVendor(vendor)}>
+                <TableCell className="font-medium cursor-pointer hover:text-primary" onClick={() => setSelectedVendor(vendor)}>
                   <div>{vendor.name}</div>
                   {vendor.nextBestAction && (
                       <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
@@ -348,7 +348,7 @@ export default function VendorsPage() {
                   )}
                   <div onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
                     <CardHeader>
-                        <CardTitle>{vendor.name}</CardTitle>
+                        <CardTitle className="hover:text-primary">{vendor.name}</CardTitle>
                         <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
