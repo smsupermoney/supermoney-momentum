@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState } from 'react';
@@ -60,26 +58,21 @@ export default function DealersPage() {
   const filteredDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
 
-    // Filter based on roles
     if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development') {
       const assignedUser = d.assignedTo ? users.find(u => u.uid === d.assignedTo) : null;
       if (!assignedUser) {
-        // If unassigned, only show to managers who can assign
         if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
           return false;
         }
       } else {
-        // If assigned, show to the assigned user OR their manager
         const isAssignedToMe = assignedUser.uid === currentUser.uid;
         const isMyReport = assignedUser.managerId === currentUser.uid;
-
         if (!isAssignedToMe && !isMyReport) {
           return false;
         }
       }
     }
 
-    // Apply global filters
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
     if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
@@ -152,15 +145,32 @@ export default function DealersPage() {
 
   const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
     e.stopPropagation();
-    
     updateDealer({ ...dealer, status: 'Onboarding' });
-
     toast({
         title: 'Onboarding Started',
         description: `${dealer.name} has been moved to the onboarding flow.`,
     });
   };
 
+  // --- FIX STARTS HERE ---
+  // A safe helper function to calculate Turn-Around Time (TAT)
+  const getTatDays = (createdAt: any): string => {
+    if (!createdAt) {
+      return 'N/A';
+    }
+    
+    // Handle both Firebase Timestamps and standard date strings/objects
+    const jsDate = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    
+    // Check if the conversion resulted in a valid date
+    if (isNaN(jsDate.getTime())) {
+      return 'N/A';
+    }
+    
+    const days = differenceInDays(new Date(), jsDate);
+    return `${days} days`;
+  };
+  // --- FIX ENDS HERE ---
 
   return (
     <>
@@ -312,7 +322,8 @@ export default function DealersPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
-                <TableCell>{differenceInDays(new Date(), new Date(dealer.createdAt))} days</TableCell>
+                {/* --- APPLYING FIX AT LINE 344 --- */}
+                <TableCell>{getTatDays(dealer.createdAt)}</TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
@@ -372,7 +383,8 @@ export default function DealersPage() {
                           <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
                            <p className="text-sm text-muted-foreground">Deal Value: {dealer.dealValue ? `${dealer.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
-                          <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(dealer.createdAt))} days</p>
+                          {/* --- APPLYING FIX IN MOBILE VIEW --- */}
+                          <p className="text-xs text-muted-foreground">TAT: {getTatDays(dealer.createdAt)}</p>
                       </CardContent>
                       <CardFooter className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
