@@ -106,7 +106,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         spoc: vendor.spoc || '',
         initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
     });
-  }, [vendor, form]);
+  }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
     updateVendor({ ...vendor, status: newStatus });

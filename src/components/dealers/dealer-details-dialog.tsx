@@ -106,7 +106,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       spoc: dealer.spoc || '',
       initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
     });
-  }, [dealer, form]);
+  }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
     updateDealer({ ...dealer, status: newStatus });
