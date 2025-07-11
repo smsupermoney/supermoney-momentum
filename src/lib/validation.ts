@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 
 // This file contains Zod schemas for "server-side" validation of data mutations.
@@ -25,6 +24,11 @@ export const ContactSchema = z.object({
     designation: z.string().optional(),
 });
 
+export const RemarkSchema = z.object({
+  text: z.string(),
+  timestamp: z.string(),
+  userName: z.string(),
+});
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
@@ -39,11 +43,7 @@ export const NewSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.array(z.object({
-    text: z.string(),
-    timestamp: z.string(),
-    userName: z.string(),
-  })).optional(),
+  remarks: z.array(RemarkSchema).optional(),
   leadDate: z.coerce.date(),
   spoc: z.string().optional(),
   initialLeadDate: z.coerce.date().optional(),
