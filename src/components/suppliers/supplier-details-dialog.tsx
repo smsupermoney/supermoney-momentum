@@ -12,10 +12,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Vendor, SpokeStatus } from '@/lib/types';
+import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -27,10 +26,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, User } from 'lucide-react';
-import { useState } from 'react';
+import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Separator } from '../ui/separator';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { NewSpokeSchema } from '@/lib/validation';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { products } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { cn } from '@/lib/utils';
+
+
+type FormValues = Zod.infer<typeof NewSpokeSchema>;
 
 interface VendorDetailsDialogProps {
   vendor: Vendor;
@@ -38,23 +56,48 @@ interface VendorDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function DetailItem({ label, value }: { label: string, value?: string | number | null }) {
-    if (!value) return null;
-    return (
-        <div>
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p>{value}</p>
-        </div>
-    )
-}
-
 export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor, anchors, currentUser, deleteVendor, lenders } = useApp();
+  const { updateVendor, currentUser, deleteVendor, lenders } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const anchorName = vendor.anchorId ? anchors.find(a => a.id === vendor.anchorId)?.name : 'N/A';
-  const lenderName = vendor.lenderId ? lenders.find(l => l.id === vendor.lenderId)?.name : 'N/A';
+  const form = useForm<FormValues>({
+    resolver: zodResolver(NewSpokeSchema),
+    defaultValues: {
+        name: vendor.name || '',
+        contacts: vendor.contacts || [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+        gstin: vendor.gstin || '',
+        city: vendor.city || '',
+        state: vendor.state || '',
+        zone: vendor.zone || '',
+        product: vendor.product || '',
+        leadSource: vendor.leadSource || '',
+        lenderId: vendor.lenderId || '',
+        remarks: vendor.remarks || '',
+        leadType: vendor.leadType || 'Fresh',
+        dealValue: vendor.dealValue || 0,
+        leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+    },
+  });
+
+  useEffect(() => {
+    form.reset({
+        name: vendor.name || '',
+        contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '', isPrimary: true }],
+        gstin: vendor.gstin || '',
+        city: vendor.city || '',
+        state: vendor.state || '',
+        zone: vendor.zone || '',
+        product: vendor.product || '',
+        leadSource: vendor.leadSource || '',
+        lenderId: vendor.lenderId || '',
+        remarks: vendor.remarks || '',
+        leadType: vendor.leadType || 'Fresh',
+        dealValue: vendor.dealValue || 0,
+        leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+    });
+  }, [vendor, form]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
     updateVendor({ ...vendor, status: newStatus });
@@ -68,27 +111,44 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     deleteVendor(vendor.id);
     onOpenChange(false);
   };
+  
+  const onSubmit = (values: FormValues) => {
+    setIsSubmitting(true);
+    const updatedVendorData: Vendor = {
+      ...vendor,
+      ...values,
+      leadDate: values.leadDate.toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    updateVendor(updatedVendorData);
+    toast({
+      title: "Vendor Updated",
+      description: `${values.name} has been successfully updated.`
+    });
+    setIsSubmitting(false);
+    onOpenChange(false);
+  };
 
   const canDelete = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
 
   return (
     <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-            <DialogTitle>{vendor.name}</DialogTitle>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Vendor: {vendor.name}</DialogTitle>
             <DialogDescription>
-                Update the status and view details for this vendor.
+              Update the status and details for this vendor lead.
             </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
-                
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
                 <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
+                    <FormLabel>Status</FormLabel>
                     <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
-                        <SelectTrigger id="status">
-                            <SelectValue />
-                        </SelectTrigger>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="New">New</SelectItem>
                             <SelectItem value="Onboarding">Onboarding</SelectItem>
@@ -103,90 +163,153 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     </Select>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                    <DetailItem label="Lead ID" value={vendor.leadId} />
-                    <DetailItem label="Lead Date" value={vendor.leadDate ? format(new Date(vendor.leadDate), 'PPP') : 'N/A'} />
-                    <DetailItem label="Lead Type" value={vendor.leadType} />
-                    <DetailItem label="Lead Source" value={vendor.leadSource} />
-                    <DetailItem label="Deal Value (INR Cr)" value={vendor.dealValue} />
-                    <DetailItem label="Anchor" value={anchorName} />
-                    <DetailItem label="Product Interest" value={vendor.product} />
-                    <DetailItem label="Lender" value={lenderName} />
-                    <DetailItem label="GSTIN" value={vendor.gstin} />
-                    <DetailItem label="City" value={vendor.city} />
-                    <DetailItem label="State" value={vendor.state} />
-                    <DetailItem label="Zone" value={vendor.zone} />
-                </div>
+                <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem><FormLabel>Vendor Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name={`contacts.0.phone`} render={({ field }) => (
+                    <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name={`contacts.0.email`} render={({ field }) => (
+                    <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
 
-                {vendor.remarks && (
-                    <DetailItem label="Remarks" value={vendor.remarks} />
-                )}
 
-                {(vendor.contacts || []).length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium">Contacts</h4>
-                    {(vendor.contacts || []).map((contact, index) => (
-                      <div key={contact.id || index}>
-                         {index > 0 && <Separator className="my-3" />}
-                         <div className="flex items-start gap-3">
-                            <User className="h-4 w-4 mt-1 text-muted-foreground" />
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm flex-1">
-                                <DetailItem label="Name" value={contact.name} />
-                                <DetailItem label="Designation" value={contact.designation} />
-                                <DetailItem label="Email" value={contact.email} />
-                                <DetailItem label="Phone" value={contact.phone} />
-                            </div>
-                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="leadDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Lead Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                disabled={!canEditLeadDate}
+                                className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                              >
+                                {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField control={form.control} name="dealValue" render={({ field }) => (
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                   <FormField control={form.control} name="city" render={({ field }) => (
+                      <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="state" render={({ field }) => (
+                      <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  <FormField control={form.control} name="zone" render={({ field }) => (
+                      <FormItem><FormLabel>Zone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+              </div>
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField control={form.control} name="leadType" render={({ field }) => (
+                    <FormItem><FormLabel>Lead Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="Fresh">Fresh</SelectItem><SelectItem value="Renewal">Renewal</SelectItem>
+                          <SelectItem value="Adhoc">Adhoc</SelectItem><SelectItem value="Enhancement">Enhancement</SelectItem>
+                          <SelectItem value="Cross sell">Cross sell</SelectItem><SelectItem value="Revive">Revive</SelectItem>
+                        </SelectContent>
+                      </Select><FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="lenderId" render={({ field }) => (
+                    <FormItem><FormLabel>Lender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a lender" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {lenders.map(lender => (<SelectItem key={lender.id} value={lender.id}>{lender.name}</SelectItem>))}
+                        </SelectContent>
+                      </Select><FormMessage />
+                    </FormItem>
+                )}/>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField control={form.control} name="product" render={({ field }) => (
+                    <FormItem><FormLabel>Product</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a product" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {products.map(p => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+                        </SelectContent>
+                      </Select><FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="gstin" render={({ field }) => (
+                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+              </div>
+
+              <FormField control={form.control} name="remarks" render={({ field }) => (
+                  <FormItem><FormLabel>Remarks</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
                 
-                {vendor.leadScore && (
-                    <Card className="bg-secondary">
-                        <CardHeader className="p-4">
-                            <CardTitle className="text-base">AI Scoring Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                            <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-2xl font-bold text-primary">{vendor.leadScore}</span>
-                                <span className="text-sm text-muted-foreground">/ 100</span>
-                            </div>
-                            <p className="text-xs text-secondary-foreground italic">"{vendor.leadScoreReason}"</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-            <DialogFooter className="justify-between sm:justify-between pt-4">
-                 <div>
-                  {canDelete && (
-                      <Button variant="destructive" size="sm" onClick={() => setIsDeleteAlertOpen(true)}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                      </Button>
-                  )}
-                </div>
-                <Button onClick={() => onOpenChange(false)}>Close</Button>
-            </DialogFooter>
+              {vendor.leadScore && (
+                  <Card className="bg-secondary">
+                      <CardHeader className="p-4"><CardTitle className="text-base">AI Scoring Analysis</CardTitle></CardHeader>
+                      <CardContent className="p-4 pt-0">
+                          <div className="flex items-baseline gap-2 mb-2">
+                              <span className="text-2xl font-bold text-primary">{vendor.leadScore}</span>
+                              <span className="text-sm text-muted-foreground">/ 100</span>
+                          </div>
+                          <p className="text-xs text-secondary-foreground italic">"{vendor.leadScoreReason}"</p>
+                      </CardContent>
+                  </Card>
+              )}
+
+              <DialogFooter className="justify-between sm:justify-between pt-4">
+                  <div>
+                    {canDelete && (
+                        <Button type="button" variant="destructive" size="sm" onClick={() => setIsDeleteAlertOpen(true)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
+                    </Button>
+                  </div>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
-        </Dialog>
-        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the lead for {vendor.name}.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                        Delete Lead
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+      </Dialog>
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the lead for {vendor.name}.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Delete Lead
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
-

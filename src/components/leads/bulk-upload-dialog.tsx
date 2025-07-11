@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useRef } from 'react';
 import { useApp } from '@/contexts/app-context';
@@ -116,12 +117,12 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const rawData = {
               name: name || '',
-              dealValue: parseFloat(dealValueStr) || 0,
-              leadType: leadType || 'Fresh',
+              dealValue: parseFloat(dealValueStr) || undefined,
+              leadType: leadType || undefined,
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
               contacts: contactInfo,
               gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, remarks,
-              lenderId: targetLender?.id || null, // Ensure null instead of undefined
+              lenderId: targetLender?.id || null,
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
@@ -139,11 +140,11 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               remarks: validatedData.remarks,
               lenderId: validatedData.lenderId,
               assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? 'New' : 'Unassigned Lead',
+              status: finalAssignedToId ? 'New' : ('Unassigned Lead' as SpokeStatus),
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              leadDate: validatedData.leadDate.toISOString(),
+              leadDate: validatedData.leadDate?.toISOString(),
               leadType: validatedData.leadType as LeadTypeEnum,
               dealValue: validatedData.dealValue || 0,
             };
@@ -199,7 +200,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with lead details. See sample for required columns and format.
+            Upload a CSV file with lead details. Only Name and Contact Number are required.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">

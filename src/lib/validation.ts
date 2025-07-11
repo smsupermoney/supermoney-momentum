@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 // This file contains Zod schemas for "server-side" validation of data mutations.
@@ -18,9 +19,9 @@ export const NewAnchorSchema = z.object({
 });
 
 export const ContactSchema = z.object({
-    name: z.string().optional(),
+    name: z.string().min(2, 'Contact name is required.'),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    phone: z.string().optional().or(z.literal('')),
+    phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
     designation: z.string().optional(),
     isPrimary: z.boolean().optional(),
 });
@@ -28,9 +29,9 @@ export const ContactSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  dealValue: z.coerce.number().min(0, "Deal value must be a positive number."),
-  leadType: z.string().min(1, "Lead Type is required."),
-  contacts: z.array(ContactSchema).optional(),
+  dealValue: z.coerce.number().optional(),
+  leadType: z.string().optional(),
+  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
   gstin: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -38,9 +39,9 @@ export const NewSpokeSchema = z.object({
   anchorId: z.string().nullable().optional(),
   product: z.string().optional(),
   leadSource: z.string().optional(),
-  lenderId: z.string().optional(),
+  lenderId: z.string().nullable().optional(),
   remarks: z.string().optional(),
-  leadDate: z.coerce.date(),
+  leadDate: z.coerce.date().optional(),
 });
 
 
