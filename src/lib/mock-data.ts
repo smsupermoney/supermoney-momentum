@@ -1,4 +1,5 @@
 
+
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data

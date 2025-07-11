@@ -19,11 +19,10 @@ export const NewAnchorSchema = z.object({
 });
 
 export const ContactSchema = z.object({
-    name: z.string().min(2, 'Contact name is required.'),
+    name: z.string().optional(),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
     phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
     designation: z.string().optional(),
-    isPrimary: z.boolean().optional(),
 });
 
 
@@ -31,14 +30,7 @@ export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
-  contacts: z.array(
-    z.object({
-      phone: z.string().min(10, "Contact number must be at least 10 digits."),
-      name: z.string().optional(),
-      email: z.string().email().optional().or(z.literal('')),
-      designation: z.string().optional(),
-    })
-  ).min(1, "At least one contact with a number is required."),
+  contacts: z.array(ContactSchema).min(1, "At least one contact with a number is required."),
   gstin: z.string().optional().or(z.literal('')),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -52,7 +44,7 @@ export const NewSpokeSchema = z.object({
     timestamp: z.string(),
     userName: z.string(),
   })).optional(),
-  leadDate: z.coerce.date().optional(),
+  leadDate: z.coerce.date(),
   spoc: z.string().optional(),
   initialLeadDate: z.coerce.date().optional(),
 });
