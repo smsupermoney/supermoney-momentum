@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 
 // Define a union type for the different kinds of leads
@@ -129,7 +130,7 @@ function LeadTable({
             <Card key={lead.id} className="p-0">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base">{lead.name}</CardTitle>
-                <CardDescription>{lead.contacts?.[0]?.phone || 'N/A'}</CardDescription>
+                <CardDescription>{(lead.contacts?.[0] as any)?.phone || 'N/A'}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 p-4 pt-0">
                  <Select onValueChange={(value) => onAnchorAssignmentChange(lead.id, value)}>
@@ -363,7 +364,7 @@ export default function AdminPage() {
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
-  const canBulkReassign = currentUser && currentUser.role === 'Admin';
+  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
 
 
   if (!canViewAdminPanel) {
@@ -528,5 +529,3 @@ export default function AdminPage() {
     </>
   );
 }
-
-    

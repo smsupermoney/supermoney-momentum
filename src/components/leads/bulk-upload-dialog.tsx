@@ -107,6 +107,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id || null;
+            
+            if (anchorName && !associatedAnchor) {
+              throw new z.ZodError([{ path: ['anchorName'], message: `Anchor named '${anchorName}' not found.`, code: 'custom' }]);
+            }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser?.uid || null;
@@ -245,5 +249,3 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     </Dialog>
   );
 }
-
-    
