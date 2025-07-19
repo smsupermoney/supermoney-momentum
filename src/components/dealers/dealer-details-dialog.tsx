@@ -26,11 +26,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, User, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Separator } from '../ui/separator';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { NewSpokeSchema } from '@/lib/validation';
@@ -44,12 +44,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { products } from '@/lib/types';
+import { products, spokeStatuses } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import { spokeStatuses } from '@/lib/types';
 
 type FormValues = z.infer<typeof NewSpokeSchema>;
 
@@ -178,7 +177,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                 <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
                                 <SelectContent>
                                     {users.filter(u => u.role === 'Area Sales Manager').map(user => (
-                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
+                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -388,5 +387,3 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     </>
   );
 }
-
-    
