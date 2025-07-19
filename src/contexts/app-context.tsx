@@ -315,7 +315,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addNotification = (notificationData: Omit<Notification, 'id' | 'isRead'>) => {
     const newNotification: Notification = {
       ...notificationData,
-      id: `notif-${Date.now()}-${Math.random()}`,
+      id: generateUniqueId('notif'),
       isRead: false,
     };
     
@@ -366,7 +366,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       };
       await firestoreService.addActivityLog(dataToSave);
     }
-    const newLog = { ...logData, id: `log-${Date.now()}` };
+    const newLog = { ...logData, id: generateUniqueId('log') };
     setActivityLogs(prev => [newLog, ...prev]);
   };
 
@@ -407,7 +407,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const docRef = await firestoreService.addAnchor(anchorToSave);
       newAnchor = { ...anchorToSave, id: docRef.id };
     } else {
-      newAnchor = { ...anchorToSave, id: `anchor-${Date.now()}`};
+      newAnchor = { ...anchorToSave, id: generateUniqueId('anchor')};
     }
     setAnchors(prev => [newAnchor, ...prev]);
     addActivityLog({
@@ -648,7 +648,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           systemGenerated: true,
       });
     } else {
-        const newVendor = { ...vendorData, id: `vendor-${Date.now()}` };
+        const newVendor = { ...vendorData, id: generateUniqueId('vendor') };
         setVendors(prev => [newVendor, ...prev]);
          addActivityLog({
           vendorId: newVendor.id,
@@ -776,7 +776,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (firebaseEnabled) {
       await firestoreService.addTask(taskData);
     }
-    const newTask = { ...taskData, id: `task-${Date.now()}` };
+    const newTask = { ...taskData, id: generateUniqueId('task') };
     setTasks(prev => [newTask, ...prev]);
     addActivityLog({
         taskId: newTask.id,
@@ -839,7 +839,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (firebaseEnabled) {
       await firestoreService.addDailyActivity(activityData);
     }
-    const newActivity = { ...activityData, id: `daily-activity-${Date.now()}` };
+    const newActivity = { ...activityData, id: generateUniqueId('daily-activity') };
     setDailyActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.activityTimestamp).getTime() - new Date(a.activityTimestamp).getTime()));
   };
 
@@ -872,7 +872,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Database Error', description: 'Could not save the new user.' });
         }
     } else { // mock mode
-        const newUser = { id: `user-${Date.now()}`, uid: `user-${Date.now()}`, ...userData };
+        const newUser = { id: generateUniqueId('user'), uid: generateUniqueId('user'), ...userData };
         setUsers(prev => [newUser, ...prev]);
          addActivityLog({
             timestamp: new Date().toISOString(),
@@ -933,7 +933,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const newLender = await firestoreService.addLender(lenderData);
       setLenders(prev => [...prev, newLender]);
     } else {
-      const newLender = { ...lenderData, id: `lender-${Date.now()}` };
+      const newLender = { ...lenderData, id: generateUniqueId('lender') };
       setLenders(prev => [...prev, newLender]);
     }
     toast({ title: 'Lender Added', description: `${lenderData.name} has been added.` });
@@ -1051,5 +1051,3 @@ export const useApp = () => {
   }
   return context;
 };
-
-    
