@@ -21,7 +21,8 @@ import { useLanguage } from '@/contexts/language-context';
 import { NewSpokeSchema } from '@/lib/validation';
 import { z } from 'zod';
 import { generateUniqueId } from '@/lib/utils';
-import { format } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface BulkUploadDialogProps {
   type: 'Dealer' | 'Vendor';
@@ -37,24 +38,27 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadErrors, setUploadErrors] = useState<{ row: number; messages: string[] }[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
+      setUploadErrors([]);
     }
   };
   
   const handleClose = () => {
     setSelectedFile(null);
+    setUploadErrors([]);
     if(fileInputRef.current) fileInputRef.current.value = "";
     onOpenChange(false);
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (YYYY-MM-DD),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (YYYY-MM-DD)";
+    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (YYYY-MM-DD),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (YYYY-MM-DD),TAT";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,2024-05-10,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,2023-11-15"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,2024-05-10,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,2023-11-15,120"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -79,6 +83,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     if (!currentUser) return;
 
     setIsProcessing(true);
+    setUploadErrors([]);
     const reader = new FileReader();
 
     reader.onload = async (e) => {
@@ -97,7 +102,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               name, contactNumber, email, gstin, city, state, zone,
               anchorName, product, leadSource, leadType, leadDateStr,
               statusStr, assignedToEmail, dealValueStr, lenderName, remarks,
-              spoc, initialLeadDateStr
+              spoc, initialLeadDateStr, tatStr
             ] = columns;
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
@@ -105,16 +110,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser?.uid || null;
-
-            const contactInfo = [];
-            if (contactNumber) {
-                contactInfo.push({
-                    name: name || 'Primary Contact',
-                    phone: contactNumber,
-                    email: email || undefined,
-                    designation: ''
-                });
-            }
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
@@ -123,12 +118,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               dealValue: parseFloat(dealValueStr) || undefined,
               leadType: leadType || undefined,
               leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
-              contacts: contactInfo,
+              contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
               gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, 
               lenderId: targetLender?.id || null,
               spoc,
               initialLeadDate: initialLeadDateStr ? new Date(initialLeadDateStr) : undefined,
               remarks: remarks ? [{ text: remarks, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
+              tat: tatStr ? parseInt(tatStr, 10) : undefined,
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
@@ -136,7 +132,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const commonData = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
-              contacts: validatedData.contacts ? validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})) : [],
+              contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
               gstin: validatedData.gstin,
               city: validatedData.city,
               state: validatedData.state,
@@ -146,7 +142,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               lenderId: validatedData.lenderId,
               remarks: validatedData.remarks,
               assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? 'New' : ('Unassigned Lead' as SpokeStatus),
+              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -155,6 +151,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               dealValue: validatedData.dealValue || 0,
               spoc: validatedData.spoc,
               initialLeadDate: validatedData.initialLeadDate?.toISOString(),
+              tat: validatedData.tat,
             };
 
             if (type === 'Dealer') {
@@ -175,23 +172,23 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
           }
         }
       
+      setIsProcessing(false);
+
       if (errors.length > 0) {
+        setUploadErrors(errors);
         toast({
           variant: 'destructive',
           title: `Bulk Upload Complete with ${errors.length} Error(s)`,
-          description: `Successfully uploaded ${successCount} leads. Check console for error details.`,
+          description: `Successfully uploaded ${successCount} leads. See details below.`,
           duration: 9000,
         });
-        console.error("Bulk Upload Errors:", errors.map(e => `Row ${e.row}: ${e.messages.join('; ')}`).join('\n'));
       } else {
          toast({
           title: 'Bulk Upload Complete',
           description: `${successCount} ${type.toLowerCase()}s uploaded successfully.`,
         });
+        handleClose();
       }
-
-      setIsProcessing(false);
-      handleClose();
     };
 
     reader.onerror = () => {
@@ -220,6 +217,22 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             <Label htmlFor="csv-file">CSV File</Label>
             <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} ref={fileInputRef}/>
           </div>
+          {uploadErrors.length > 0 && (
+            <Alert variant="destructive">
+                <AlertTitle>Upload Errors</AlertTitle>
+                <AlertDescription>
+                    <ScrollArea className="h-24 pr-4">
+                        <ul className="text-xs space-y-1">
+                          {uploadErrors.map(err => (
+                            <li key={err.row}>
+                                <strong>Row {err.row}:</strong> {err.messages.join('; ')}
+                            </li>
+                          ))}
+                        </ul>
+                    </ScrollArea>
+                </AlertDescription>
+            </Alert>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
@@ -232,3 +245,5 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     </Dialog>
   );
 }
+
+    

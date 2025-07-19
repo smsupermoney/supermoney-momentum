@@ -31,9 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { spokeStatuses } from '@/lib/types';
 
 
-const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function VendorsPage() {
@@ -134,20 +134,15 @@ export default function VendorsPage() {
         case 'Active':
         case 'Already Onboarded':
         case 'Disbursed':
+        case 'Approved PF Collected':
+        case 'Limit Live':
             return 'default';
         case 'Rejected':
         case 'Not Interested':
+        case 'Closed':
             return 'destructive';
-        case 'Unassigned Lead':
-        case 'New':
-            return 'outline';
-        case 'Onboarding':
-        case 'Partial Docs':
-        case 'Follow Up':
-        case 'Not reachable':
-            return 'secondary';
         default:
-            return 'outline';
+            return 'secondary';
     }
   };
 
@@ -161,6 +156,28 @@ export default function VendorsPage() {
         description: `${vendor.name} has been moved to the onboarding flow.`,
     });
   };
+
+  const getTatDays = (createdAt: any, tat?: number): string => {
+    if (tat !== undefined) {
+      return `${tat} days`;
+    }
+    if (!createdAt) {
+      return 'N/A';
+    }
+    
+    const jsDate = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    
+    if (isNaN(jsDate.getTime())) {
+      return 'N/A';
+    }
+    
+    const days = differenceInDays(new Date(), jsDate);
+    return `${days} days`;
+  };
+
+  const handleRowClick = (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+  }
 
 
   return (
@@ -283,7 +300,7 @@ export default function VendorsPage() {
           </TableHeader>
           <TableBody>
             {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
-              <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"} onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
+              <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"} onClick={() => handleRowClick(vendor)} className="cursor-pointer">
                  {canBulkDelete && (
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
@@ -311,7 +328,7 @@ export default function VendorsPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(vendor.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(vendor.assignedTo)}</TableCell>
-                <TableCell>{differenceInDays(new Date(), new Date(vendor.createdAt))} days</TableCell>
+                <TableCell>{getTatDays(vendor.createdAt, vendor.tat)}</TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)} className="ml-2">
@@ -347,7 +364,7 @@ export default function VendorsPage() {
                             />
                       </div>
                   )}
-                  <div onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
+                  <div onClick={() => handleRowClick(vendor)} className="cursor-pointer">
                     <CardHeader>
                         <CardTitle className="hover:text-primary pr-8">{vendor.name}</CardTitle>
                         <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
@@ -371,7 +388,7 @@ export default function VendorsPage() {
                         <p className="text-sm text-muted-foreground pt-2">{vendor.contacts?.[0]?.phone || 'N/A'}</p>
                         <p className="text-sm text-muted-foreground">Deal Value: {vendor.dealValue ? `${vendor.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                         <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
-                        <p className="text-xs text-muted-foreground">TAT: {differenceInDays(new Date(), new Date(vendor.createdAt))} days</p>
+                        <p className="text-xs text-muted-foreground">TAT: {getTatDays(vendor.createdAt, vendor.tat)}</p>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, vendor)}>
@@ -391,3 +408,5 @@ export default function VendorsPage() {
     </>
   );
 }
+
+    

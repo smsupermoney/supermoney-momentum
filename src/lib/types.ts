@@ -13,7 +13,15 @@ export interface User {
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';
-export type SpokeStatus = 'New' | 'Partial Docs' | 'Follow Up' | 'Already Onboarded' | 'Disbursed' | 'Not reachable' | 'Active' | 'Unassigned Lead' | 'Rejected' | 'Not Interested' | 'Onboarding';
+
+export const spokeStatuses = [
+    'New', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 
+    'Not reachable', 'Active', 'Unassigned Lead', 'Rejected', 'Not Interested', 
+    'Onboarding', 'Approved PF Collected', 'Awaiting Sanction', 'Closed', 
+    'Limit Live', 'Login Pending', 'On Hold', 'Queries Raised', 'Relook'
+] as const;
+export type SpokeStatus = (typeof spokeStatuses)[number];
+
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
@@ -66,6 +74,7 @@ export interface BaseLead {
   lenderId?: string;
   spoc?: string; // Single Point of Contact
   initialLeadDate?: string; // For 'Revive' lead type
+  tat?: number; // Turn Around Time in days, for bulk uploads
 }
 
 export interface Anchor {
@@ -177,3 +186,5 @@ export interface Lender {
   id: string;
   name: string;
 }
+
+    

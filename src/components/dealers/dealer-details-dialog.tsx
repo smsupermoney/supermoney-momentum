@@ -49,6 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
+import { spokeStatuses } from '@/lib/types';
 
 type FormValues = z.infer<typeof NewSpokeSchema>;
 
@@ -67,23 +68,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(NewSpokeSchema),
-    defaultValues: {
-      name: dealer.name || '',
-      contacts: dealer.contacts || [{ name: '', email: '', phone: '', designation: '' }],
-      gstin: dealer.gstin || '',
-      city: dealer.city || '',
-      state: dealer.state || '',
-      zone: dealer.zone || '',
-      product: dealer.product || '',
-      leadSource: dealer.leadSource || '',
-      lenderId: dealer.lenderId || '',
-      remarks: dealer.remarks || [],
-      leadType: dealer.leadType || 'Fresh',
-      dealValue: dealer.dealValue || 0,
-      leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
-      spoc: dealer.spoc || '',
-      initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
-    },
+    defaultValues: {},
   });
 
   const watchLeadType = form.watch("leadType");
@@ -182,15 +167,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                         <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="New">New</SelectItem>
-                                <SelectItem value="Onboarding">Onboarding</SelectItem>
-                                <SelectItem value="Partial Docs">Partial Docs</SelectItem>
-                                <SelectItem value="Follow Up">Follow Up</SelectItem>
-                                <SelectItem value="Already Onboarded">Already Onboarded</SelectItem>
-                                <SelectItem value="Disbursed">Disbursed</SelectItem>
-                                <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                <SelectItem value="Rejected">Rejected</SelectItem>
-                                <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -201,8 +178,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                 <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
                                 <SelectContent>
                                     {users.filter(u => u.role === 'Area Sales Manager').map(user => (
-                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
-                                    ))}
+                                        <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -412,3 +388,5 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     </>
   );
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 // This file contains Zod schemas for "server-side" validation of data mutations.
@@ -18,10 +19,12 @@ export const NewAnchorSchema = z.object({
 });
 
 export const ContactSchema = z.object({
-    name: z.string().optional(),
+    id: z.string().optional(),
+    name: z.string().min(2, { message: 'Contact name is required' }),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
     phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
     designation: z.string().optional(),
+    isPrimary: z.boolean().optional(),
 });
 
 export const RemarkSchema = z.object({
@@ -47,6 +50,7 @@ export const NewSpokeSchema = z.object({
   leadDate: z.coerce.date(),
   spoc: z.string().optional(),
   initialLeadDate: z.coerce.date().optional(),
+  tat: z.number().int().optional(),
 });
 
 
@@ -71,3 +75,5 @@ export const NewUserSchema = z.object({
     email: z.string().email("A valid email is required."),
     role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
 });
+
+    

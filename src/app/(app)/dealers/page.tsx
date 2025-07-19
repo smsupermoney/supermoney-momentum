@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -29,8 +30,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { spokeStatuses } from '@/lib/types';
 
-const spokeStatuses: SpokeStatus[] = ['Unassigned Lead', 'New', 'Onboarding', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 'Not reachable', 'Rejected', 'Not Interested'];
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function DealersPage() {
@@ -126,20 +127,15 @@ export default function DealersPage() {
         case 'Active':
         case 'Already Onboarded':
         case 'Disbursed':
+        case 'Approved PF Collected':
+        case 'Limit Live':
             return 'default';
         case 'Rejected':
         case 'Not Interested':
+        case 'Closed':
             return 'destructive';
-        case 'Unassigned Lead':
-        case 'New':
-            return 'outline';
-        case 'Onboarding':
-        case 'Partial Docs':
-        case 'Follow Up':
-        case 'Not reachable':
-            return 'secondary';
         default:
-            return 'outline';
+            return 'secondary';
     }
   };
 
@@ -152,17 +148,16 @@ export default function DealersPage() {
     });
   };
 
-  // --- FIX STARTS HERE ---
-  // A safe helper function to calculate Turn-Around Time (TAT)
-  const getTatDays = (createdAt: any): string => {
+  const getTatDays = (createdAt: any, tat?: number): string => {
+    if (tat !== undefined) {
+      return `${tat} days`;
+    }
     if (!createdAt) {
       return 'N/A';
     }
     
-    // Handle both Firebase Timestamps and standard date strings/objects
     const jsDate = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
     
-    // Check if the conversion resulted in a valid date
     if (isNaN(jsDate.getTime())) {
       return 'N/A';
     }
@@ -170,7 +165,10 @@ export default function DealersPage() {
     const days = differenceInDays(new Date(), jsDate);
     return `${days} days`;
   };
-  // --- FIX ENDS HERE ---
+
+  const handleRowClick = (dealer: Dealer) => {
+    setSelectedDealer(dealer);
+  }
 
   return (
     <>
@@ -294,7 +292,7 @@ export default function DealersPage() {
           </TableHeader>
           <TableBody>
             {filteredDealers.length > 0 ? filteredDealers.map(dealer => (
-              <TableRow key={dealer.id} data-state={selectedRows[dealer.id] && "selected"} onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
+              <TableRow key={dealer.id} data-state={selectedRows[dealer.id] && "selected"} onClick={() => handleRowClick(dealer)} className="cursor-pointer">
                 {canBulkDelete && (
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
@@ -322,8 +320,7 @@ export default function DealersPage() {
                 </TableCell>
                 <TableCell>{getAnchorName(dealer.anchorId)}</TableCell>
                 <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
-                {/* --- APPLYING FIX AT LINE 344 --- */}
-                <TableCell>{getTatDays(dealer.createdAt)}</TableCell>
+                <TableCell>{getTatDays(dealer.createdAt, dealer.tat)}</TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
@@ -359,7 +356,7 @@ export default function DealersPage() {
                             />
                       </div>
                   )}
-                  <div onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
+                  <div onClick={() => handleRowClick(dealer)} className="cursor-pointer">
                       <CardHeader>
                           <CardTitle className="hover:text-primary pr-8">{dealer.name}</CardTitle>
                           <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
@@ -383,8 +380,7 @@ export default function DealersPage() {
                           <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
                            <p className="text-sm text-muted-foreground">Deal Value: {dealer.dealValue ? `${dealer.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
-                          {/* --- APPLYING FIX IN MOBILE VIEW --- */}
-                          <p className="text-xs text-muted-foreground">TAT: {getTatDays(dealer.createdAt)}</p>
+                          <p className="text-xs text-muted-foreground">TAT: {getTatDays(dealer.createdAt, dealer.tat)}</p>
                       </CardContent>
                       <CardFooter className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                           <Button size="sm" asChild onClick={(e) => handleStartOnboarding(e, dealer)}>
@@ -404,3 +400,5 @@ export default function DealersPage() {
     </>
   );
 }
+
+    

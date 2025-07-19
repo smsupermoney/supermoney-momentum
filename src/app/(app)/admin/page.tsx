@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowRight } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
@@ -24,8 +25,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 
@@ -218,6 +217,73 @@ function LenderManagement() {
     )
 }
 
+function BulkReassignment() {
+    const { users, reassignLeads, dealers, vendors } = useApp();
+    const [fromUserId, setFromUserId] = useState('');
+    const [toUserId, setToUserId] = useState('');
+    const { toast } = useToast();
+
+    const salesUsers = useMemo(() => users.filter(u => u.role === 'Area Sales Manager'), [users]);
+
+    const leadCount = useMemo(() => {
+        if (!fromUserId) return 0;
+        const assignedDealers = dealers.filter(d => d.assignedTo === fromUserId).length;
+        const assignedVendors = vendors.filter(v => v.assignedTo === fromUserId).length;
+        return assignedDealers + assignedVendors;
+    }, [fromUserId, dealers, vendors]);
+
+    const handleReassignment = () => {
+        if (!fromUserId || !toUserId) {
+            toast({ variant: 'destructive', title: 'Selection Missing', description: 'Please select both a "from" and "to" user.' });
+            return;
+        }
+        reassignLeads(fromUserId, toUserId);
+        toast({ title: 'Leads Reassigned', description: `${leadCount} leads have been reassigned.` });
+        setFromUserId('');
+        setToUserId('');
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Bulk Lead Reassignment</CardTitle>
+                <CardDescription>Move all assigned leads from one user to another.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-full sm:w-auto flex-1">
+                        <Label>From User</Label>
+                        <Select value={fromUserId} onValueChange={setFromUserId}>
+                            <SelectTrigger><SelectValue placeholder="Select user to move leads from" /></SelectTrigger>
+                            <SelectContent>
+                                {salesUsers.map(user => <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-muted-foreground mt-5 hidden sm:block"/>
+                    <div className="w-full sm:w-auto flex-1">
+                        <Label>To User</Label>
+                         <Select value={toUserId} onValueChange={setToUserId}>
+                            <SelectTrigger><SelectValue placeholder="Select user to move leads to" /></SelectTrigger>
+                            <SelectContent>
+                                {salesUsers.filter(u => u.uid !== fromUserId).map(user => <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground">
+                        {leadCount > 0 ? `${leadCount} lead(s) will be moved.` : 'Select a user to see how many leads will be moved.'}
+                    </p>
+                    <Button onClick={handleReassignment} disabled={!fromUserId || !toUserId || leadCount === 0}>
+                        Reassign Leads
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function AdminPage() {
   const { dealers, vendors, users, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser, anchors, updateAnchor } = useApp();
   const { toast } = useToast();
@@ -297,6 +363,8 @@ export default function AdminPage() {
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canBulkReassign = currentUser && currentUser.role === 'Admin';
+
 
   if (!canViewAdminPanel) {
     return (
@@ -367,6 +435,7 @@ export default function AdminPage() {
         </Card>
         
         {canManageLenders && <LenderManagement />}
+        {canBulkReassign && <BulkReassignment />}
 
         {/* Section for Admins & BD */}
         {canManageUsers && (
@@ -408,7 +477,7 @@ export default function AdminPage() {
                               <TableCell>{getManagerName(user.managerId)}</TableCell>
                               <TableCell>{user.region || 'N/A'}</TableCell>
                               <TableCell className="text-right">
-                                {user.uid !== currentUser.uid && (
+                                {user.uid !== currentUser?.uid && (
                                   <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
@@ -440,7 +509,7 @@ export default function AdminPage() {
                               <span className="text-muted-foreground">{t('admin.table.region')}:</span>
                               <span className="font-medium">{user.region || 'N/A'}</span>
                             </div>
-                            {user.uid !== currentUser.uid && (
+                            {user.uid !== currentUser?.uid && (
                               <div className="pt-2">
                                 <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
                                   <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
@@ -459,3 +528,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
