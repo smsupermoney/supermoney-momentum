@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema } from '@/lib/validation';
 import { sendNotificationEmail } from '@/ai/flows/send-notification-email-flow';
+import { generateUniqueId } from '@/lib/utils';
 
 
 interface AppContextType {
@@ -506,7 +507,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         systemGenerated: true,
       });
     } else {
-        const newDealer = { ...dealerData, id: `dealer-${Date.now()}` };
+        const newDealer = { ...dealerData, id: generateUniqueId('dealer') };
         setDealers(prev => [newDealer, ...prev]);
         addActivityLog({
             dealerId: newDealer.id,
