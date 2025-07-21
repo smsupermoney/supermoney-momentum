@@ -60,30 +60,11 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       
-      // Provide a generic but helpful error message for various sign-in failures.
-      let toastDescription = 'An unknown error occurred. Please try again or check your network connection.';
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/popup-blocked':
-            toastDescription = 'Your browser blocked the sign-in popup. Please look for a popup blocker icon in your address bar and allow popups for this site.';
-            break;
-          case 'auth/popup-closed-by-user':
-          case 'auth/unauthorized-domain':
-            toastDescription = "This app's domain is not authorized. Please go to your Firebase Console -> Authentication -> Sign-in method -> Google and add this domain to the list of authorized domains.";
-            break;
-          case 'auth/cancelled-popup-request':
-            toastDescription = 'Sign-in cancelled. You can try again at any time.';
-            break;
-           case 'auth/configuration-not-found':
-            toastDescription = 'Google Sign-In is not enabled for this project. Please go to your Firebase Console -> Authentication -> Sign-in method and enable the Google provider.';
-            break;
-        }
-      }
-      
+      // Display the raw error for debugging purposes as requested.
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
-        description: toastDescription,
+        description: JSON.stringify(error),
         duration: 9000,
       });
     } finally {
