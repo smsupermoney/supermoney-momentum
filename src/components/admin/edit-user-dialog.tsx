@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,13 +34,12 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import type { User, UserRole } from '@/lib/types';
-import { useLanguage } from '@/contexts/language-context';
-import { NewUserSchema, userRoles, regions } from '@/lib/validation';
+import { EditUserSchema, userRoles, regions } from '@/lib/validation';
 
+type EditUserFormValues = z.infer<typeof EditUserSchema>;
 
-type NewUserFormValues = z.infer<typeof NewUserSchema>;
-
-interface NewUserDialogProps {
+interface EditUserDialogProps {
+  user: User;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -52,18 +51,34 @@ const managerRolesHierarchy: Record<string, UserRole[]> = {
     'National Sales Manager': ['Admin']
 };
 
-export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
-  const { addUser, users } = useApp();
+export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {
+  const { updateUser, users } = useApp();
   const { toast } = useToast();
-  const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<NewUserFormValues>({
-    resolver: zodResolver(NewUserSchema),
-    defaultValues: { name: '', email: '', role: '', managerId: '', region: '' },
+  const form = useForm<EditUserFormValues>({
+    resolver: zodResolver(EditUserSchema),
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      managerId: user.managerId || '',
+      region: user.region || '',
+    },
   });
+  
+  useEffect(() => {
+    form.reset({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      managerId: user.managerId || '',
+      region: user.region || '',
+    });
+  }, [user, form]);
 
-  const selectedRole = form.watch('role') as UserRole;
+
+  const selectedRole = form.watch('role');
 
   const possibleManagerRoles = useMemo(() => {
     return selectedRole ? managerRolesHierarchy[selectedRole] || [] : [];
@@ -83,27 +98,25 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     onOpenChange(false);
   }
 
-  const onSubmit = (values: NewUserFormValues) => {
+  const onSubmit = (values: EditUserFormValues) => {
     setIsSubmitting(true);
     try {
-      const newUser: Omit<User, 'uid' | 'id'> = {
-        name: values.name,
-        email: values.email,
-        role: values.role as UserRole,
+      const updatedUser: User = {
+        ...user,
+        ...values,
         managerId: showManagerDropdown ? values.managerId : null,
-        region: values.region,
       };
-      addUser(newUser);
+      updateUser(updatedUser);
       toast({
-        title: 'User Created',
-        description: `${values.name} has been added to the system.`,
+        title: 'User Updated',
+        description: `${values.name}'s profile has been updated.`,
       });
       handleClose();
     } catch (error) {
        toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to create new user. Please try again.',
+        description: 'Failed to update user. Please try again.',
       });
     } finally {
         setIsSubmitting(false);
@@ -114,8 +127,8 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('admin.addNewUser')}</DialogTitle>
-          <DialogDescription>{t('admin.userManagementDescription')}</DialogDescription>
+          <DialogTitle>Edit User: {user.name}</DialogTitle>
+          <DialogDescription>Modify the details for this user.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
@@ -124,7 +137,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('admin.table.name')}</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl><Input placeholder="e.g. John Doe" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,8 +148,8 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('admin.table.email')}</FormLabel>
-                  <FormControl><Input type="email" placeholder="e.g. john.doe@supermoney.in" {...field} /></FormControl>
+                  <FormLabel>Email (Cannot be changed)</FormLabel>
+                  <FormControl><Input type="email" {...field} disabled /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -146,7 +159,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('admin.table.role')}</FormLabel>
+                  <FormLabel>Role</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -162,7 +175,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               name="region"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('admin.table.region')}</FormLabel>
+                  <FormLabel>Region</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select a region" /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -179,7 +192,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
                 name="managerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.table.manager')}</FormLabel>
+                    <FormLabel>Manager</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} required>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select a manager" /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -194,10 +207,10 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               />
             )}
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('dialogs.create')} User
+                Save Changes
               </Button>
             </DialogFooter>
           </form>

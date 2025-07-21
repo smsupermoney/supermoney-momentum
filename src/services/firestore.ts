@@ -60,6 +60,14 @@ export const addUser = async (user: Omit<User, 'uid' | 'id'>): Promise<User> => 
     return { uid: tempId, id: tempId, ...user };
 };
 
+export const updateUser = async (user: User) => {
+  if (!db) throw new Error("Firestore not initialized");
+  const { id, uid, ...userData } = user;
+  const docRef = doc(db, 'users', uid);
+  await updateDoc(docRef, userData);
+};
+
+
 export const deleteUser = async (userId: string): Promise<void> => {
     if (!db) throw new Error("Firestore not initialized");
     const userDocRef = doc(db, 'users', userId);

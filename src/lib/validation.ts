@@ -6,6 +6,9 @@ import { z } from 'zod';
 // In a real application, these would be used within server actions or cloud functions
 // to ensure data integrity before writing to the database.
 
+export const userRoles = ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] as const;
+export const regions = ['National', 'West', 'East', 'North', 'South'] as const;
+
 export const NewAnchorSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required' }),
   industry: z.string().min(2, { message: 'Industry is required' }),
@@ -73,5 +76,11 @@ export const NewDailyActivitySchema = z.object({
 export const NewUserSchema = z.object({
     name: z.string().min(2, "User name is required."),
     email: z.string().email("A valid email is required."),
-    role: z.enum(['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development']),
+    role: z.enum(userRoles),
+    region: z.enum(regions).optional().or(z.literal('')),
+    managerId: z.string().optional(),
+});
+
+export const EditUserSchema = NewUserSchema.extend({
+  email: z.string().email("A valid email is required.").readonly(),
 });

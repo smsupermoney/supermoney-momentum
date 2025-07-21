@@ -11,7 +11,7 @@ import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut }
 import * as firestoreService from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema } from '@/lib/validation';
+import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema, EditUserSchema } from '@/lib/validation';
 import { sendNotificationEmail } from '@/ai/flows/send-notification-email-flow';
 import { generateUniqueId } from '@/lib/utils';
 
@@ -19,6 +19,7 @@ import { generateUniqueId } from '@/lib/utils';
 interface AppContextType {
   users: User[];
   addUser: (user: Omit<User, 'uid' | 'id'>) => void;
+  updateUser: (user: User) => void;
   deleteUser: (userId: string) => void;
   currentUser: User | null;
   login: (email: string, password: string) => boolean;
@@ -885,6 +886,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
     }
   };
+  
+  const updateUser = async (updatedUser: User) => {
+    try {
+        EditUserSchema.parse(updatedUser);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error("Validation failed for user update:", e.flatten().fieldErrors);
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for user update.' });
+            return;
+        }
+    }
+    if (!currentUser) return;
+     if (firebaseEnabled) {
+        await firestoreService.updateUser(updatedUser);
+     }
+     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+     addActivityLog({
+        timestamp: new Date().toISOString(),
+        type: 'Status Change', // Using status change for generic update
+        title: 'User Profile Updated',
+        outcome: `User profile for '${updatedUser.name}' was updated by ${currentUser.name}.`,
+        userName: 'System',
+        userId: currentUser.uid,
+        systemGenerated: true,
+    });
+  };
 
   const deleteUser = async (userId: string) => {
     if (!currentUser || currentUser.role !== 'Admin') {
@@ -949,8 +976,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const reassignLeads = (fromUserId: string, toUserId: string) => {
-    if (!currentUser || currentUser.role !== 'Admin') {
-      toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only Admins can reassign leads.' });
+    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+      toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only authorized users can reassign leads.' });
       return;
     }
 
@@ -1005,6 +1032,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     users,
     addUser,
+    updateUser,
     deleteUser,
     currentUser,
     login,

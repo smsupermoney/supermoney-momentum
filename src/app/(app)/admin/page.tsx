@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
-import { PlusCircle, Trash2, ArrowRight } from 'lucide-react';
+import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { PlusCircle, Trash2, ArrowRight, Pencil } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
@@ -290,6 +291,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [userAssignments, setUserAssignments] = useState<Record<string, string>>({});
   const [anchorAssignments, setAnchorAssignments] = useState<Record<string, string>>({});
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -384,6 +386,13 @@ export default function AdminPage() {
     <>
       <PageHeader title={t('admin.title')} description={t('admin.description')} />
       <NewUserDialog open={isNewUserDialogOpen} onOpenChange={setIsNewUserDialogOpen} />
+      {userToEdit && (
+        <EditUserDialog 
+          user={userToEdit}
+          open={!!userToEdit} 
+          onOpenChange={() => setUserToEdit(null)} 
+        />
+      )}
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -477,7 +486,10 @@ export default function AdminPage() {
                               <TableCell>{user.role}</TableCell>
                               <TableCell>{getManagerName(user.managerId)}</TableCell>
                               <TableCell>{user.region || 'N/A'}</TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right space-x-2">
+                                <Button variant="ghost" size="icon" onClick={() => setUserToEdit(user)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
                                 {user.uid !== currentUser?.uid && (
                                   <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -510,13 +522,16 @@ export default function AdminPage() {
                               <span className="text-muted-foreground">{t('admin.table.region')}:</span>
                               <span className="font-medium">{user.region || 'N/A'}</span>
                             </div>
-                            {user.uid !== currentUser?.uid && (
-                              <div className="pt-2">
-                                <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
-                                  <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
+                            <div className="pt-2 flex gap-2">
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToEdit(user)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit User
                                 </Button>
-                              </div>
-                            )}
+                                {user.uid !== currentUser?.uid && (
+                                    <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
+                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
+                                    </Button>
+                                )}
+                            </div>
                           </CardContent>
                         </Card>
                       ))}

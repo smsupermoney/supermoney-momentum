@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum, Remark } from '@/lib/types';
+import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum, Remark, User } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { useForm } from 'react-hook-form';
@@ -59,7 +59,7 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
+  const { updateUser, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,10 +142,16 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     setIsSubmitting(false);
     onOpenChange(false);
   };
-
+  
   const canDelete = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
   const canReassign = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
+
+  const assignableUsers = useMemo(() => {
+    if (!canReassign) return [];
+    return users.filter(u => u.role === 'Area Sales Manager');
+  }, [canReassign, users]);
+
 
   return (
     <>
@@ -176,7 +182,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                             <Select onValueChange={handleAssignmentChange} defaultValue={dealer.assignedTo || ''}>
                                 <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
                                 <SelectContent>
-                                    {users.filter(u => u.role === 'Area Sales Manager').map(user => (
+                                    {assignableUsers.map(user => (
                                         <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>))}
                                 </SelectContent>
                             </Select>

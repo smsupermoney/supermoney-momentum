@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -142,10 +142,15 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     setIsSubmitting(false);
     onOpenChange(false);
   };
-
+  
   const canDelete = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
   const canReassign = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
+
+  const assignableUsers = useMemo(() => {
+    if (!canReassign) return [];
+    return users.filter(u => u.role === 'Area Sales Manager');
+  }, [canReassign, users]);
 
 
   return (
@@ -177,7 +182,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                             <Select onValueChange={handleAssignmentChange} defaultValue={vendor.assignedTo || ''}>
                                 <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
                                 <SelectContent>
-                                    {users.filter(u => u.role === 'Area Sales Manager').map(user => (
+                                    {assignableUsers.map(user => (
                                         <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>))}
                                 </SelectContent>
                             </Select>
