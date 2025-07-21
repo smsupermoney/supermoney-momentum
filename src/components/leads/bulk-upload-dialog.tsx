@@ -55,10 +55,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (DD/MM/YYYY),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (DD/MM/YYYY),TAT";
+    const headers = "Name,Contact Number,Email,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (DD/MM/YYYY),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (DD/MM/YYYY),TAT";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,26/07/2024,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,10/05/2024,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,15/11/2023,120"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,26/07/2024,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,10/05/2024,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,15/11/2023,120"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -111,10 +111,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         
         try {
             const [
-              name, contactNumber, email, gstin, city, state, zone,
-              anchorName, product, leadSource, leadType, leadDateStr,
-              statusStr, assignedToEmail, dealValueStr, lenderName, remarks,
-              spoc, initialLeadDateStr, tatStr
+              name, contactNumber, email, city, state, zone, // Columns A-F
+              anchorName, product, leadSource, leadType, leadDateStr, // Columns G-K
+              statusStr, assignedToEmail, dealValueStr, lenderName, remarks, // Columns L-P
+              spoc, initialLeadDateStr, tatStr // Columns Q-S
             ] = columns;
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
@@ -129,16 +129,16 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
-            const parsedLeadDate = parseDate(leadDateStr);
+            const parsedLeadDate = parseDate(leadDateStr) || new Date();
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
             const rawData = {
               name: name || '',
               dealValue: parseFloat(dealValueStr) || undefined,
               leadType: leadType || undefined,
-              leadDate: parsedLeadDate || new Date(), // Default to today if empty/invalid
+              leadDate: parsedLeadDate,
               contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
-              gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, 
+              city, state, zone, anchorId: finalAnchorId, product, leadSource, 
               lenderId: targetLender?.id || null,
               spoc,
               initialLeadDate: parsedInitialLeadDate,
@@ -152,7 +152,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
               contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
-              gstin: validatedData.gstin,
               city: validatedData.city,
               state: validatedData.state,
               zone: validatedData.zone,
