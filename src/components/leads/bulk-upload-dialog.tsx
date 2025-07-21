@@ -55,10 +55,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (YYYY-MM-DD),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (YYYY-MM-DD),TAT";
+    const headers = "Name,Contact Number,Email,GSTIN,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Lead Date (DD/MM/YYYY),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (DD/MM/YYYY),TAT";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,2024-07-26,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,2024-05-10,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,2023-11-15,120"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,27AAAAA0000A1Z5,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,26/07/2024,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,29BBBBB1111B2Z6,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,10/05/2024,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,15/11/2023,120"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -74,6 +74,18 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     URL.revokeObjectURL(url);
   };
 
+  const parseDate = (dateStr: string): Date | undefined => {
+    if (!dateStr) return undefined;
+    const parts = dateStr.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+    if (!parts) return undefined;
+    const day = parseInt(parts[1], 10);
+    const month = parseInt(parts[2], 10) - 1; // JS months are 0-indexed
+    const year = parseInt(parts[3], 10);
+    if (day > 0 && day <= 31 && month >= 0 && month < 12 && year > 1900) {
+      return new Date(year, month, day);
+    }
+    return undefined;
+  };
 
   const processCSV = () => {
     if (!selectedFile) {
@@ -117,16 +129,19 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
+            const parsedLeadDate = parseDate(leadDateStr);
+            const parsedInitialLeadDate = parseDate(initialLeadDateStr);
+
             const rawData = {
               name: name || '',
               dealValue: parseFloat(dealValueStr) || undefined,
               leadType: leadType || undefined,
-              leadDate: leadDateStr ? new Date(leadDateStr) : new Date(),
+              leadDate: parsedLeadDate || new Date(), // Default to today if empty/invalid
               contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
               gstin, city, state, zone, anchorId: finalAnchorId, product, leadSource, 
               lenderId: targetLender?.id || null,
               spoc,
-              initialLeadDate: initialLeadDateStr ? new Date(initialLeadDateStr) : undefined,
+              initialLeadDate: parsedInitialLeadDate,
               remarks: remarks ? [{ text: remarks, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
               tat: tatStr ? parseInt(tatStr, 10) : undefined,
             };
