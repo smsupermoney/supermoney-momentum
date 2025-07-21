@@ -889,7 +889,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUser = async (updatedUser: User) => {
     try {
-        EditUserSchema.parse(updatedUser);
+        const dataToValidate = {
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            managerId: updatedUser.managerId,
+            region: updatedUser.region,
+        };
+        EditUserSchema.parse(dataToValidate);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for user update:", e.flatten().fieldErrors);
