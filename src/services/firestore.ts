@@ -102,6 +102,12 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
       userDocSnap = await getDoc(userDocRef);
     }
   }
+  
+  if (!userDocSnap.exists()) {
+    // This should theoretically not be reached after the above logic, but as a safeguard:
+    console.error("Failed to create or find user document even after creation attempt.");
+    return null;
+  }
 
   // Final check for data integrity before returning the user profile.
   // This handles cases where a document might exist but be malformed.
