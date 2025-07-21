@@ -74,7 +74,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     URL.revokeObjectURL(url);
   };
 
-  const parseDate = (dateStr: string): Date | undefined => {
+  const parseDate = (dateStr: string | undefined): Date | undefined => {
     if (!dateStr) return undefined;
     const parts = dateStr.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
     if (!parts) return undefined;
@@ -148,7 +148,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             
             const validatedData = NewSpokeSchema.parse(rawData);
             
-            const commonData = {
+            const commonData: Record<string, any> = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
               contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
@@ -167,11 +167,18 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               updatedAt: new Date().toISOString(),
               leadDate: validatedData.leadDate?.toISOString(),
               leadType: (validatedData.leadType as LeadTypeEnum) || 'Fresh',
-              dealValue: validatedData.dealValue || 0,
+              dealValue: validatedData.dealValue,
               spoc: validatedData.spoc,
               initialLeadDate: validatedData.initialLeadDate?.toISOString(),
               tat: validatedData.tat,
             };
+
+            // Remove undefined fields before sending to Firestore
+            Object.keys(commonData).forEach(key => {
+              if (commonData[key] === undefined) {
+                delete commonData[key];
+              }
+            });
 
             if (type === 'Dealer') {
               await addDealer(commonData as Omit<Dealer, 'id'>);
