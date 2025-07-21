@@ -68,7 +68,7 @@ export default function LoginPage() {
             toastDescription = 'Your browser blocked the sign-in popup. Please look for a popup blocker icon in your address bar and allow popups for this site.';
             break;
           case 'auth/popup-closed-by-user':
-            toastDescription = 'The sign-in popup was closed before completing. If this happens instantly, please ensure your domain is authorized in the Firebase console and the user account exists in the CRM.';
+            toastDescription = "This app's domain is not authorized. Please go to your Firebase Console -> Authentication -> Sign-in method -> Google and add this domain to the list of authorized domains.";
             break;
           case 'auth/cancelled-popup-request':
             toastDescription = 'Sign-in cancelled. You can try again at any time.';
