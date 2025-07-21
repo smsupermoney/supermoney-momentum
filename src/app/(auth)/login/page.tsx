@@ -64,6 +64,9 @@ export default function LoginPage() {
       let toastDescription = 'An unknown error occurred. Please try again or check your network connection.';
       if (error.code) {
         switch (error.code) {
+          case 'auth/popup-blocked':
+            toastDescription = 'Your browser blocked the sign-in popup. Please look for a popup blocker icon in your address bar and allow popups for this site.';
+            break;
           case 'auth/popup-closed-by-user':
             toastDescription = 'The sign-in popup was closed before completing. If this happens instantly, please ensure your domain is authorized in the Firebase console and the user account exists in the CRM.';
             break;
