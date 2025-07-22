@@ -118,10 +118,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             ] = columns;
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
-            const finalAnchorId = anchorId || associatedAnchor?.id || null;
+            const finalAnchorId = anchorId || associatedAnchor?.id;
             
             if (anchorName && !associatedAnchor) {
-              throw new z.ZodError([{ path: ['anchorName'], message: `Anchor named '${anchorName}' not found.`, code: 'custom' }]);
+              throw new z.ZodError([{ path: ['anchorId'], message: `Anchor named '${anchorName}' not found.`, code: 'custom' }]);
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
@@ -132,24 +132,23 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
-            const rawData = {
-              name: name || '',
-              contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
-              anchorId: finalAnchorId,
-            };
-            
-            NewSpokeSchema.parse(rawData);
-            
             const commonData: Record<string, any> = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
-              name: name,
-              contacts: [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email, designation: '', id: `contact-${Date.now()}`, isPrimary: true }],
-              assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
-              anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              assignedTo: finalAssignedToId,
+              anchorId: finalAnchorId,
+              name: name,
+              contacts: [{ 
+                name: spoc || name || 'Primary Contact', 
+                phone: contactNumber, 
+                email: email || '', 
+                designation: '', 
+                id: `contact-${Date.now()}`, 
+                isPrimary: true 
+              }],
               leadType: (leadType as LeadTypeEnum) || 'Fresh',
+              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
             };
             
             if (city) commonData.city = city;
@@ -164,16 +163,14 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             if (parsedLeadDate) commonData.leadDate = parsedLeadDate.toISOString();
             if (parsedInitialLeadDate) commonData.initialLeadDate = parsedInitialLeadDate.toISOString();
             if (tatStr && !isNaN(parseInt(tatStr, 10))) commonData.tat = parseInt(tatStr, 10);
-            if (email) commonData.contacts[0].email = email;
 
-            // Final check to remove any undefined values before sending to Firestore
+            // Final sanitization to remove any null or undefined values before sending to Firestore
             Object.keys(commonData).forEach(key => {
-                if (commonData[key] === undefined || commonData[key] === null || commonData[key] === '') {
+                if (commonData[key] === undefined || commonData[key] === null) {
                     delete commonData[key];
                 }
             });
-
-
+            
             if (type === 'Dealer') {
               await addDealer(commonData as Omit<Dealer, 'id'>);
             } else {
