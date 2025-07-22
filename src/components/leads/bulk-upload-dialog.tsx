@@ -111,10 +111,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         
         try {
             const [
-              name, contactNumber, email, city, state, zone, // Columns A-F
-              anchorName, product, leadSource, leadType, leadDateStr, // Columns G-K
-              statusStr, assignedToEmail, dealValueStr, lenderName, remarks, // Columns L-P
-              spoc, initialLeadDateStr, tatStr // Columns Q-S
+              name, contactNumber, email, city, state, zone,
+              anchorName, product, leadSource, leadType, leadDateStr,
+              statusStr, assignedToEmail, dealValueStr, lenderName, remarks,
+              spoc, initialLeadDateStr, tatStr
             ] = columns;
 
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
@@ -125,7 +125,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser?.uid || null;
+            const finalAssignedToId = targetUser?.id || null;
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
@@ -152,13 +152,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               name: validatedData.name,
               contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
-              city: validatedData.city,
-              state: validatedData.state,
-              zone: validatedData.zone,
-              product: validatedData.product,
-              leadSource: validatedData.leadSource,
-              lenderId: validatedData.lenderId,
-              remarks: validatedData.remarks,
               assignedTo: finalAssignedToId,
               status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
               anchorId: finalAnchorId,
@@ -166,18 +159,22 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               updatedAt: new Date().toISOString(),
               leadDate: validatedData.leadDate?.toISOString(),
               leadType: (validatedData.leadType as LeadTypeEnum) || 'Fresh',
-              dealValue: validatedData.dealValue,
-              spoc: validatedData.spoc,
-              initialLeadDate: validatedData.initialLeadDate?.toISOString(),
-              tat: validatedData.tat,
             };
 
-            // Remove undefined fields before sending to Firestore
-            Object.keys(commonData).forEach(key => {
-              if (commonData[key] === undefined) {
-                delete commonData[key];
-              }
-            });
+            // Conditionally add optional fields to avoid sending 'undefined' to Firestore
+            if (validatedData.city) commonData.city = validatedData.city;
+            if (validatedData.state) commonData.state = validatedData.state;
+            if (validatedData.zone) commonData.zone = validatedData.zone;
+            if (validatedData.product) commonData.product = validatedData.product;
+            if (validatedData.leadSource) commonData.leadSource = validatedData.leadSource;
+            if (validatedData.lenderId) commonData.lenderId = validatedData.lenderId;
+            if (validatedData.remarks && validatedData.remarks.length > 0) commonData.remarks = validatedData.remarks;
+            if (validatedData.dealValue) commonData.dealValue = validatedData.dealValue;
+            if (validatedData.spoc) commonData.spoc = validatedData.spoc;
+            if (validatedData.initialLeadDate) commonData.initialLeadDate = validatedData.initialLeadDate.toISOString();
+            if (validatedData.tat) commonData.tat = validatedData.tat;
+            if (validatedData.gstin) commonData.gstin = validatedData.gstin;
+
 
             if (type === 'Dealer') {
               await addDealer(commonData as Omit<Dealer, 'id'>);
