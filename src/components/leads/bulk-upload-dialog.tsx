@@ -125,7 +125,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser?.id || null;
+            const finalAssignedToId = targetUser?.uid || null;
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
@@ -135,7 +135,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const rawData = {
               name: name || '',
               dealValue: parseFloat(dealValueStr) || undefined,
-              leadType: leadType || undefined,
+              leadType: leadType || 'Fresh',
               leadDate: parsedLeadDate,
               contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
               city, state, zone, anchorId: finalAnchorId, product, leadSource, 
@@ -174,6 +174,13 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             if (validatedData.initialLeadDate) commonData.initialLeadDate = validatedData.initialLeadDate.toISOString();
             if (validatedData.tat) commonData.tat = validatedData.tat;
             if (validatedData.gstin) commonData.gstin = validatedData.gstin;
+
+            // Final cleanup of undefined values
+            for (const key in commonData) {
+                if (commonData[key] === undefined) {
+                    delete commonData[key];
+                }
+            }
 
 
             if (type === 'Dealer') {

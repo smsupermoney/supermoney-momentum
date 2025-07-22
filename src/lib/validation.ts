@@ -23,7 +23,7 @@ export const NewAnchorSchema = z.object({
 
 export const ContactSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(2, { message: 'Contact name is required' }),
+    name: z.string().optional(),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
     phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
     designation: z.string().optional(),
@@ -45,7 +45,7 @@ export const NewSpokeSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zone: z.string().optional(),
-  anchorId: z.string().nullable().optional(),
+  anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
@@ -81,6 +81,10 @@ export const NewUserSchema = z.object({
     managerId: z.string().optional(),
 });
 
-export const EditUserSchema = NewUserSchema.extend({
-  email: z.string().email("A valid email is required.").readonly(),
+export const EditUserSchema = z.object({
+    name: z.string().min(2, "User name is required."),
+    email: z.string().email("A valid email is required.").readonly(),
+    role: z.enum(userRoles),
+    region: z.enum(regions).optional().or(z.literal('')),
+    managerId: z.string().optional().nullable(),
 });

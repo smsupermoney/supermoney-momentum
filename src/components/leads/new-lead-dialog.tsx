@@ -29,15 +29,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Vendor, LeadType as LeadTypeEnum } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
-import { Loader2, PlusCircle, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { generateUniqueId } from '@/lib/utils';
 import { NewSpokeSchema } from '@/lib/validation';
-import { products } from '@/lib/types';
-import { Textarea } from '../ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 type NewLeadFormValues = z.infer<typeof NewSpokeSchema>;
 
@@ -49,7 +43,7 @@ interface NewLeadDialogProps {
 }
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
-  const { addDealer, addVendor, currentUser, anchors, lenders } = useApp();
+  const { addDealer, addVendor, currentUser, anchors } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,48 +51,16 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: '',
-      contacts: [{ name: '', email: '', phone: '', designation: '' }],
-      gstin: '',
-      city: '',
-      state: '',
-      zone: '',
+      contacts: [{ phone: '' }],
       anchorId: anchorId || '',
-      product: '',
-      leadType: 'Fresh',
-      leadSource: '',
-      lenderId: '',
-      remarks: [],
-      leadDate: new Date(),
-      spoc: '',
-      initialLeadDate: undefined,
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "contacts",
-  });
-
-  const watchLeadType = form.watch('leadType');
-  
   const handleClose = () => {
     form.reset({
-        name: '',
-        contacts: [{ name: '', email: '', phone: '', designation: '' }],
-        gstin: '',
-        city: '',
-        state: '',
-        zone: '',
-        anchorId: anchorId || '',
-        product: '',
-        leadType: 'Fresh',
-        leadSource: '',
-        dealValue: undefined,
-        lenderId: '',
-        remarks: [],
-        leadDate: new Date(),
-        spoc: '',
-        initialLeadDate: undefined,
+      name: '',
+      contacts: [{ phone: '' }],
+      anchorId: anchorId || '',
     });
     onOpenChange(false);
   }
@@ -113,12 +75,17 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     try {
         const isSpecialist = currentUser.role === 'Business Development';
         const finalAnchorId = anchorId || values.anchorId || null;
-        const associatedAnchor = finalAnchorId ? anchors.find(a => a.id === finalAnchorId) : null;
+        
+        if (!finalAnchorId) {
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'An anchor must be selected.' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        const associatedAnchor = anchors.find(a => a.id === finalAnchorId);
 
         const scoringInput: SpokeScoringInput = {
             name: values.name,
-            product: values.product,
-            location: values.city,
             anchorName: associatedAnchor?.name,
             anchorIndustry: associatedAnchor?.industry,
         };
@@ -129,25 +96,15 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
           name: values.name,
           contacts: values.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
-          gstin: values.gstin,
-          city: values.city,
-          state: values.state,
-          zone: values.zone,
-          product: values.product || undefined,
-          leadSource: values.leadSource,
-          lenderId: values.lenderId || undefined,
-          remarks: values.remarks,
           assignedTo: isSpecialist ? null : currentUser.uid,
           status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'New' : 'Unassigned Lead'),
           anchorId: finalAnchorId,
           createdAt: new Date().toISOString(),
-          leadDate: values.leadDate?.toISOString(),
+          leadDate: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
-          leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
-          dealValue: values.dealValue,
-          spoc: values.spoc,
-          initialLeadDate: values.initialLeadDate?.toISOString(),
+          leadType: 'Fresh' as LeadTypeEnum,
+          remarks: [],
         }
 
         if (type === 'Dealer') {
@@ -177,20 +134,44 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         setIsSubmitting(false);
     }
   };
-  
-  const canEditLeadDate = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>+ New {type} Lead</DialogTitle>
           <DialogDescription>
-            Add a new {type.toLowerCase()} lead. Only Name and Contact Number are required.
+            Add a new {type.toLowerCase()} lead. Only Name, Contact Number, and Anchor are required.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            {!anchorId && (
+                 <FormField
+                  control={form.control}
+                  name="anchorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anchor</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select the associated anchor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {anchors.filter(a => a.status === 'Active').map((anchor) => (
+                            <SelectItem key={anchor.id} value={anchor.id}>
+                              {anchor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            )}
             <FormField
               control={form.control}
               name="name"
@@ -218,69 +199,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   </FormItem>
                 )}
               />
-
-            <FormField
-              control={form.control}
-              name="spoc"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{type} SPOC</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Single Point of Contact name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="leadType"
-                  render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Lead Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                <SelectItem value="Fresh">Fresh</SelectItem>
-                                <SelectItem value="Renewal">Renewal</SelectItem>
-                                <SelectItem value="Adhoc">Adhoc</SelectItem>
-                                <SelectItem value="Enhancement">Enhancement</SelectItem>
-                                <SelectItem value="Cross sell">Cross sell</SelectItem>
-                                <SelectItem value="Revive">Revive</SelectItem>
-                              </SelectContent>
-                          </Select>
-                        <FormMessage />
-                      </FormItem>
-                  )}
-                />
-              {watchLeadType === 'Revive' && (
-                <FormField
-                  control={form.control}
-                  name="initialLeadDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Initial Lead Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal',!field.value && 'text-muted-foreground')}>
-                              {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
             
             <DialogFooter>
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
