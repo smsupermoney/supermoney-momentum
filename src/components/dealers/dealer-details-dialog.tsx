@@ -59,7 +59,7 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateUser, currentUser, deleteDealer, lenders, users } = useApp();
+  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
