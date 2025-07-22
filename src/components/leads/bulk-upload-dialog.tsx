@@ -125,25 +125,17 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser?.uid || null;
+            const finalAssignedToId = targetUser?.id || null;
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
-            const parsedLeadDate = parseDate(leadDateStr) || new Date();
+            const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
             const rawData = {
               name: name || '',
-              dealValue: parseFloat(dealValueStr) || undefined,
-              leadType: leadType || 'Fresh',
-              leadDate: parsedLeadDate,
               contacts: contactNumber ? [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email || undefined, designation: '' }] : [],
-              city, state, zone, anchorId: finalAnchorId, product, leadSource, 
-              lenderId: targetLender?.id || null,
-              spoc,
-              initialLeadDate: parsedInitialLeadDate,
-              remarks: remarks ? [{ text: remarks, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
-              tat: tatStr ? parseInt(tatStr, 10) : undefined,
+              anchorId: finalAnchorId,
             };
             
             const validatedData = NewSpokeSchema.parse(rawData);
@@ -157,30 +149,21 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               anchorId: finalAnchorId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              leadDate: validatedData.leadDate?.toISOString(),
-              leadType: (validatedData.leadType as LeadTypeEnum) || 'Fresh',
+              leadType: (leadType as LeadTypeEnum) || 'Fresh',
             };
-
-            // Conditionally add optional fields to avoid sending 'undefined' to Firestore
-            if (validatedData.city) commonData.city = validatedData.city;
-            if (validatedData.state) commonData.state = validatedData.state;
-            if (validatedData.zone) commonData.zone = validatedData.zone;
-            if (validatedData.product) commonData.product = validatedData.product;
-            if (validatedData.leadSource) commonData.leadSource = validatedData.leadSource;
-            if (validatedData.lenderId) commonData.lenderId = validatedData.lenderId;
-            if (validatedData.remarks && validatedData.remarks.length > 0) commonData.remarks = validatedData.remarks;
-            if (validatedData.dealValue) commonData.dealValue = validatedData.dealValue;
-            if (validatedData.spoc) commonData.spoc = validatedData.spoc;
-            if (validatedData.initialLeadDate) commonData.initialLeadDate = validatedData.initialLeadDate.toISOString();
-            if (validatedData.tat) commonData.tat = validatedData.tat;
-            if (validatedData.gstin) commonData.gstin = validatedData.gstin;
-
-            // Final cleanup of undefined values
-            for (const key in commonData) {
-                if (commonData[key] === undefined) {
-                    delete commonData[key];
-                }
-            }
+            
+            if (city) commonData.city = city;
+            if (state) commonData.state = state;
+            if (zone) commonData.zone = zone;
+            if (product) commonData.product = product;
+            if (leadSource) commonData.leadSource = leadSource;
+            if (targetLender?.id) commonData.lenderId = targetLender.id;
+            if (remarks) commonData.remarks = [{ text: remarks, timestamp: new Date().toISOString(), userName: currentUser.name }];
+            if (dealValueStr) commonData.dealValue = parseFloat(dealValueStr);
+            if (spoc) commonData.spoc = spoc;
+            if (parsedLeadDate) commonData.leadDate = parsedLeadDate.toISOString();
+            if (parsedInitialLeadDate) commonData.initialLeadDate = parsedInitialLeadDate.toISOString();
+            if (tatStr) commonData.tat = parseInt(tatStr, 10);
 
 
             if (type === 'Dealer') {
@@ -234,7 +217,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with lead details. Only Name and Contact Number are required.
+            Upload a CSV file with lead details. Only Name, Contact Number and Anchor Name are required.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
