@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for sending notification emails.
@@ -13,7 +14,7 @@ import nodemailer from 'nodemailer';
 
 const SendNotificationEmailInputSchema = z.object({
   to: z.string().email().describe("The recipient's email address."),
-  type: z.enum(['NewLeadAssignment', 'TaskOverdue', 'NewAnchorAdded']).describe('The type of notification.'),
+  type: z.enum(['NewLeadAssignment', 'TaskOverdue', 'NewAnchorAdded', 'DailyDigest']).describe('The type of notification.'),
   context: z.object({
     assigneeName: z.string().optional(),
     leadName: z.string().optional(),
@@ -23,13 +24,15 @@ const SendNotificationEmailInputSchema = z.object({
     taskDueDate: z.string().optional(),
     anchorName: z.string().optional(),
     creatorName: z.string().optional(),
+    subject: z.string().optional(),
+    body: z.string().optional(), // For raw HTML emails like the digest
   }).describe('The context for the notification.'),
 });
 export type SendNotificationEmailInput = z.infer<typeof SendNotificationEmailInputSchema>;
 
 const SendNotificationEmailOutputSchema = z.object({
   subject: z.string().describe('The subject line for the email.'),
-  body: z.string().describe('The plain text body of the email.'),
+  body: z.string().describe('The plain text or HTML body of the email.'),
 });
 export type SendNotificationEmailOutput = z.infer<typeof SendNotificationEmailOutputSchema>;
 
@@ -49,9 +52,10 @@ const prompt = ai.definePrompt({
 
 # Instructions
 1.  Based on the 'type', generate an appropriate 'subject' and 'body'.
-2.  The tone should be direct and informative.
-3.  Do not add salutations like "Hi [Name]," or sign-offs. The email body should be the notification text itself.
-4.  The output must be a valid JSON object with 'subject' and 'body' keys.
+2.  If the type is 'DailyDigest', the 'subject' and 'body' are already provided in the context. Simply pass them through. The body will be HTML.
+3.  For all other types, the tone should be direct and informative.
+4.  Do not add salutations like "Hi [Name]," or sign-offs. The email body should be the notification text itself.
+5.  The output must be a valid JSON object with 'subject' and 'body' keys.
 
 # Examples
 -   **Type: NewLeadAssignment**
@@ -97,8 +101,8 @@ const sendNotificationEmailFlow = ai.defineFlow(
           from: `"Supermoney Sales Hub" <${process.env.EMAIL_SERVER_USER}>`,
           to: input.to,
           subject: email.subject,
-          text: email.body, // plain text body
-          // html: "<p>Or HTML body</p>" // You can also send HTML
+          text: input.type === 'DailyDigest' ? 'Please view this email in an HTML-compatible client.' : email.body,
+          html: input.type === 'DailyDigest' ? email.body : undefined,
         };
 
         try {

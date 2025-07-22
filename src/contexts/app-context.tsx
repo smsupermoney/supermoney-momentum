@@ -12,7 +12,7 @@ import * as firestoreService from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema, EditUserSchema } from '@/lib/validation';
-import { sendNotificationEmail } from '@/ai/flows/send-notification-email-flow';
+import { sendNotificationEmail, SendNotificationEmailInput } from '@/ai/flows/send-notification-email-flow';
 import { generateUniqueId } from '@/lib/utils';
 
 
@@ -53,6 +53,7 @@ interface AppContextType {
   addLender: (lender: Omit<Lender, 'id'>) => void;
   deleteLender: (lenderId: string) => void;
   reassignLeads: (fromUserId: string, toUserId: string) => void;
+  sendEmail: (input: SendNotificationEmailInput) => Promise<void>;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
@@ -1039,6 +1040,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         systemGenerated: true,
     });
   }
+
+  const sendEmail = async (input: SendNotificationEmailInput) => {
+    if (!currentUser) {
+        toast({ variant: "destructive", title: "Not logged in" });
+        return;
+    }
+    try {
+        const result = await sendNotificationEmail(input);
+
+        // Log this action
+        addActivityLog({
+            timestamp: new Date().toISOString(),
+            type: 'Email',
+            title: `Email: ${result.subject}`,
+            outcome: result.body,
+            userName: currentUser.name,
+            userId: currentUser.uid,
+            systemGenerated: true, // It's a system-generated email format
+        });
+    } catch (error) {
+        console.error("Failed to send email:", error);
+        toast({
+            variant: "destructive",
+            title: "Email Failed",
+            description: "Could not send the email.",
+        });
+    }
+  };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -1087,6 +1116,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     addLender,
     deleteLender,
     reassignLeads,
+    sendEmail,
     t
   };
 

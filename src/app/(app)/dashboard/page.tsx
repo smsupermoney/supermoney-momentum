@@ -21,10 +21,16 @@ import {
   Shield,
   BarChart,
   LayoutDashboard,
+  Mail,
+  Loader2,
 } from 'lucide-react';
-import type { UserRole } from '@/lib/types';
+import type { UserRole, Task } from '@/lib/types';
 import { StaleLeadsCard } from '@/components/dashboard/stale-leads-card';
 import { TeamProgressCard } from '@/components/dashboard/team-progress-card';
+import { generateDailyDigest } from '@/ai/flows/generate-daily-digest-flow';
+import { isPast, isToday } from 'date-fns';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 
 function QuickNav() {
@@ -70,7 +76,59 @@ function QuickNav() {
 
 
 export default function DashboardPage() {
-    const { currentUser, t } = useApp();
+    const { currentUser, t, tasks, dealers, vendors, sendEmail } = useApp();
+    const { toast } = useToast();
+    const [isDigestLoading, setIsDigestLoading] = useState(false);
+
+    const handleSendDigest = async () => {
+      if (!currentUser) return;
+      setIsDigestLoading(true);
+
+      try {
+        const userTasks = tasks.filter(t => t.assignedTo === currentUser.uid);
+        const tasksDueToday = userTasks.filter(t => isToday(new Date(t.dueDate)) && t.status !== 'Completed');
+        const overdueTasks = userTasks.filter(t => isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate)) && t.status !== 'Completed');
+
+        const now = new Date();
+        const yesterday = new Date(now.setDate(now.getDate() - 1));
+        const newLeads = [...dealers, ...vendors].filter(lead => 
+            lead.assignedTo === currentUser.uid &&
+            new Date(lead.createdAt) > yesterday
+        ).map(l => ({ id: l.id, name: l.name, type: 'dealerIds' in l ? 'Vendor' : 'Dealer', status: l.status}));
+
+
+        const digest = await generateDailyDigest({
+            userName: currentUser.name,
+            tasksDueToday: tasksDueToday.map(t => ({id: t.id, title: t.title, dueDate: t.dueDate, priority: t.priority})),
+            overdueTasks: overdueTasks.map(t => ({id: t.id, title: t.title, dueDate: t.dueDate, priority: t.priority})),
+            newLeads: newLeads,
+        });
+
+        await sendEmail({
+            to: currentUser.email,
+            type: 'DailyDigest',
+            context: {
+                subject: digest.subject,
+                body: digest.body,
+            }
+        });
+        
+        toast({
+            title: "Daily Digest Sent (Simulation)",
+            description: "The summary email has been generated and logged.",
+        });
+
+      } catch (error) {
+         console.error("Failed to generate or send daily digest:", error);
+         toast({
+            variant: "destructive",
+            title: "Digest Failed",
+            description: "Could not generate or send the daily digest email.",
+         })
+      } finally {
+        setIsDigestLoading(false);
+      }
+    };
 
     if (!currentUser) return null;
 
@@ -108,7 +166,18 @@ export default function DashboardPage() {
             <PageHeader 
                 title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
-            />
+            >
+              {currentUser.role === 'Area Sales Manager' && (
+                <Button variant="outline" onClick={handleSendDigest} disabled={isDigestLoading}>
+                  {isDigestLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="mr-2 h-4 w-4" />
+                  )}
+                  Send Daily Digest
+                </Button>
+              )}
+            </PageHeader>
             <QuickNav />
             {renderDashboard()}
         </>
