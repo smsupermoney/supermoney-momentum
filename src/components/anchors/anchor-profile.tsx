@@ -25,6 +25,7 @@ import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 import { useLanguage } from '@/contexts/language-context';
 import { NewContactDialog } from './new-contact-dialog';
 import { cn } from '@/lib/utils';
+import { spokeStatuses } from '@/lib/types';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -258,7 +259,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
           <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>{t('anchors.profile.associatedDealers')}</CardTitle>
+                    <CardTitle>{t('anchors.profile.associatedDealers')} ({initialDealers.length})</CardTitle>
                     {isSalesRole && <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addDealer')}</Button>}
                 </div>
             </CardHeader>
@@ -272,7 +273,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
           <Card>
              <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>{t('anchors.profile.associatedVendors')}</CardTitle>
+                    <CardTitle>{t('anchors.profile.associatedVendors')} ({initialVendors.length})</CardTitle>
                     {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addVendor')}</Button>}
                 </div>
             </CardHeader>
@@ -330,7 +331,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 }
 
 function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onUpdateSpoke: (spoke: any) => void; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
-    const { currentUser } = useApp();
+    const { currentUser, users } = useApp();
     const { t } = useLanguage();
     const isSpecialist = currentUser?.role === 'Business Development';
 
@@ -341,20 +342,23 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
     const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
         switch (status) {
             case 'Active':
+            case 'Already Onboarded':
+            case 'Disbursed':
+            case 'Approved PF Collected':
+            case 'Limit Live':
                 return 'default';
             case 'Rejected':
             case 'Not Interested':
+            case 'Closed':
                 return 'destructive';
-            case 'Unassigned Lead':
-            case 'New':
-                return 'outline';
-            case 'Onboarding':
-            case 'Partial Docs':
-            case 'Not reachable':
-                return 'secondary';
             default:
-                return 'outline';
+                return 'secondary';
         }
+    };
+    
+    const getAssignedToName = (userId: string | null) => {
+        if (!userId) return 'Unassigned';
+        return users.find(u => u.uid === userId)?.name || 'Unknown';
     };
 
     return (
@@ -365,8 +369,9 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                     <TableHeader>
                         <TableRow>
                             <TableHead>{t('anchors.profile.spokeTable.name', { type })}</TableHead>
-                            <TableHead>{t('anchors.profile.spokeTable.contact')}</TableHead>
+                            <TableHead>Phone</TableHead>
                             <TableHead>{t('anchors.profile.spokeTable.status')}</TableHead>
+                            <TableHead>Assigned To</TableHead>
                             <TableHead className="text-right">{t('anchors.profile.spokeTable.actions')}</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -374,7 +379,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                         {spokes.length > 0 ? spokes.map(spoke => (
                         <TableRow key={spoke.id}>
                             <TableCell className="font-medium">{spoke.name}</TableCell>
-                            <TableCell>{spoke.contactNumber}</TableCell>
+                            <TableCell>{spoke.contacts?.[0]?.phone || 'N/A'}</TableCell>
                             <TableCell>
                                 {isSpecialist ? (
                                     <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
@@ -382,26 +387,21 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="New">New</SelectItem>
-                                            <SelectItem value="Onboarding">Onboarding</SelectItem>
-                                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
-                                            <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                            <SelectItem value="Active">Active</SelectItem>
-                                            <SelectItem value="Rejected">Rejected</SelectItem>
-                                            <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                            {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 ) : (
                                     <Badge variant={getStatusVariant(spoke.status)}>{spoke.status}</Badge>
                                 )}
                             </TableCell>
+                            <TableCell>{getAssignedToName(spoke.assignedTo)}</TableCell>
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="sm" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>
                             </TableCell>
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</TableCell>
+                                <TableCell colSpan={5} className="h-24 text-center">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -414,8 +414,9 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                         <CardContent className="p-4 space-y-3">
                             <div>
                                 <p className="font-medium">{spoke.name}</p>
-                                <p className="text-sm text-muted-foreground">{spoke.contactNumber}</p>
+                                <p className="text-sm text-muted-foreground">{spoke.contacts?.[0]?.phone || 'N/A'}</p>
                             </div>
+                             <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(spoke.assignedTo)}</p>
                             <div>
                                 {isSpecialist ? (
                                     <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
@@ -423,13 +424,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="New">New</SelectItem>
-                                            <SelectItem value="Onboarding">Onboarding</SelectItem>
-                                            <SelectItem value="Partial Docs">Partial Docs</SelectItem>
-                                            <SelectItem value="Not reachable">Not reachable</SelectItem>
-                                            <SelectItem value="Active">Active</SelectItem>
-                                            <SelectItem value="Rejected">Rejected</SelectItem>
-                                            <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                            {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 ) : (

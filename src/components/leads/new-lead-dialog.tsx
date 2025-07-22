@@ -51,7 +51,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: '',
-      contacts: [{ phone: '' }],
+      contacts: [{ phone: '', email: '', designation: '', name: '' }],
       anchorId: anchorId || '',
       leadType: 'Fresh',
     },
@@ -60,7 +60,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   const handleClose = () => {
     form.reset({
       name: '',
-      contacts: [{ phone: '' }],
+      contacts: [{ phone: '', email: '', designation: '', name: '' }],
       anchorId: anchorId || '',
       leadType: 'Fresh',
     });
