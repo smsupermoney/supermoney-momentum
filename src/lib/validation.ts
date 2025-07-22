@@ -25,7 +25,7 @@ export const ContactSchema = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+    phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
     designation: z.string().optional(),
     isPrimary: z.boolean().optional(),
 });
@@ -38,7 +38,7 @@ export const RemarkSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  contacts: z.array(z.object({ phone: z.string().min(10, 'A 10-digit phone number is required.') })).min(1, "Contact number is required."),
+  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
 
   // Optional fields from now on

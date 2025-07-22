@@ -83,6 +83,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       leadDate: new Date(),
       spoc: '',
       initialLeadDate: undefined,
+      anchorId: '',
     },
   });
 
@@ -92,7 +93,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     if (open && vendor) {
         form.reset({
             name: vendor.name || '',
-            contacts: vendor.contacts?.length ? vendor.contacts.map(c => ({...c, phone: c.phone || ''})) : [{ name: '', email: '', phone: '', designation: '' }],
+            contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', phone: '', email: '', designation: ''}],
             gstin: vendor.gstin || '',
             city: vendor.city || '',
             state: vendor.state || '',
@@ -106,6 +107,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
             spoc: vendor.spoc || '',
             initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
+            anchorId: vendor.anchorId || '',
         });
     }
   }, [vendor, form, open]);
@@ -149,7 +151,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       ...vendor,
       ...values,
       contacts: values.contacts.map((c, index) => ({...c, id: vendor.contacts[index]?.id || `contact-${Date.now()}-${index}`, isPrimary: index === 0 })),
-      leadDate: values.leadDate.toISOString(),
+      leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
       initialLeadDate: values.initialLeadDate?.toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -253,7 +255,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     )}
                   />
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
                   )}/>
               </div>
 
