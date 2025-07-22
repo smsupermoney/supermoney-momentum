@@ -119,6 +119,8 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         gstin: values.gstin,
         address: values.address,
         annualTurnover: values.annualTurnover,
+        creditRating: scoreResult.creditRating,
+        ratingAgency: scoreResult.ratingAgency,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],
@@ -136,9 +138,11 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
           <div>
             <p>{values.companyName} has been added and is now visible to all users.</p>
             <p className="font-bold mt-2">AI Lead Score: {scoreResult.score}/100</p>
+            {scoreResult.creditRating && <p className="font-bold mt-1">Credit Rating: {scoreResult.creditRating} ({scoreResult.ratingAgency})</p>}
             <p className="text-xs">{scoreResult.reason}</p>
           </div>
         ),
+        duration: 9000
       });
       handleClose();
 

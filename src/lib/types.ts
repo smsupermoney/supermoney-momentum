@@ -73,7 +73,7 @@ export interface BaseLead {
   remarks?: Remark[];
   lenderId?: string;
   spoc?: string; // Single Point of Contact
-  initialLeadDate?: string; // For 'Revive' lead type
+  initialLeadDate?: string | null; // For 'Revive' lead type
   tat?: number; // Turn Around Time in days, for bulk uploads
 }
 
@@ -84,6 +84,7 @@ export interface Anchor {
   industry: string;
   annualTurnover?: string;
   creditRating?: string;
+  ratingAgency?: string;
   address?: string;
   status: LeadStatus;
   leadScore?: number;

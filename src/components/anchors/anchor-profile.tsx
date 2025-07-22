@@ -194,8 +194,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full overflow-x-auto justify-start">
           <TabsTrigger value="details">{t('anchors.profile.detailsTab')}</TabsTrigger>
-          <TabsTrigger value="dealers">{t('anchors.profile.dealersTab', { count: initialDealers.length })}</TabsTrigger>
-          <TabsTrigger value="vendors">{t('anchors.profile.vendorsTab', { count: initialVendors.length })}</TabsTrigger>
+          <TabsTrigger value="dealers">{t('sidebar.dealers')} ({initialDealers.length})</TabsTrigger>
+          <TabsTrigger value="vendors">{t('sidebar.vendors')} ({initialVendors.length})</TabsTrigger>
           <TabsTrigger value="interactions">{t('anchors.profile.interactionsTab', { count: initialLogs.length })}</TabsTrigger>
         </TabsList>
 
@@ -207,9 +207,12 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                     <CardContent className="grid sm:grid-cols-2 gap-4 text-sm">
                         <div><div className="text-muted-foreground">Lead ID</div><div>{anchor.leadId || 'N/A'}</div></div>
                         <div><div className="text-muted-foreground">{t('anchors.profile.gstin')}</div><div>{anchor.gstin || 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">{t('anchors.profile.creditRating')}</div><div>{anchor.creditRating || 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">{t('anchors.profile.annualTurnover')}</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover.toLocaleString('en-IN')}` : 'N/A'}</div></div>
-                        <div><div className="text-muted-foreground">{t('anchors.profile.address')}</div><div>{anchor.address || 'N/A'}</div></div>
+                        <div>
+                            <div className="text-muted-foreground">{t('anchors.profile.creditRating')}</div>
+                            <div>{anchor.creditRating ? `${anchor.creditRating} (${anchor.ratingAgency || 'N/A'})` : 'N/A'}</div>
+                        </div>
+                        <div><div className="text-muted-foreground">{t('anchors.profile.annualTurnover')}</div><div>{anchor.annualTurnover ? `₹ ${anchor.annualTurnover}` : 'N/A'}</div></div>
+                        <div className="sm:col-span-2"><div className="text-muted-foreground">{t('anchors.profile.address')}</div><div>{anchor.address || 'N/A'}</div></div>
                     </CardContent>
                 </Card>
                  <Card>
