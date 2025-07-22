@@ -59,7 +59,7 @@ interface VendorDetailsDialogProps {
 }
 
 export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor, currentUser, deleteVendor, lenders, users } = useApp();
+  const { updateVendor: updateVendorInContext, currentUser, deleteVendor, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,7 +93,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     if (open && vendor) {
         form.reset({
             name: vendor.name || '',
-            contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', phone: '', email: '', designation: ''}],
+            contacts: vendor.contacts?.length ? vendor.contacts.map(c => ({...c, phone: c.phone || ''})) : [{ name: '', phone: '', email: '', designation: ''}],
             gstin: vendor.gstin || '',
             city: vendor.city || '',
             state: vendor.state || '',
@@ -113,7 +113,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateVendor({ ...vendor, status: newStatus });
+    updateVendorInContext({ ...vendor, status: newStatus });
     toast({
       title: 'Vendor Status Updated',
       description: `${vendor.name}'s status is now ${newStatus}.`,
@@ -121,7 +121,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateVendor({ ...vendor, assignedTo: newUserId });
+    updateVendorInContext({ ...vendor, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${vendor.name} has been assigned to a new user.`,
@@ -147,15 +147,24 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
+    
     const updatedVendorData: Vendor = {
       ...vendor,
       ...values,
       contacts: values.contacts.map((c, index) => ({...c, id: vendor.contacts[index]?.id || `contact-${Date.now()}-${index}`, isPrimary: index === 0 })),
       leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
-      initialLeadDate: values.initialLeadDate?.toISOString(),
+      initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
-    updateVendor(updatedVendorData);
+    
+    // Remove undefined keys before sending to update function
+    Object.keys(updatedVendorData).forEach(key => {
+        if (updatedVendorData[key as keyof typeof updatedVendorData] === undefined) {
+            delete updatedVendorData[key as keyof typeof updatedVendorData];
+        }
+    });
+
+    updateVendorInContext(updatedVendorData);
     toast({
       title: "Vendor Updated",
       description: `${values.name} has been successfully updated.`
@@ -255,7 +264,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     )}
                   />
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
               </div>
 

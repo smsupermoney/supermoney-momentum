@@ -535,10 +535,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldDealer = dealers.find(d => d.id === updatedDealer.id);
+    const dataToSave = { ...updatedDealer };
+    Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+            delete dataToSave[key as keyof typeof dataToSave];
+        }
+    });
+
     if(firebaseEnabled) {
-      await firestoreService.updateDealer(updatedDealer);
+      await firestoreService.updateDealer(dataToSave);
     }
-    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...updatedDealer, updatedAt: new Date().toISOString()} : d));
+    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...dataToSave, updatedAt: new Date().toISOString()} : d));
     
     if (currentUser && oldDealer) {
         let logMessage = '';
@@ -676,10 +683,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldVendor = vendors.find(s => s.id === updatedVendor.id);
+    const dataToSave = { ...updatedVendor };
+    Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+            delete dataToSave[key as keyof typeof dataToSave];
+        }
+    });
+
     if(firebaseEnabled) {
-      await firestoreService.updateVendor(updatedVendor);
+      await firestoreService.updateVendor(dataToSave);
     }
-    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...updatedVendor, updatedAt: new Date().toISOString()} : s));
+    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...dataToSave, updatedAt: new Date().toISOString()} : s));
 
     if (currentUser && oldVendor) {
         let logMessage = '';

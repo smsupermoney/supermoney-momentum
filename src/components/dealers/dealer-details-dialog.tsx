@@ -59,7 +59,7 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
+  const { updateDealer: updateDealerInContext, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,7 +93,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     if (open && dealer) {
         form.reset({
           name: dealer.name || '',
-          contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', phone: '', email: '', designation: ''}],
+          contacts: dealer.contacts?.length ? dealer.contacts.map(c => ({...c, phone: c.phone || ''})) : [{ name: '', phone: '', email: '', designation: ''}],
           gstin: dealer.gstin || '',
           city: dealer.city || '',
           state: dealer.state || '',
@@ -113,7 +113,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateDealer({ ...dealer, status: newStatus });
+    updateDealerInContext({ ...dealer, status: newStatus });
     toast({
       title: 'Dealer Status Updated',
       description: `${dealer.name}'s status is now ${newStatus}.`,
@@ -121,7 +121,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateDealer({ ...dealer, assignedTo: newUserId });
+    updateDealerInContext({ ...dealer, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${dealer.name} has been assigned to a new user.`,
@@ -147,15 +147,24 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
+    
     const updatedDealerData: Dealer = {
       ...dealer,
       ...values,
       contacts: values.contacts.map((c, index) => ({...c, id: dealer.contacts[index]?.id || `contact-${Date.now()}-${index}`, isPrimary: index === 0 })),
       leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
-      initialLeadDate: values.initialLeadDate?.toISOString(),
+      initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
-    updateDealer(updatedDealerData);
+
+    // Remove undefined keys before sending to update function
+    Object.keys(updatedDealerData).forEach(key => {
+        if (updatedDealerData[key as keyof typeof updatedDealerData] === undefined) {
+            delete updatedDealerData[key as keyof typeof updatedDealerData];
+        }
+    });
+
+    updateDealerInContext(updatedDealerData);
     toast({
       title: "Dealer Updated",
       description: `${values.name} has been successfully updated.`
@@ -255,7 +264,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     )}
                   />
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
                 </div>
                 
