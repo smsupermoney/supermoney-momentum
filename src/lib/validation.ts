@@ -25,7 +25,7 @@ export const ContactSchema = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
     email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    phone: z.string().min(10, 'Phone number must be at least 10 digits.'),
+    phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
     designation: z.string().optional(),
     isPrimary: z.boolean().optional(),
 });
@@ -38,19 +38,21 @@ export const RemarkSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
+  contacts: z.array(z.object({ phone: z.string().min(10, 'A 10-digit phone number is required.') })).min(1, "Contact number is required."),
+  anchorId: z.string().min(1, "An anchor must be associated with the lead."),
+
+  // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
-  contacts: z.array(ContactSchema).min(1, "At least one contact with a number is required."),
   gstin: z.string().optional().or(z.literal('')),
   city: z.string().optional(),
   state: z.string().optional(),
   zone: z.string().optional(),
-  anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
   remarks: z.array(RemarkSchema).optional(),
-  leadDate: z.coerce.date(),
+  leadDate: z.coerce.date().optional(),
   spoc: z.string().optional(),
   initialLeadDate: z.coerce.date().optional(),
   tat: z.number().int().optional(),

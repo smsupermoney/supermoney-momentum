@@ -53,6 +53,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       name: '',
       contacts: [{ phone: '' }],
       anchorId: anchorId || '',
+      leadType: 'Fresh',
     },
   });
 
@@ -61,6 +62,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       name: '',
       contacts: [{ phone: '' }],
       anchorId: anchorId || '',
+      leadType: 'Fresh',
     });
     onOpenChange(false);
   }
@@ -103,7 +105,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadDate: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
-          leadType: 'Fresh' as LeadTypeEnum,
+          leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
           remarks: [],
         }
 
