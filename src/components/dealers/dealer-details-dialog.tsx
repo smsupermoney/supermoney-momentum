@@ -59,7 +59,7 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer: updateDealerInContext, currentUser, deleteDealer, lenders, users } = useApp();
+  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +113,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateDealerInContext({ ...dealer, status: newStatus });
+    updateDealer({ ...dealer, status: newStatus });
     toast({
       title: 'Dealer Status Updated',
       description: `${dealer.name}'s status is now ${newStatus}.`,
@@ -121,7 +121,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateDealerInContext({ ...dealer, assignedTo: newUserId });
+    updateDealer({ ...dealer, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${dealer.name} has been assigned to a new user.`,
@@ -157,14 +157,14 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       updatedAt: new Date().toISOString(),
     };
 
-    // Remove undefined keys before sending to update function
+    // Final sanitization to remove any lingering 'undefined' values
     Object.keys(updatedDealerData).forEach(key => {
         if (updatedDealerData[key as keyof typeof updatedDealerData] === undefined) {
             delete updatedDealerData[key as keyof typeof updatedDealerData];
         }
     });
 
-    updateDealerInContext(updatedDealerData);
+    updateDealer(updatedDealerData);
     toast({
       title: "Dealer Updated",
       description: `${values.name} has been successfully updated.`

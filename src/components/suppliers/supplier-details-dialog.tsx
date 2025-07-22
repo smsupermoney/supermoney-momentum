@@ -59,7 +59,7 @@ interface VendorDetailsDialogProps {
 }
 
 export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor: updateVendorInContext, currentUser, deleteVendor, lenders, users } = useApp();
+  const { updateVendor, currentUser, deleteVendor, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +113,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateVendorInContext({ ...vendor, status: newStatus });
+    updateVendor({ ...vendor, status: newStatus });
     toast({
       title: 'Vendor Status Updated',
       description: `${vendor.name}'s status is now ${newStatus}.`,
@@ -121,11 +121,11 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateVendorInContext({ ...vendor, assignedTo: newUserId });
+    updateVendor({ ...vendor, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${vendor.name} has been assigned to a new user.`,
-    });
+    })
   }
 
   const handleDelete = () => {
@@ -157,14 +157,14 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       updatedAt: new Date().toISOString(),
     };
     
-    // Remove undefined keys before sending to update function
+    // Final sanitization to remove any lingering 'undefined' values
     Object.keys(updatedVendorData).forEach(key => {
         if (updatedVendorData[key as keyof typeof updatedVendorData] === undefined) {
             delete updatedVendorData[key as keyof typeof updatedVendorData];
         }
     });
 
-    updateVendorInContext(updatedVendorData);
+    updateVendor(updatedVendorData);
     toast({
       title: "Vendor Updated",
       description: `${values.name} has been successfully updated.`

@@ -436,20 +436,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateAnchor = async (updatedAnchor: Anchor) => {
+  const updateAnchor = async (anchor: Anchor) => {
     try {
-        const primaryContact = updatedAnchor.contacts[0] || {};
+        const primaryContact = anchor.contacts[0] || {};
         const dataToValidate = {
-            id: updatedAnchor.id,
-            companyName: updatedAnchor.name,
-            industry: updatedAnchor.industry,
-            annualTurnover: updatedAnchor.annualTurnover,
+            id: anchor.id,
+            companyName: anchor.name,
+            industry: anchor.industry,
+            annualTurnover: anchor.annualTurnover,
             primaryContactName: primaryContact.name,
             primaryContactDesignation: primaryContact.designation,
             email: primaryContact.email,
             phone: primaryContact.phone,
-            gstin: updatedAnchor.gstin,
-            address: updatedAnchor.address,
+            gstin: anchor.gstin,
+            address: anchor.address,
         };
         NewAnchorSchema.extend({ id: z.string() }).parse(dataToValidate);
     } catch (e) {
@@ -459,19 +459,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    const oldAnchor = anchors.find(a => a.id === updatedAnchor.id);
+    const oldAnchor = anchors.find(a => a.id === anchor.id);
     if (firebaseEnabled) {
-      await firestoreService.updateAnchor(updatedAnchor);
+      await firestoreService.updateAnchor(anchor);
     }
-    setAnchors(prev => prev.map(a => a.id === updatedAnchor.id ? {...updatedAnchor, updatedAt: new Date().toISOString()} : a));
+    setAnchors(prev => prev.map(a => a.id === anchor.id ? {...anchor, updatedAt: new Date().toISOString()} : a));
 
-    if (oldAnchor && oldAnchor.status !== updatedAnchor.status && currentUser) {
+    if (oldAnchor && oldAnchor.status !== anchor.status && currentUser) {
         addActivityLog({
-            anchorId: updatedAnchor.id,
+            anchorId: anchor.id,
             timestamp: new Date().toISOString(),
             type: 'Status Change',
-            title: `Status changed to ${updatedAnchor.status}`,
-            outcome: `Anchor status was updated from '${oldAnchor.status}' to '${updatedAnchor.status}' by ${currentUser.name}.`,
+            title: `Status changed to ${anchor.status}`,
+            outcome: `Anchor status was updated from '${oldAnchor.status}' to '${anchor.status}' by ${currentUser.name}.`,
             userName: 'System',
             userId: currentUser.uid,
             systemGenerated: true,
