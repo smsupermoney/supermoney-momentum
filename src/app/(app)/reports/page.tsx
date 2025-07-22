@@ -193,7 +193,7 @@ export default function ReportsPage() {
         title={getPageTitle(currentUser.role)}
         description={getPageDescription(currentUser.role)}
       >
-        {currentUser?.role === 'Admin' && adminActions}
+        {(currentUser?.role === 'Admin' || currentUser?.role === 'Business Development') && adminActions}
       </PageHeader>
       {renderReports()}
     </>
@@ -485,7 +485,7 @@ function AdminReports() {
     const activeAnchors = anchors.filter(a => a.status === 'Active');
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.status === 'Active');
-    const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
+    const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / activeSpokes.length) * 100 : 0;
 
   return (
     <div className="grid gap-4">
@@ -783,6 +783,8 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
 
 
 
+
+    
 
     
 
