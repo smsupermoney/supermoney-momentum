@@ -67,29 +67,47 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(NewSpokeSchema),
-    defaultValues: {},
+    defaultValues: {
+      name: '',
+      contacts: [{ name: '', email: '', phone: '', designation: '' }],
+      gstin: '',
+      city: '',
+      state: '',
+      zone: '',
+      product: '',
+      leadSource: '',
+      lenderId: '',
+      remarks: [],
+      leadType: 'Fresh',
+      dealValue: undefined,
+      leadDate: new Date(),
+      spoc: '',
+      initialLeadDate: undefined,
+    },
   });
 
   const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
-    form.reset({
-        name: vendor.name || '',
-        contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '' }],
-        gstin: vendor.gstin || '',
-        city: vendor.city || '',
-        state: vendor.state || '',
-        zone: vendor.zone || '',
-        product: vendor.product || '',
-        leadSource: vendor.leadSource || '',
-        lenderId: vendor.lenderId || '',
-        remarks: vendor.remarks || [],
-        leadType: vendor.leadType || 'Fresh',
-        dealValue: vendor.dealValue,
-        leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
-        spoc: vendor.spoc || '',
-        initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
-    });
+    if (open && vendor) {
+        form.reset({
+            name: vendor.name || '',
+            contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '' }],
+            gstin: vendor.gstin || '',
+            city: vendor.city || '',
+            state: vendor.state || '',
+            zone: vendor.zone || '',
+            product: vendor.product || '',
+            leadSource: vendor.leadSource || '',
+            lenderId: vendor.lenderId || '',
+            remarks: vendor.remarks || [],
+            leadType: vendor.leadType || 'Fresh',
+            dealValue: vendor.dealValue,
+            leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+            spoc: vendor.spoc || '',
+            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
+        });
+    }
   }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {

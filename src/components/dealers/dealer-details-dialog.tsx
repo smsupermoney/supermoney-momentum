@@ -67,29 +67,47 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(NewSpokeSchema),
-    defaultValues: {},
+    defaultValues: {
+      name: '',
+      contacts: [{ name: '', email: '', phone: '', designation: '' }],
+      gstin: '',
+      city: '',
+      state: '',
+      zone: '',
+      product: '',
+      leadSource: '',
+      lenderId: '',
+      remarks: [],
+      leadType: 'Fresh',
+      dealValue: undefined,
+      leadDate: new Date(),
+      spoc: '',
+      initialLeadDate: undefined,
+    },
   });
 
   const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
-    form.reset({
-      name: dealer.name || '',
-      contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', email: '', phone: '', designation: '' }],
-      gstin: dealer.gstin || '',
-      city: dealer.city || '',
-      state: dealer.state || '',
-      zone: dealer.zone || '',
-      product: dealer.product || '',
-      leadSource: dealer.leadSource || '',
-      lenderId: dealer.lenderId || '',
-      remarks: dealer.remarks || [],
-      leadType: dealer.leadType || 'Fresh',
-      dealValue: dealer.dealValue,
-      leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
-      spoc: dealer.spoc || '',
-      initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
-    });
+    if (open && dealer) {
+        form.reset({
+          name: dealer.name || '',
+          contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', email: '', phone: '', designation: '' }],
+          gstin: dealer.gstin || '',
+          city: dealer.city || '',
+          state: dealer.state || '',
+          zone: dealer.zone || '',
+          product: dealer.product || '',
+          leadSource: dealer.leadSource || '',
+          lenderId: dealer.lenderId || '',
+          remarks: dealer.remarks || [],
+          leadType: dealer.leadType || 'Fresh',
+          dealValue: dealer.dealValue,
+          leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
+          spoc: dealer.spoc || '',
+          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
+        });
+    }
   }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
