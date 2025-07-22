@@ -113,7 +113,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const [
               name, contactNumber, email, city, state, zone,
               anchorName, product, leadSource, leadType, leadDateStr,
-              statusStr, assignedToEmail, dealValueStr, lenderName, remarks,
+              statusStr, assignedToEmail, dealValueStr, lenderName, remarksStr,
               spoc, initialLeadDateStr, tatStr
             ] = columns;
 
@@ -125,7 +125,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
-            const finalAssignedToId = targetUser?.id || null;
+            const finalAssignedToId = targetUser?.uid || null;
             
             const targetLender = lenderName ? lenders.find(l => l.name.toLowerCase() === lenderName.toLowerCase()) : null;
             
@@ -138,12 +138,12 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               anchorId: finalAnchorId,
             };
             
-            const validatedData = NewSpokeSchema.parse(rawData);
+            NewSpokeSchema.parse(rawData);
             
             const commonData: Record<string, any> = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
-              name: validatedData.name,
-              contacts: validatedData.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
+              name: name,
+              contacts: [{ name: spoc || name || 'Primary Contact', phone: contactNumber, email: email, designation: '', id: `contact-${Date.now()}`, isPrimary: true }],
               assignedTo: finalAssignedToId,
               status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
               anchorId: finalAnchorId,
@@ -158,12 +158,20 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             if (product) commonData.product = product;
             if (leadSource) commonData.leadSource = leadSource;
             if (targetLender?.id) commonData.lenderId = targetLender.id;
-            if (remarks) commonData.remarks = [{ text: remarks, timestamp: new Date().toISOString(), userName: currentUser.name }];
+            if (remarksStr) commonData.remarks = [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }];
             if (dealValueStr) commonData.dealValue = parseFloat(dealValueStr);
             if (spoc) commonData.spoc = spoc;
             if (parsedLeadDate) commonData.leadDate = parsedLeadDate.toISOString();
             if (parsedInitialLeadDate) commonData.initialLeadDate = parsedInitialLeadDate.toISOString();
-            if (tatStr) commonData.tat = parseInt(tatStr, 10);
+            if (tatStr && !isNaN(parseInt(tatStr, 10))) commonData.tat = parseInt(tatStr, 10);
+            if (email) commonData.contacts[0].email = email;
+
+            // Final check to remove any undefined values before sending to Firestore
+            Object.keys(commonData).forEach(key => {
+                if (commonData[key] === undefined || commonData[key] === null || commonData[key] === '') {
+                    delete commonData[key];
+                }
+            });
 
 
             if (type === 'Dealer') {
@@ -217,7 +225,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with lead details. Only Name, Contact Number and Anchor Name are required.
+            Upload a CSV file with lead details. Name, Contact Number and Anchor Name are required.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
