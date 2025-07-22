@@ -85,7 +85,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       lenderId: dealer.lenderId || '',
       remarks: dealer.remarks || [],
       leadType: dealer.leadType || 'Fresh',
-      dealValue: dealer.dealValue || 0,
+      dealValue: dealer.dealValue,
       leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
       spoc: dealer.spoc || '',
       initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
@@ -106,7 +106,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       title: 'Lead Re-assigned',
       description: `${dealer.name} has been assigned to a new user.`,
     });
-  }
+  };
 
   const handleDelete = () => {
     deleteDealer(dealer.id);
@@ -234,7 +234,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                     )}
                   />
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
                 </div>
                 

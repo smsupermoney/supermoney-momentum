@@ -85,7 +85,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         lenderId: vendor.lenderId || '',
         remarks: vendor.remarks || [],
         leadType: vendor.leadType || 'Fresh',
-        dealValue: vendor.dealValue || 0,
+        dealValue: vendor.dealValue,
         leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
         spoc: vendor.spoc || '',
         initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
@@ -234,7 +234,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     )}
                   />
                   <FormField control={form.control} name="dealValue" render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                   )}/>
               </div>
 
