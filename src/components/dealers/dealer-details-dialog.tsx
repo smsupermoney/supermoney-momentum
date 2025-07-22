@@ -92,7 +92,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     if (open && dealer) {
         form.reset({
           name: dealer.name || '',
-          contacts: dealer.contacts?.length ? dealer.contacts : [{ name: '', email: '', phone: '', designation: '' }],
+          contacts: dealer.contacts?.length ? dealer.contacts.map(c => ({...c, phone: c.phone || ''})) : [{ name: '', email: '', phone: '', designation: '' }],
           gstin: dealer.gstin || '',
           city: dealer.city || '',
           state: dealer.state || '',
@@ -148,6 +148,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     const updatedDealerData: Dealer = {
       ...dealer,
       ...values,
+      contacts: values.contacts.map((c, index) => ({...c, id: dealer.contacts[index]?.id || `contact-${Date.now()}-${index}`, isPrimary: index === 0 })),
       leadDate: values.leadDate.toISOString(),
       initialLeadDate: values.initialLeadDate?.toISOString(),
       updatedAt: new Date().toISOString(),

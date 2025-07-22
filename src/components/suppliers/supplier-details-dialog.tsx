@@ -92,7 +92,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     if (open && vendor) {
         form.reset({
             name: vendor.name || '',
-            contacts: vendor.contacts?.length ? vendor.contacts : [{ name: '', email: '', phone: '', designation: '' }],
+            contacts: vendor.contacts?.length ? vendor.contacts.map(c => ({...c, phone: c.phone || ''})) : [{ name: '', email: '', phone: '', designation: '' }],
             gstin: vendor.gstin || '',
             city: vendor.city || '',
             state: vendor.state || '',
@@ -148,6 +148,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     const updatedVendorData: Vendor = {
       ...vendor,
       ...values,
+      contacts: values.contacts.map((c, index) => ({...c, id: vendor.contacts[index]?.id || `contact-${Date.now()}-${index}`, isPrimary: index === 0 })),
       leadDate: values.leadDate.toISOString(),
       initialLeadDate: values.initialLeadDate?.toISOString(),
       updatedAt: new Date().toISOString(),
