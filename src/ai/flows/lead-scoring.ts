@@ -30,8 +30,10 @@ export type LeadScoringInput = z.infer<typeof LeadScoringInputSchema>;
 const LeadScoringOutputSchema = z.object({
   score: z.number().describe('The score of the lead, from 0 to 100.'),
   reason: z.string().describe('The reason for the score.'),
-  creditRating: z.string().optional().describe('The most recent publicly available credit rating of the company (e.g., "AAA", "AA+").'),
+  creditRating: z.string().optional().describe('The most recent publicly available long-term credit rating of the company (e.g., "AAA", "AA+").'),
   ratingAgency: z.string().optional().describe('The name of the credit rating agency that provided the rating.'),
+  industryBackground: z.string().optional().describe("A brief summary of the company's industry background."),
+  financialPerformance: z.string().optional().describe("A brief summary of the company's latest annual financial performance."),
 });
 
 export type LeadScoringOutput = z.infer<typeof LeadScoringOutputSchema>;
@@ -46,23 +48,13 @@ const prompt = ai.definePrompt({
   output: {schema: LeadScoringOutputSchema},
   prompt: `You are an expert sales consultant specializing in supply chain finance.
 
-You will use this information to score the lead, provide a reason for the score, and find the company's most recent credit rating from public sources.
-
-Score should be from 0 to 100, where 100 is the most likely to convert to an onboarded customer.
-
-Consider the following factors for the score:
-- Industry: Some industries are more likely to need supply chain finance than others.
-- Lead Source: Some lead sources are more likely to be qualified than others.
-- Company Size: Larger companies are more likely to need supply chain finance. A higher annual turnover is a strong positive signal.
-- Contact Information: Leads with complete contact information are more likely to be qualified.
-
-# Credit Rating Search
-Based on the company's name, industry, and annual turnover, perform a search of public information to find its latest credit rating. You must prioritize the rating agencies in this order:
-1.  Credit Rating Information Services of India Ltd. (CRISIL)
-2.  Investment Information and Credit Rating Agency of India (ICRA) Ltd.
-3.  Any other major Indian rating agency (e.g., CARE, Acuite, Brickwork, India Ratings, INFOMERICS).
-
-If the company is large and well-known (e.g., Tata Motors, Reliance), it's highly likely to have a rating from CRISIL or ICRA. For smaller or less-known companies, it might be from another agency. Find the most recent rating possible (e.g., "AAA", "AA+", "A-", "BBB") and set the 'creditRating' and 'ratingAgency' fields in your response. If no public rating is found, leave these fields blank.
+Your task is to analyze a new lead based on the provided details and public information. You will perform the following actions:
+1.  **Analyze Public Information**: Conduct an online search for the company '{{{companyName}}}'.
+2.  **Summarize Industry Background**: Provide a concise summary of the company's industry background.
+3.  **Summarize Financial Performance**: Provide a brief summary of the company's latest reported annual financial performance.
+4.  **Find Credit Rating**: Search for the company's long-term credit rating. For example, search for "'{{{companyName}}}' credit rating". Prioritize results from the following Indian rating agencies in this order: CRISIL, ICRA, CARE, Acuite, Brickwork, India Ratings, INFOMERICS. Extract the latest long-term rating (e.g., "AAA", "AA+", "A-", "BBB") and the agency name. If no public rating is found, leave the credit rating fields blank.
+5.  **Score the Lead**: Generate a lead score from 0 to 100, where 100 is the most likely to convert.
+6.  **Provide a Reason**: Write a summary reason for your score, incorporating your findings on their industry, financials, and credit rating.
 
 # Lead Details
 Company Name: {{{companyName}}}
@@ -75,7 +67,7 @@ Lead Source: {{{leadSource}}}
 GSTIN: {{{gstin}}}
 Location: {{{location}}}
 
-Now, provide the lead score, reason, and the retrieved credit rating.`,
+Now, provide the lead score, reason, and all other requested analytical information.`,
 });
 
 const leadScoringFlow = ai.defineFlow(

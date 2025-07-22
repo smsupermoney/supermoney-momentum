@@ -85,6 +85,8 @@ export interface Anchor {
   annualTurnover?: string;
   creditRating?: string;
   ratingAgency?: string;
+  industryBackground?: string;
+  financialPerformance?: string;
   address?: string;
   status: LeadStatus;
   leadScore?: number;

@@ -121,6 +121,8 @@ export function NewAnchorDialog({ open, onOpenChange }: NewAnchorDialogProps) {
         annualTurnover: values.annualTurnover,
         creditRating: scoreResult.creditRating,
         ratingAgency: scoreResult.ratingAgency,
+        industryBackground: scoreResult.industryBackground,
+        financialPerformance: scoreResult.financialPerformance,
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString(),
         dealerIds: [],

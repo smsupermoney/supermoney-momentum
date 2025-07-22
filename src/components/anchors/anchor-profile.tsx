@@ -250,8 +250,23 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                     <CardHeader>
                         <CardTitle>{t('anchors.profile.aiAnalysis')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-secondary-foreground italic">"{anchor.leadScoreReason}"</p>
+                    <CardContent className="space-y-4">
+                        <div>
+                          <p className="text-sm font-semibold text-secondary-foreground mb-1">Reason for Score</p>
+                          <p className="text-sm text-secondary-foreground italic">"{anchor.leadScoreReason}"</p>
+                        </div>
+                         {anchor.industryBackground && (
+                            <div>
+                               <p className="text-sm font-semibold text-secondary-foreground mb-1">Industry Background</p>
+                               <p className="text-sm text-secondary-foreground">{anchor.industryBackground}</p>
+                            </div>
+                        )}
+                        {anchor.financialPerformance && (
+                            <div>
+                               <p className="text-sm font-semibold text-secondary-foreground mb-1">Financial Performance</p>
+                               <p className="text-sm text-secondary-foreground">{anchor.financialPerformance}</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             }
