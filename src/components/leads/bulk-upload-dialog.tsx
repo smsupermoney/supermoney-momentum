@@ -270,4 +270,3 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
     </Dialog>
   );
 }
-
