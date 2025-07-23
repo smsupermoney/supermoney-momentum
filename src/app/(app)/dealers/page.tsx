@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2 } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search } from 'lucide-react';
 import type { Dealer, SpokeStatus, LeadType } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { spokeStatuses } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+
 
 const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
@@ -45,6 +47,7 @@ export default function DealersPage() {
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'dealer' } } | null>(null);
   const { toast } = useToast();
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [leadTypeFilter, setLeadTypeFilter] = useState('all');
   const [anchorFilter, setAnchorFilter] = useState('all');
@@ -73,7 +76,10 @@ export default function DealersPage() {
         }
       }
     }
+    
+    const searchMatch = searchQuery.length > 0 ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
 
+    if (!searchMatch) return false;
     if (statusFilter !== 'all' && d.status !== statusFilter) return false;
     if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
@@ -219,48 +225,58 @@ export default function DealersPage() {
           </AlertDialogContent>
       </AlertDialog>
 
-
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4">
-          <div className="w-full">
-            {canBulkDelete && numSelected > 0 && (
-              <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4"/>
-                Delete ({numSelected}) Selected
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
-               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-               </Select>
-               <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
-                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Lead Types</SelectItem>
-                     {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
-                  </SelectContent>
-               </Select>
-               <Select value={anchorFilter} onValueChange={setAnchorFilter}>
-                  <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Anchors</SelectItem>
-                    {anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                  </SelectContent>
-               </Select>
-               {canShowAssignedToFilter && (
-                <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+      <div className="space-y-4 pb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search by dealer name..."
+            className="w-full pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full">
+              {canBulkDelete && numSelected > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4"/>
+                  Delete ({numSelected}) Selected
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
+                 <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
-                        {visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
-                </Select>
-               )}
-          </div>
+                 </Select>
+                 <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Lead Types</SelectItem>
+                       {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+                 <Select value={anchorFilter} onValueChange={setAnchorFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Anchors</SelectItem>
+                      {anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+                 {canShowAssignedToFilter && (
+                  <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                      <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">All Users</SelectItem>
+                          {visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                 )}
+            </div>
+        </div>
       </div>
 
 
@@ -311,7 +327,7 @@ export default function DealersPage() {
                       </Badge>
                   )}
                 </TableCell>
-                <TableCell>{dealer.contacts?.[0]?.phone || 'N/A'}</TableCell>
+                <TableCell>{dealer.contactNumber || 'N/A'}</TableCell>
                 <TableCell>{dealer.dealValue ? dealer.dealValue.toFixed(2) : 'N/A'}</TableCell>
                 <TableCell>{dealer.state || 'N/A'}</TableCell>
                 <TableCell>{dealer.leadType || 'Fresh'}</TableCell>
@@ -377,7 +393,7 @@ export default function DealersPage() {
                             <Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge>
                             <Badge variant="outline">{dealer.leadType || 'Fresh'}</Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground pt-2">{dealer.contacts?.[0]?.phone || 'N/A'}</p>
+                          <p className="text-sm text-muted-foreground pt-2">{dealer.contactNumber || 'N/A'}</p>
                            <p className="text-sm text-muted-foreground">Deal Value: {dealer.dealValue ? `${dealer.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{getAssignedToName(dealer.assignedTo)}</p>
                           <p className="text-xs text-muted-foreground">TAT: {getTatDays(dealer.createdAt, dealer.tat)}</p>
@@ -400,5 +416,7 @@ export default function DealersPage() {
     </>
   );
 }
+
+    
 
     
