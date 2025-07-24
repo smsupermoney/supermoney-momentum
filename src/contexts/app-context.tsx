@@ -530,7 +530,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-        NewSpokeSchema.parse(dealerData);
+        UpdateSpokeSchema.parse(dealerData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new dealer:", e.flatten().fieldErrors);
@@ -573,7 +573,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateDealer = async (updatedDealer: Dealer) => {
     try {
-        UpdateSpokeSchema.extend({ id: z.string() }).parse(updatedDealer);
+        UpdateSpokeSchema.partial().extend({ id: z.string() }).parse(updatedDealer);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
@@ -694,7 +694,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-        NewSpokeSchema.parse(vendorData);
+        UpdateSpokeSchema.parse(vendorData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new vendor:", e.flatten().fieldErrors);
@@ -736,7 +736,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateVendor = async (updatedVendor: Vendor) => {
      try {
-        UpdateSpokeSchema.extend({ id: z.string() }).parse(updatedVendor);
+        UpdateSpokeSchema.partial().extend({ id: z.string() }).parse(updatedVendor);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for vendor update:", e.flatten().fieldErrors);
@@ -997,7 +997,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser || !['Admin', 'BIU'].includes(currentUser.role)) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only Admins can delete users.' });
         return;
     }
@@ -1191,3 +1191,5 @@ export const useApp = () => {
   }
   return context;
 };
+
+    
