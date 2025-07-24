@@ -181,7 +181,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUsers = useMemo(() => {
     if (!currentUser || !users.length) return [];
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development') {
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
       return users;
     }
     
@@ -214,7 +214,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         );
 
         leadsToReassign.forEach(lead => {
-            const leadType = 'anchorId' in lead ? 'Dealer' : 'Vendor'; // Simple type check
+            const leadType = 'contactNumber' in lead ? 'Dealer' : 'Vendor';
             const updateFunction = leadType === 'Dealer' ? updateDealer : updateVendor;
             updateFunction({...lead, assignedTo: harshitaUser.uid});
             addActivityLog({
@@ -424,7 +424,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Notify Admins and BD
-    const recipients = users.filter(u => ['Admin', 'Business Development'].includes(u.role));
+    const recipients = users.filter(u => ['Admin', 'Business Development', 'BIU'].includes(u.role));
     recipients.forEach(r => {
       sendNotificationEmail({
         to: r.email,
@@ -483,6 +483,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
     if (!currentUser) return;
     
+    // Check for duplicates
+    const isDuplicate = dealers.some(
+      (dealer) => dealer.name === dealerData.name && dealer.anchorId === dealerData.anchorId
+    );
+
+    if (isDuplicate) {
+      toast({
+        variant: 'destructive',
+        title: 'Duplicate Lead',
+        description: `A dealer named "${dealerData.name}" already exists for this anchor.`,
+      });
+      return;
+    }
+
     try {
         NewSpokeSchema.parse(dealerData);
     } catch (e) {
@@ -602,7 +616,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteDealer = async (dealerId: string) => {
-    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+    if (!currentUser || !['Admin', 'Business Development', 'BIU'].includes(currentUser.role)) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
         return;
     }
@@ -632,6 +646,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
     if (!currentUser) return;
+    
+    // Check for duplicates
+    const isDuplicate = vendors.some(
+      (vendor) => vendor.name === vendorData.name && vendor.anchorId === vendorData.anchorId
+    );
+
+    if (isDuplicate) {
+      toast({
+        variant: 'destructive',
+        title: 'Duplicate Lead',
+        description: `A vendor named "${vendorData.name}" already exists for this anchor.`,
+      });
+      return;
+    }
+
     try {
         NewSpokeSchema.parse(vendorData);
     } catch (e) {
@@ -750,7 +779,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteVendor = async (vendorId: string) => {
-    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+    if (!currentUser || !['Admin', 'Business Development', 'BIU'].includes(currentUser.role)) {
         toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete leads.' });
         return;
     }
@@ -998,7 +1027,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const reassignLeads = (fromUserId: string, toUserId: string) => {
-    if (!currentUser || !['Admin', 'Business Development'].includes(currentUser.role)) {
+    if (!currentUser || !['Admin', 'Business Development', 'BIU'].includes(currentUser.role)) {
       toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only authorized users can reassign leads.' });
       return;
     }

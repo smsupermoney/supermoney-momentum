@@ -56,13 +56,13 @@ export default function DealersPage() {
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
-  const canBulkDelete = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
+  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
+  const canBulkDelete = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
 
   const filteredDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
 
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development') {
+    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development' && currentUser.role !== 'BIU') {
       const assignedUser = d.assignedTo ? users.find(u => u.uid === d.assignedTo) : null;
       if (!assignedUser) {
         if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {

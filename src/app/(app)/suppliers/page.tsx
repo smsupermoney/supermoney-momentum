@@ -56,15 +56,15 @@ export default function VendorsPage() {
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'].includes(currentUser.role);
-  const canBulkDelete = currentUser && ['Admin', 'Business Development'].includes(currentUser.role);
+  const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
+  const canBulkDelete = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
 
   
   const filteredVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
     
     // Filter based on roles
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development') {
+    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development' && currentUser.role !== 'BIU') {
       const assignedUser = s.assignedTo ? users.find(u => u.uid === s.assignedTo) : null;
       if (!assignedUser) {
         // If unassigned, only show to managers (who can assign)

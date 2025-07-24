@@ -131,7 +131,7 @@ function LeadTable({
             <Card key={lead.id} className="p-0">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base">{lead.name}</CardTitle>
-                <CardDescription>{(lead.contacts?.[0] as any)?.phone || 'N/A'}</CardDescription>
+                <CardDescription>{lead.contactNumber || 'N/A'}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 p-4 pt-0">
                  <Select onValueChange={(value) => onAnchorAssignmentChange(lead.id, value)}>
@@ -300,9 +300,9 @@ export default function AdminPage() {
     if (!currentUser) return [];
     if (currentUser.role === 'Admin') {
       // Admins can assign to any non-admin, non-specialist user.
-      return users.filter(u => u.role !== 'Admin' && u.role !== 'Business Development');
+      return users.filter(u => u.role !== 'Admin' && u.role !== 'Business Development' && u.role !== 'BIU');
     }
-    if(currentUser.role === 'Business Development') {
+    if(currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
       return users.filter(u => ['Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
     }
     // Managers can assign to their direct or indirect subordinates.
@@ -363,10 +363,10 @@ export default function AdminPage() {
   };
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development');
-  const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
-  const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
-  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
+  const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
+  const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
+  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
 
 
   if (!canViewAdminPanel) {

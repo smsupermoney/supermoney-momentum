@@ -6,7 +6,7 @@ import { z } from 'zod';
 // In a real application, these would be used within server actions or cloud functions
 // to ensure data integrity before writing to the database.
 
-export const userRoles = ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] as const;
+export const userRoles = ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] as const;
 export const regions = ['National', 'West', 'East', 'North', 'South'] as const;
 
 export const NewAnchorSchema = z.object({
@@ -38,7 +38,8 @@ export const RemarkSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  contacts: z.array(ContactSchema).min(1, "At least one contact is required."),
+  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+  email: z.string().email("A valid email is required.").optional().or(z.literal('')),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
 
   // Optional fields from now on

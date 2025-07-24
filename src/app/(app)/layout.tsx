@@ -60,14 +60,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
   const allNavItems = [
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
     { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'] },
-    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
-    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
-    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
-    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
-    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
-    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
+    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
+    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] },
   ];
 
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role)).map(item => {

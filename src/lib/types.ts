@@ -1,6 +1,6 @@
 
 
-export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development';
+export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU';
 
 export interface User {
   id: string; // Document ID from Firestore
@@ -57,7 +57,8 @@ export interface BaseLead {
   id: string;
   leadId?: string;
   name: string;
-  contacts: Contact[];
+  contactNumber?: string;
+  email?: string;
   gstin?: string;
   city?: string;
   state?: string;
