@@ -76,6 +76,7 @@ export interface BaseLead {
   spoc?: string; // Single Point of Contact
   initialLeadDate?: string | null; // For 'Revive' lead type
   tat?: number; // Turn Around Time in days, for bulk uploads
+  priority?: 'High' | 'Normal';
 }
 
 export interface Anchor {

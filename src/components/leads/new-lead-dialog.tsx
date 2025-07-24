@@ -51,18 +51,20 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: '',
-      contacts: [{ phone: '', email: '', designation: '', name: '' }],
+      contactNumber: '',
       anchorId: anchorId || '',
       leadType: 'Fresh',
+      priority: 'Normal',
     },
   });
 
   const handleClose = () => {
     form.reset({
       name: '',
-      contacts: [{ phone: '', email: '', designation: '', name: '' }],
+      contactNumber: '',
       anchorId: anchorId || '',
       leadType: 'Fresh',
+      priority: 'Normal',
     });
     onOpenChange(false);
   }
@@ -97,7 +99,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const commonData = {
           leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
           name: values.name,
-          contacts: values.contacts.map((c, index) => ({...c, id: `contact-${Date.now()}-${index}`, isPrimary: index === 0})),
+          contactNumber: values.contactNumber,
+          email: values.email,
           assignedTo: isSpecialist ? null : currentUser.uid,
           status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'New' : 'Unassigned Lead'),
           anchorId: finalAnchorId,
@@ -106,6 +109,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
           leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
+          priority: values.priority as 'High' | 'Normal',
           remarks: [],
         }
 
@@ -190,7 +194,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
 
              <FormField
                 control={form.control}
-                name={`contacts.0.phone`}
+                name={`contactNumber`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contact Number</FormLabel>
@@ -201,6 +205,28 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   </FormItem>
                 )}
               />
+            
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Set lead priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Normal">Normal</SelectItem>
+                          <SelectItem value="High">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <DialogFooter>
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>

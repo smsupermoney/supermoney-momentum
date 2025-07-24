@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame } from 'lucide-react';
 import type { Dealer, SpokeStatus, LeadType } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -319,7 +319,10 @@ export default function DealersPage() {
                   </TableCell>
                 )}
                 <TableCell className="font-medium hover:text-primary">
-                  <div>{dealer.name}</div>
+                  <div className="flex items-center gap-2">
+                    {dealer.priority === 'High' && <Flame className="h-4 w-4 text-destructive" />}
+                    <span>{dealer.name}</span>
+                  </div>
                   {dealer.nextBestAction && (
                       <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal">
                           <Sparkles className="mr-1.5 h-3 w-3 text-primary shrink-0" />
@@ -374,7 +377,10 @@ export default function DealersPage() {
                   )}
                   <div onClick={() => handleRowClick(dealer)} className="cursor-pointer">
                       <CardHeader>
-                          <CardTitle className="hover:text-primary pr-8">{dealer.name}</CardTitle>
+                          <CardTitle className="hover:text-primary pr-8 flex items-center gap-2">
+                            {dealer.priority === 'High' && <Flame className="h-5 w-5 text-destructive" />}
+                            {dealer.name}
+                          </CardTitle>
                           <CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
@@ -420,3 +426,4 @@ export default function DealersPage() {
     
 
     
+

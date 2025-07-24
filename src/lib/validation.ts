@@ -38,7 +38,7 @@ export const RemarkSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
-  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
 
@@ -57,6 +57,7 @@ export const NewSpokeSchema = z.object({
   spoc: z.string().optional(),
   initialLeadDate: z.coerce.date().optional(),
   tat: z.number().int().optional(),
+  priority: z.enum(['High', 'Normal']).optional(),
 });
 
 export const UpdateSpokeSchema = NewSpokeSchema.partial();
