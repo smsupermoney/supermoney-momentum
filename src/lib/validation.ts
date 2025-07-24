@@ -59,6 +59,8 @@ export const NewSpokeSchema = z.object({
   tat: z.number().int().optional(),
 });
 
+export const UpdateSpokeSchema = NewSpokeSchema.partial();
+
 
 export const NewTaskSchema = z.object({
     title: z.string().min(3, "Task title is required."),

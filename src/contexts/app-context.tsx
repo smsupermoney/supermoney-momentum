@@ -11,7 +11,7 @@ import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut }
 import * as firestoreService from '@/services/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema, EditUserSchema } from '@/lib/validation';
+import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema, EditUserSchema, UpdateSpokeSchema } from '@/lib/validation';
 import { sendNotificationEmail, SendNotificationEmailInput } from '@/ai/flows/send-notification-email-flow';
 import { generateUniqueId } from '@/lib/utils';
 
@@ -541,7 +541,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateDealer = async (updatedDealer: Dealer) => {
     try {
-        NewSpokeSchema.extend({ id: z.string() }).parse(updatedDealer);
+        UpdateSpokeSchema.extend({ id: z.string() }).parse(updatedDealer);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
@@ -704,7 +704,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateVendor = async (updatedVendor: Vendor) => {
      try {
-        NewSpokeSchema.extend({ id: z.string() }).parse(updatedVendor);
+        UpdateSpokeSchema.extend({ id: z.string() }).parse(updatedVendor);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for vendor update:", e.flatten().fieldErrors);
