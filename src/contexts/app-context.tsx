@@ -76,6 +76,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDataCleaned, setIsDataCleaned] = useState(false);
 
   const [anchors, setAnchors] = useState<Anchor[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
@@ -113,6 +114,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCurrentUser(null);
     sessionStorage.removeItem('currentUser');
     setUsers(mockUsers); // Reset users to show login options
+    setIsDataCleaned(false); // Reset cleanup flag on logout
   }, []);
 
   useEffect(() => {
@@ -178,6 +180,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [loadMockData, logout, toast]);
+
+  // Data inconsistency cleanup effect
+  useEffect(() => {
+    if (isLoading || isDataCleaned || dealers.length === 0 || vendors.length === 0) {
+      return;
+    }
+  
+    const dealersToUpdate = dealers.filter(d => d.status === 'Unassigned Lead' && d.assignedTo);
+    const vendorsToUpdate = vendors.filter(v => v.status === 'Unassigned Lead' && v.assignedTo);
+  
+    if (dealersToUpdate.length > 0) {
+      console.log(`Correcting status for ${dealersToUpdate.length} assigned dealer(s) marked as unassigned.`);
+      dealersToUpdate.forEach(dealer => {
+        updateDealer({ ...dealer, status: 'New' });
+      });
+    }
+  
+    if (vendorsToUpdate.length > 0) {
+      console.log(`Correcting status for ${vendorsToUpdate.length} assigned vendor(s) marked as unassigned.`);
+      vendorsToUpdate.forEach(vendor => {
+        updateVendor({ ...vendor, status: 'New' });
+      });
+    }
+  
+    // This effect should only run once after the initial data load.
+    setIsDataCleaned(true);
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, dealers, vendors, isDataCleaned]);
+
 
   const visibleUsers = useMemo(() => {
     if (!currentUser || !users.length) return [];
