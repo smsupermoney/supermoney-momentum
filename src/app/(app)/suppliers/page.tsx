@@ -327,7 +327,7 @@ export default function VendorsPage() {
                 )}
                 <TableCell className="font-medium hover:text-primary">
                   <div className="flex items-center gap-2">
-                    {vendor.priority === 'High' && <Flame className="h-4 w-4 text-destructive" />}
+                    {vendor.priority === 'High' && <Flame className="h-6 w-6 text-destructive" />}
                     <span>{vendor.name}</span>
                   </div>
                   {vendor.nextBestAction && (
@@ -385,7 +385,7 @@ export default function VendorsPage() {
                   <div onClick={() => handleRowClick(vendor)} className="cursor-pointer">
                     <CardHeader>
                         <CardTitle className="hover:text-primary pr-8 flex items-center gap-2">
-                            {vendor.priority === 'High' && <Flame className="h-5 w-5 text-destructive" />}
+                            {vendor.priority === 'High' && <Flame className="h-6 w-6 text-destructive" />}
                             {vendor.name}
                         </CardTitle>
                         <CardDescription>{getAnchorName(vendor.anchorId)}</CardDescription>
