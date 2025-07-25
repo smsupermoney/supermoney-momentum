@@ -123,6 +123,9 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             if (anchorName && !associatedAnchor) {
               throw new z.ZodError([{ path: ['anchorId'], message: `Anchor named '${anchorName}' not found.`, code: 'custom' }]);
             }
+            if (!finalAnchorId) {
+                throw new z.ZodError([{ path: ['anchorId'], message: 'Anchor Name is required and must be valid.', code: 'custom' }]);
+            }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser?.uid || null;
@@ -139,7 +142,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               assignedTo: finalAssignedToId,
               anchorId: finalAnchorId,
               name: name,
-              contactNumber: contactNumber,
+              contactNumber: contactNumber || '',
               email: email || '',
               leadType: (leadType as LeadTypeEnum) || 'Fresh',
               priority: (priority === 'High' ? 'High' : 'Normal'),
