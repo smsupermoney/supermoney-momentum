@@ -243,16 +243,8 @@ export default function VendorsPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="w-full">
-              {canBulkDelete && numSelected > 0 && (
-                <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
-                  <Trash2 className="mr-2 h-4 w-4"/>
-                  Delete ({numSelected}) Selected
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-end">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
                     <SelectContent>
@@ -283,6 +275,14 @@ export default function VendorsPage() {
                       </SelectContent>
                   </Select>
                  )}
+            </div>
+            <div className="w-full sm:w-auto flex justify-end">
+              {canBulkDelete && numSelected > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4"/>
+                  Delete ({numSelected}) Selected
+                </Button>
+              )}
             </div>
         </div>
       </div>
@@ -432,3 +432,6 @@ export default function VendorsPage() {
 
     
 
+
+
+    
