@@ -45,7 +45,7 @@ export const NewSpokeSchema = z.object({
   // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
-  gstin: z.string().optional().or(z.literal('')),
+  gstin: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zone: z.string().optional(),
@@ -58,13 +58,6 @@ export const NewSpokeSchema = z.object({
   initialLeadDate: z.string().nullable().optional(),
   tat: z.number().int().optional(),
   priority: z.enum(['High', 'Normal']).optional(),
-  
-  // Fields added by the system, but need to be included for validation context
-  leadId: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  assignedTo: z.string().nullable(),
-  status: z.string(),
 });
 
 export const UpdateSpokeSchema = NewSpokeSchema.partial();
@@ -72,7 +65,7 @@ export const UpdateSpokeSchema = NewSpokeSchema.partial();
 
 export const NewTaskSchema = z.object({
     title: z.string().min(3, "Task title is required."),
-    dueDate: z.string().datetime("A valid due date is required."),
+    dueDate: z.date({ invalid_type_error: "A valid date is required." }),
     priority: z.enum(['High', 'Medium', 'Low']),
     assignedTo: z.string().min(1, "A user must be assigned."),
     status: z.enum(['To-Do', 'In Progress', 'Completed']),

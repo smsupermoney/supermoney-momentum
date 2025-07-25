@@ -24,7 +24,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Loader2, Check, ChevronsUpDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Task, UserRole } from '@/lib/types';
 
@@ -274,34 +274,37 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Due Date</FormLabel>
-                      <Popover modal={false}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      <div className="flex items-center">
+                        <Input
+                          placeholder="dd/mm/yyyy"
+                          value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                          onChange={(e) => {
+                            try {
+                              const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
+                              if (!isNaN(parsedDate.getTime())) {
+                                field.onChange(parsedDate);
+                              }
+                            } catch (error) {
+                              // Handle invalid date format if necessary
+                            }
+                          }}
+                        />
+                        <Popover modal={false}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="ml-2">
+                              <CalendarIcon className="h-4 w-4" />
                             </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => date && field.onChange(date)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
