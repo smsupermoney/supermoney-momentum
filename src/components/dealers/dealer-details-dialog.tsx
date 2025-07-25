@@ -161,8 +161,9 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
     // Sanitize data before sending to validation/Firestore
     Object.keys(updatedDealerData).forEach(key => {
-        if (updatedDealerData[key as keyof typeof updatedDealerData] === undefined) {
-            (updatedDealerData as any)[key] = null;
+        const k = key as keyof typeof updatedDealerData;
+        if (updatedDealerData[k] === undefined) {
+            (updatedDealerData as any)[k] = null;
         }
     });
 
@@ -268,7 +269,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       )}
                     />
                     <FormField control={form.control} name="dealValue" render={({ field }) => (
-                        <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
                     )}/>
                   </div>
                   
