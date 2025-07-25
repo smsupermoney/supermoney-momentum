@@ -216,8 +216,8 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         title: values.title,
         notes: values.notes,
         activityTimestamp: values.activityTimestamp || new Date().toISOString(),
-        location: values.location,
-        images: values.images,
+        location: values.location || null,
+        images: values.images || [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

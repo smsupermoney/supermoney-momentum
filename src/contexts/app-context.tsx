@@ -913,10 +913,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    const dataToSave = { ...activityData };
+    // Sanitize data before sending to Firestore
+    Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+            (dataToSave as any)[key] = null;
+        }
+    });
+
     if (firebaseEnabled) {
-      await firestoreService.addDailyActivity(activityData);
+      await firestoreService.addDailyActivity(dataToSave);
     }
-    const newActivity = { ...activityData, id: generateUniqueId('daily-activity') };
+    const newActivity = { ...dataToSave, id: generateUniqueId('daily-activity') } as DailyActivity;
     setDailyActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.activityTimestamp).getTime() - new Date(a.activityTimestamp).getTime()));
   };
 
