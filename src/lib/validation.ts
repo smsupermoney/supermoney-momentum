@@ -66,6 +66,7 @@ export const NewSpokeSchema = z.object({
 export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
     leadDate: z.date().optional(),
     initialLeadDate: z.date().optional().nullable(),
+    priority: z.enum(['High', 'Normal']).optional(),
 });
 
 
@@ -89,6 +90,8 @@ export const NewDailyActivitySchema = z.object({
     activityType: z.enum(['Client Meeting', 'Site Visit', 'Sales Presentation', 'Follow-up', 'Administrative', 'Training', 'Networking']),
     title: z.string().min(3, "A title is required for the activity."),
     activityTimestamp: z.string().datetime("A valid timestamp is required."),
+    location: z.object({ latitude: z.number(), longitude: z.number() }).nullable().optional(),
+    locationAddress: z.string().nullable().optional(),
 });
 
 export const NewUserSchema = z.object({

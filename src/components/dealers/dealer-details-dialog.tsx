@@ -151,7 +151,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
-    const updatedDealerData: Dealer = {
+    const updatedDealerData: Partial<Dealer> = {
       ...dealer,
       ...values,
       leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
@@ -167,7 +167,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
         }
     });
 
-    updateDealer(updatedDealerData);
+    updateDealer(updatedDealerData as Dealer);
     toast({
       title: "Dealer Updated",
       description: `${values.name} has been successfully updated.`

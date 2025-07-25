@@ -152,7 +152,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
-    const updatedVendorData: Vendor = {
+    const updatedVendorData: Partial<Vendor> = {
       ...vendor,
       ...values,
       leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
@@ -168,7 +168,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         }
     });
 
-    updateVendor(updatedVendorData);
+    updateVendor(updatedVendorData as Vendor);
     toast({
       title: "Vendor Updated",
       description: `${values.name} has been successfully updated.`
