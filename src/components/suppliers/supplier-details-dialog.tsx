@@ -270,7 +270,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       )}
                     />
                     <FormField control={form.control} name="dealValue" render={({ field }) => (
-                        <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </div>
 
