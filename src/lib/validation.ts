@@ -38,10 +38,10 @@ export const RemarkSchema = z.object({
 
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
+  anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
-  anchorId: z.string().min(1, "An anchor must be associated with the lead."),
-
+  
   // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
@@ -53,11 +53,18 @@ export const NewSpokeSchema = z.object({
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
   remarks: z.array(RemarkSchema).optional(),
-  leadDate: z.coerce.date().optional(),
+  leadDate: z.string().optional(),
   spoc: z.string().optional(),
-  initialLeadDate: z.coerce.date().optional(),
+  initialLeadDate: z.string().nullable().optional(),
   tat: z.number().int().optional(),
   priority: z.enum(['High', 'Normal']).optional(),
+  
+  // Fields added by the system, but need to be included for validation context
+  leadId: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  assignedTo: z.string().nullable(),
+  status: z.string(),
 });
 
 export const UpdateSpokeSchema = NewSpokeSchema.partial();

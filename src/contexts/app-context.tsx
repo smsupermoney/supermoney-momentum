@@ -573,7 +573,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateDealer = async (updatedDealer: Dealer) => {
     try {
-        UpdateSpokeSchema.partial().extend({ id: z.string() }).parse(updatedDealer);
+        UpdateSpokeSchema.parse(updatedDealer);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
@@ -736,7 +736,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateVendor = async (updatedVendor: Vendor) => {
      try {
-        UpdateSpokeSchema.partial().extend({ id: z.string() }).parse(updatedVendor);
+        UpdateSpokeSchema.parse(updatedVendor);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for vendor update:", e.flatten().fieldErrors);
