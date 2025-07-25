@@ -80,10 +80,10 @@ export function ActivityList() {
               <div className="border-t -mx-4 my-2"></div>
               {entityName && <p className="text-sm font-medium">{entityType}: {entityName}</p>}
               {activity.notes && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{activity.notes}</p>}
-              {activity.location && (
+              {activity.locationAddress && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3" />
-                  <span>Lat: {activity.location.latitude.toFixed(4)}, Lng: {activity.location.longitude.toFixed(4)}</span>
+                  <span>{activity.locationAddress}</span>
                 </div>
               )}
               {activity.images && activity.images.length > 0 && (

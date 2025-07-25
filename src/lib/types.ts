@@ -170,7 +170,8 @@ export interface DailyActivity {
     location?: {
         latitude: number;
         longitude: number;
-    };
+    } | null;
+    locationAddress?: string | null;
     images?: string[];
     createdAt: string;
     updatedAt: string;

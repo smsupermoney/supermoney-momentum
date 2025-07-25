@@ -35,6 +35,7 @@ import type { DailyActivity, DailyActivityType, UserRole } from '@/lib/types';
 import Image from 'next/image';
 import { CameraCaptureDialog } from './camera-capture-dialog';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
+import { reverseGeocode } from '@/ai/flows/reverse-geocode-flow';
 import { useLanguage } from '@/contexts/language-context';
 
 const formSchema = z.object({
@@ -46,6 +47,7 @@ const formSchema = z.object({
     latitude: z.number(),
     longitude: z.number(),
   }).optional(),
+  locationAddress: z.string().optional(),
   images: z.array(z.string()).optional(),
   activityTimestamp: z.string().optional(),
   logForUserId: z.string().optional(),
@@ -73,6 +75,9 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationAddress, setLocationAddress] = useState<string | null>(null);
 
   const isManager = currentUser && managerRoles.includes(currentUser.role);
   
@@ -102,6 +107,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       notes: '',
     });
     setImagePreviews([]);
+    setLocationAddress(null);
     onOpenChange(false);
   };
   
@@ -110,16 +116,28 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
       toast({ variant: 'destructive', title: 'Geolocation not supported', description: 'Your browser does not support geolocation.' });
       return;
     }
+    setIsFetchingLocation(true);
+    setLocationAddress(null);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         const timestamp = new Date().toISOString();
         form.setValue('location', { latitude, longitude });
         form.setValue('activityTimestamp', timestamp);
-        toast({ title: 'Location Captured', description: `Timestamp set to current time.` });
+        try {
+          const result = await reverseGeocode({ latitude, longitude });
+          setLocationAddress(result.address);
+          form.setValue('locationAddress', result.address);
+          toast({ title: 'Location Captured', description: `Address found: ${result.address}` });
+        } catch (e) {
+          toast({ variant: 'destructive', title: 'Could not fetch address', description: 'Address lookup failed, but coordinates were saved.' });
+        } finally {
+            setIsFetchingLocation(false);
+        }
       },
       () => {
         toast({ variant: 'destructive', title: 'Unable to retrieve location', description: 'Please ensure location services are enabled.' });
+        setIsFetchingLocation(false);
       }
     );
   };
@@ -208,50 +226,42 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
 
     setIsSubmitting(true);
     
-    try {
-      const newActivity: Partial<DailyActivity> = {
-        userId: logForUser.uid,
-        userName: logForUser.name,
-        activityType: values.activityType as DailyActivityType,
-        title: values.title,
-        notes: values.notes,
-        activityTimestamp: values.activityTimestamp || new Date().toISOString(),
-        location: values.location || null,
-        images: values.images || [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    const newActivity: Partial<DailyActivity> = {
+      userId: logForUser.uid,
+      userName: logForUser.name,
+      activityType: values.activityType as DailyActivityType,
+      title: values.title,
+      notes: values.notes,
+      activityTimestamp: values.activityTimestamp || new Date().toISOString(),
+      location: values.location || null,
+      locationAddress: values.locationAddress || null,
+      images: values.images || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-      if (values.associatedEntity) {
-        const [type, id] = values.associatedEntity.split(':');
-        if (type === 'anchor') {
-            const selected = anchors.find(a => a.id === id);
-            newActivity.anchorId = id;
-            newActivity.anchorName = selected?.name;
-        } else if (type === 'dealer') {
-            const selected = dealers.find(d => d.id === id);
-            newActivity.dealerId = id;
-            newActivity.dealerName = selected?.name;
-        } else if (type === 'vendor') {
-            const selected = vendors.find(v => v.id === id);
-            newActivity.vendorId = id;
-            newActivity.vendorName = selected?.name;
-        }
+    if (values.associatedEntity) {
+      const [type, id] = values.associatedEntity.split(':');
+      if (type === 'anchor') {
+          const selected = anchors.find(a => a.id === id);
+          newActivity.anchorId = id;
+          newActivity.anchorName = selected?.name;
+      } else if (type === 'dealer') {
+          const selected = dealers.find(d => d.id === id);
+          newActivity.dealerId = id;
+          newActivity.dealerName = selected?.name;
+      } else if (type === 'vendor') {
+          const selected = vendors.find(v => v.id === id);
+          newActivity.vendorId = id;
+          newActivity.vendorName = selected?.name;
       }
-
-      addDailyActivity(newActivity as Omit<DailyActivity, 'id'>);
-      toast({ title: 'Activity Logged', description: `Activity for ${logForUser.name} has been logged.` });
-      handleClose();
-
-    } catch (error) {
-      console.error("Failed to log activity:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to log your activity. Please try again.' });
-    } finally {
-      setIsSubmitting(false);
     }
+    
+    addDailyActivity(newActivity as Omit<DailyActivity, 'id'>);
+    toast({ title: 'Activity Logged', description: `Activity for ${logForUser.name} has been logged.` });
+    handleClose();
+    setIsSubmitting(false);
   };
-
-  const locationValue = form.watch('location');
 
   const voiceButtonContent = () => {
     if (isTranscribing) {
@@ -412,8 +422,9 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
             <div className="space-y-4 rounded-lg border p-4">
                 <h3 className="text-sm font-medium">{t('activities.form.attachmentsAndLocation')}</h3>
                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full">
-                        <MapPin className="mr-2 h-4 w-4"/> {t('activities.form.captureLocation')}
+                    <Button type="button" variant="outline" onClick={handleCaptureLocation} className="w-full" disabled={isFetchingLocation}>
+                        {isFetchingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4"/>}
+                        {t('activities.form.captureLocation')}
                     </Button>
                     <Button type="button" variant="outline" onClick={handleToggleRecording} disabled={isTranscribing} className="w-full">
                         {voiceButtonContent()}
@@ -430,9 +441,10 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                         <Camera className="mr-2 h-4 w-4"/> {t('activities.form.takePhoto')}
                     </Button>
                  </div>
-                 {locationValue && (
-                     <div className="text-xs text-muted-foreground">
-                         {t('activities.form.locationCaptured')}
+                 {locationAddress && (
+                     <div className="text-xs text-muted-foreground flex items-start gap-2">
+                        <MapPin className="h-3 w-3 mt-0.5 shrink-0" /> 
+                        <span>{locationAddress}</span>
                      </div>
                  )}
                  {imagePreviews.length > 0 && (
