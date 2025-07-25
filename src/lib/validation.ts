@@ -62,7 +62,11 @@ export const NewSpokeSchema = z.object({
   priority: z.enum(['High', 'Normal']).optional(),
 });
 
-export const UpdateSpokeSchema = NewSpokeSchema.partial();
+
+export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
+    leadDate: z.date().optional(),
+    initialLeadDate: z.date().optional().nullable(),
+});
 
 
 export const NewTaskSchema = z.object({
