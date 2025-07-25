@@ -160,10 +160,10 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       updatedAt: new Date().toISOString(),
     };
     
-    // Final sanitization to remove any lingering 'undefined' values
+    // Sanitize data before sending to validation/Firestore
     Object.keys(updatedVendorData).forEach(key => {
         if (updatedVendorData[key as keyof typeof updatedVendorData] === undefined) {
-            delete updatedVendorData[key as keyof typeof updatedVendorData];
+            (updatedVendorData as any)[key] = null;
         }
     });
 

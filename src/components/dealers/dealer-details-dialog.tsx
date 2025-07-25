@@ -159,10 +159,10 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
       updatedAt: new Date().toISOString(),
     };
 
-    // Final sanitization to remove any lingering 'undefined' values
+    // Sanitize data before sending to validation/Firestore
     Object.keys(updatedDealerData).forEach(key => {
         if (updatedDealerData[key as keyof typeof updatedDealerData] === undefined) {
-            delete updatedDealerData[key as keyof typeof updatedDealerData];
+            (updatedDealerData as any)[key] = null;
         }
     });
 
