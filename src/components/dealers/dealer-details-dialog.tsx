@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -59,7 +58,7 @@ interface DealerDetailsDialogProps {
 }
 
 export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
-  const { updateDealer, currentUser, deleteDealer, lenders, users } from useApp();
+  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
