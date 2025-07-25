@@ -1,6 +1,8 @@
 
 
 import { z } from 'zod';
+import { parse, isValid } from 'date-fns';
+
 
 // This file contains Zod schemas for "server-side" validation of data mutations.
 // In a real application, these would be used within server actions or cloud functions
@@ -39,7 +41,7 @@ export const RemarkSchema = z.object({
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
-  contactNumber: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
+  contactNumber: z.string().optional().or(z.literal('')),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
   
   // Optional fields from now on
@@ -65,10 +67,16 @@ export const UpdateSpokeSchema = NewSpokeSchema.partial();
 
 export const NewTaskSchema = z.object({
     title: z.string().min(3, "Task title is required."),
-    dueDate: z.date({ invalid_type_error: "A valid date is required." }),
-    priority: z.enum(['High', 'Medium', 'Low']),
-    assignedTo: z.string().min(1, "A user must be assigned."),
-    status: z.enum(['To-Do', 'In Progress', 'Completed']),
+    associatedEntity: z.string().optional(),
+    type: z.string().min(1, 'Task type is required'),
+    dueDate: z.string().refine((val) => {
+        if (!val) return false;
+        const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
+        return isValid(parsedDate);
+    }, { message: "Due date is required in dd/mm/yyyy format." }),
+    priority: z.string().min(1, 'Priority is required'),
+    description: z.string().optional(),
+    assignedTo: z.string().optional(),
 });
 
 

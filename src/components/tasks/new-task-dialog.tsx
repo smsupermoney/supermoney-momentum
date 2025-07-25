@@ -27,19 +27,10 @@ import { CalendarIcon, Loader2, Check, ChevronsUpDown } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Task, UserRole } from '@/lib/types';
+import { NewTaskSchema } from '@/lib/validation';
 
 
-const formSchema = z.object({
-  title: z.string().min(3, 'Title is required'),
-  associatedEntity: z.string().optional(),
-  type: z.string().min(1, 'Task type is required'),
-  dueDate: z.date({ required_error: 'A due date is required.' }),
-  priority: z.string().min(1, 'Priority is required'),
-  description: z.string().optional(),
-  assignedTo: z.string().optional(),
-});
-
-type NewTaskFormValues = z.infer<typeof formSchema>;
+type NewTaskFormValues = z.infer<typeof NewTaskSchema>;
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -64,7 +55,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
   ];
 
   const form = useForm<NewTaskFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(NewTaskSchema),
     defaultValues: {
         title: '',
         associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
@@ -116,7 +107,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           title: values.title,
           associatedWith: associatedWith,
           type: values.type as Task['type'],
-          dueDate: values.dueDate.toISOString(),
+          dueDate: parse(values.dueDate, 'dd/MM/yyyy', new Date()).toISOString(),
           priority: values.priority as Task['priority'],
           description: values.description || '',
           status: 'To-Do',
@@ -274,42 +265,24 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Due Date</FormLabel>
-                      <div className="flex items-center">
-                        <Input
+                       <Input
                           placeholder="dd/mm/yyyy"
-                          value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
-                          onChange={(e) => {
-                            try {
-                              const parsedDate = parse(e.target.value, 'dd/MM/yyyy', new Date());
-                              if (!isNaN(parsedDate.getTime())) {
-                                field.onChange(parsedDate);
-                              }
-                            } catch (error) {
-                              // Handle invalid date format if necessary
-                            }
-                          }}
+                          {...field}
                         />
-                        <Popover modal={false}>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" size="icon" className="ml-2">
-                              <CalendarIcon className="h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={(date) => date && field.onChange(date)}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
              </div>
+             <Calendar
+                mode="single"
+                onSelect={(date) => {
+                    if (date) {
+                        form.setValue('dueDate', format(date, 'dd/MM/yyyy'));
+                    }
+                }}
+                className="rounded-md border"
+             />
              <FormField name="priority" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Priority</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger></FormControl>
