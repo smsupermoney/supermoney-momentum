@@ -154,7 +154,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     const updatedDealerData: Partial<Dealer> = {
       ...dealer,
       ...values,
-      leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
+      leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
       initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };

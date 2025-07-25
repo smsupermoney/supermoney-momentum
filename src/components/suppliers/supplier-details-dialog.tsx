@@ -154,7 +154,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     const updatedVendorData: Partial<Vendor> = {
       ...vendor,
       ...values,
-      leadDate: values.leadDate?.toISOString() || new Date().toISOString(),
+      leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
       initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };

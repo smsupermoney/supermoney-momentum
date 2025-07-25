@@ -66,6 +66,7 @@ export const NewSpokeSchema = z.object({
 export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
     leadDate: z.date({ invalid_type_error: "Lead Date must be a valid date." }).optional(),
     initialLeadDate: z.date({ invalid_type_error: "Initial Lead Date must be a valid date." }).optional().nullable(),
+    priority: z.enum(['High', 'Normal']).optional(),
 });
 
 
