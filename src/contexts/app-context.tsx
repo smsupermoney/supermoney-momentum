@@ -183,7 +183,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // Data inconsistency cleanup effect
   useEffect(() => {
-    if (isLoading || isDataCleaned || dealers.length === 0 || vendors.length === 0) {
+    if (isLoading || isDataCleaned || (dealers.length === 0 && vendors.length === 0)) {
       return;
     }
   
@@ -530,7 +530,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-        UpdateSpokeSchema.parse(dealerData);
+        NewSpokeSchema.parse(dealerData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new dealer:", e.flatten().fieldErrors);
@@ -694,7 +694,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-        UpdateSpokeSchema.parse(vendorData);
+        NewSpokeSchema.parse(vendorData);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new vendor:", e.flatten().fieldErrors);

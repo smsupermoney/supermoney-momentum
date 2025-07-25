@@ -121,10 +121,12 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const finalAnchorId = anchorId || associatedAnchor?.id;
             
             if (anchorName && !associatedAnchor) {
-              throw new z.ZodError([{ path: ['anchorId'], message: `Anchor named '${anchorName}' not found.`, code: 'custom' }]);
+              errors.push({ row: rowNumber, messages: [`Anchor named '${anchorName}' not found.`] });
+              continue;
             }
             if (!finalAnchorId) {
-                throw new z.ZodError([{ path: ['anchorId'], message: 'Anchor Name is required and must be valid.', code: 'custom' }]);
+                errors.push({ row: rowNumber, messages: ['Anchor Name is required and must be valid.'] });
+                continue;
             }
 
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
@@ -135,37 +137,36 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
-            const commonData: Record<string, any> = {
+            const commonData = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               assignedTo: finalAssignedToId,
               anchorId: finalAnchorId,
-              name: name,
+              name: name || '',
               contactNumber: contactNumber || '',
               email: email || '',
+              city: city || '',
+              state: state || '',
+              zone: zone || '',
+              product: product || '',
+              leadSource: leadSource || '',
               leadType: (leadType as LeadTypeEnum) || 'Fresh',
               priority: (priority === 'High' ? 'High' : 'Normal'),
               status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
+              lenderId: targetLender?.id || null,
+              remarks: remarksStr ? [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
+              dealValue: dealValueStr ? parseFloat(dealValueStr) : undefined,
+              spoc: spoc || '',
+              leadDate: parsedLeadDate?.toISOString() || new Date().toISOString(),
+              initialLeadDate: parsedInitialLeadDate?.toISOString() || null,
+              tat: tatStr ? parseInt(tatStr, 10) : undefined
             };
-            
-            if (city) commonData.city = city;
-            if (state) commonData.state = state;
-            if (zone) commonData.zone = zone;
-            if (product) commonData.product = product;
-            if (leadSource) commonData.leadSource = leadSource;
-            if (targetLender?.id) commonData.lenderId = targetLender.id;
-            if (remarksStr) commonData.remarks = [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }];
-            if (dealValueStr) commonData.dealValue = parseFloat(dealValueStr);
-            if (spoc) commonData.spoc = spoc;
-            if (parsedLeadDate) commonData.leadDate = parsedLeadDate.toISOString();
-            if (parsedInitialLeadDate) commonData.initialLeadDate = parsedInitialLeadDate.toISOString();
-            if (tatStr && !isNaN(parseInt(tatStr, 10))) commonData.tat = parseInt(tatStr, 10);
 
-            // Final sanitization to remove any null or undefined values before sending to Firestore
+            // Final sanitization to remove any lingering 'undefined' values before sending to Firestore
             Object.keys(commonData).forEach(key => {
-                if (commonData[key] === undefined || commonData[key] === null) {
-                    delete commonData[key];
+                if (commonData[key as keyof typeof commonData] === undefined) {
+                    delete commonData[key as keyof typeof commonData];
                 }
             });
             
@@ -220,7 +221,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Bulk Upload {type}s</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with lead details. Name, Contact Number and Anchor Name are required.
+            Upload a CSV file with lead details. Name and Anchor Name are required.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
