@@ -49,7 +49,10 @@ const managerRolesHierarchy: Record<string, UserRole[]> = {
     'Area Sales Manager': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Regional Sales Manager': ['National Sales Manager', 'Admin'],
-    'National Sales Manager': ['Admin']
+    'National Sales Manager': ['Admin'],
+    'ETB Executive': ['ETB Manager', 'Admin'],
+    'ETB Manager': ['Admin'],
+    'Telecaller': ['ETB Manager', 'Admin'],
 };
 
 export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
@@ -194,7 +197,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
               />
             )}
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={handleClose}>{t('dialogs.cancel')}</Button>
+              <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('dialogs.create')} User

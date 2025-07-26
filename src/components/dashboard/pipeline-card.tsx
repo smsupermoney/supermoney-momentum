@@ -14,7 +14,7 @@ export function PipelineCard() {
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
 
-    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
     if (managerRoles.includes(currentUser.role)) {
       // Managers and above see all non-archived anchors created by anyone in their visibility tree
       return anchors.filter(a => a.status !== 'Archived' && visibleUserIds.includes(a.createdBy || ''));
@@ -42,7 +42,7 @@ export function PipelineCard() {
 
   const getTitle = () => {
     if (!currentUser) return '';
-    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+    const managerRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
     if (managerRoles.includes(currentUser.role)) {
         return t('dashboard.teamPipeline');
     }

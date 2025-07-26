@@ -8,7 +8,7 @@ import { parse, isValid } from 'date-fns';
 // In a real application, these would be used within server actions or cloud functions
 // to ensure data integrity before writing to the database.
 
-export const userRoles = ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'] as const;
+export const userRoles = ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] as const;
 export const regions = ['National', 'West', 'East', 'North', 'South'] as const;
 
 export const NewAnchorSchema = z.object({

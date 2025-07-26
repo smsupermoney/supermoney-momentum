@@ -22,7 +22,7 @@ export function StaleLeadsCard() {
     const { dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
 
     const { staleLeads, inactiveUsers } = useMemo(() => {
-        const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
+        const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'];
         if (!currentUser || !managerRoles.includes(currentUser?.role || '')) {
             return { staleLeads: [], inactiveUsers: [] };
         }
@@ -40,7 +40,7 @@ export function StaleLeadsCard() {
         }
         lastWorkingDay.setHours(0, 0, 0, 0);
 
-        const areaSalesManagers = users.filter(u => u.role === 'Area Sales Manager' && visibleUserIds.includes(u.uid));
+        const areaSalesManagers = users.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role) && visibleUserIds.includes(u.uid));
 
         const allStaleLeads: StaleLead[] = [];
         const allInactiveUsers: InactiveUser[] = [];

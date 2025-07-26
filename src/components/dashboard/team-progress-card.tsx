@@ -9,7 +9,7 @@ import { isPast, isToday, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User, Activity, AlertCircle, Package, Handshake, IndianRupee } from 'lucide-react';
 import { UserRole, products as allProducts } from '@/lib/types';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
@@ -25,7 +25,7 @@ export function TeamProgressCard() {
 
     const filteredUsers = useMemo(() => {
         if (!currentUser) return [];
-        let users = visibleUsers.filter(u => u.uid !== currentUser.uid && u.role !== 'Admin' && u.role !== 'Business Development');
+        let users = visibleUsers.filter(u => u.uid !== currentUser.uid && u.role !== 'Admin' && u.role !== 'Business Development' && u.role !== 'BIU');
         if (regionFilter !== 'all') {
             users = users.filter(u => u.region === regionFilter);
         }
@@ -72,7 +72,7 @@ export function TeamProgressCard() {
         }).filter(p => p.newLeads > 0 || p.dealValue > 0);
     }, [dealers, vendors, regionFilter, visibleUsers]);
 
-    const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development'];
+    const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'];
     if (!currentUser || !managerRoles.includes(currentUser.role) || filteredUsers.length === 0) {
         return null;
     }

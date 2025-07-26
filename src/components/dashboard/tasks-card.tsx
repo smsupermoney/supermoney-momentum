@@ -18,7 +18,7 @@ export function TasksCard() {
 
   const getVisibleTasks = () => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Business Development') {
+    if (currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
       return tasks.filter(task => task.assignedTo === currentUser.uid);
     }
     return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
@@ -46,7 +46,7 @@ export function TasksCard() {
 
   const getTitle = () => {
     if (!currentUser) return t('dashboard.myTasksToday');
-    const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'];
+    const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin', 'ETB Manager'];
     if (managerialRoles.includes(currentUser.role)) {
       return t('dashboard.teamTasksToday');
     }
@@ -73,7 +73,7 @@ export function TasksCard() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">{getAnchorName(task.associatedWith.anchorId)}</p>
                     <Badge variant={priorityVariant[task.priority]} className="capitalize">{task.priority}</Badge>
-                     { (currentUser.role !== 'Area Sales Manager' && currentUser.role !== 'Business Development') && (
+                     { ![ 'Area Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'Telecaller' ].includes(currentUser.role) && (
                         <Badge variant="outline">{getAssignedToName(task.assignedTo)}</Badge>
                      )}
                   </div>

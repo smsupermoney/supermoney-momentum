@@ -48,7 +48,10 @@ const managerRolesHierarchy: Record<string, UserRole[]> = {
     'Area Sales Manager': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Regional Sales Manager': ['National Sales Manager', 'Admin'],
-    'National Sales Manager': ['Admin']
+    'National Sales Manager': ['Admin'],
+    'ETB Executive': ['ETB Manager', 'Admin'],
+    'ETB Manager': ['Admin'],
+    'Telecaller': ['ETB Manager', 'Admin'],
 };
 
 export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps) {

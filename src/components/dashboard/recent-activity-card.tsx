@@ -30,8 +30,8 @@ export function RecentActivityCard({ className }: { className?: string }) {
   const getVisibleLogs = () => {
     if (!currentUser) return [];
     
-    // Business Development and Admin see all activity
-    if (currentUser.role === 'Business Development' || currentUser.role === 'Admin') {
+    // BD, BIU and Admin see all activity
+    if (['Business Development', 'BIU', 'Admin'].includes(currentUser.role)) {
       return activityLogs;
     }
     

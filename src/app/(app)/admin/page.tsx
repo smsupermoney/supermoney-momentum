@@ -240,7 +240,7 @@ function BulkReassignment() {
             return;
         }
         reassignLeads(fromUserId, toUserId);
-        toast({ title: 'Leads Reassigned', description: `${leadCount} leads have been reassigned.` });
+        toast({ title: 'Leads Reassigned', description: `${leadCount} lead(s) have been reassigned.` });
         setFromUserId('');
         setToUserId('');
     };
