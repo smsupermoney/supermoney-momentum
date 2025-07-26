@@ -225,7 +225,7 @@ function BulkReassignment() {
     const [toUserId, setToUserId] = useState('');
     const { toast } = useToast();
 
-    const salesUsers = useMemo(() => users.filter(u => u.role === 'Area Sales Manager'), [users]);
+    const salesUsers = useMemo(() => users.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role)), [users]);
 
     const leadCount = useMemo(() => {
         if (!fromUserId) return 0;
@@ -363,10 +363,10 @@ export default function AdminPage() {
   };
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
-  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
+  const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
-  const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
-  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
+  const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
+  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
 
 
   if (!canViewAdminPanel) {

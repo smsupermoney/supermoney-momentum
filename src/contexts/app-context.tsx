@@ -220,7 +220,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUsers = useMemo(() => {
     if (!currentUser || !users.length) return [];
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager') {
       return users;
     }
     
@@ -986,6 +986,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             role: updatedUser.role,
             managerId: updatedUser.managerId,
             region: updatedUser.region,
+            territoryAccess: updatedUser.territoryAccess,
         };
         EditUserSchema.parse(dataToValidate);
     } catch (e) {
@@ -1074,7 +1075,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const reassignLeads = (fromUserId: string, toUserId: string) => {
-    if (!currentUser || !['Admin', 'Business Development', 'BIU'].includes(currentUser.role)) {
+    if (!currentUser || !['Admin', 'Business Development', 'BIU', 'ETB Manager'].includes(currentUser.role)) {
       toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only authorized users can reassign leads.' });
       return;
     }
