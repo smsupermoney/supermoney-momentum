@@ -7,6 +7,7 @@ import { AnchorProfile } from "@/components/anchors/anchor-profile";
 import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
+import { useMemo } from "react";
 
 export default function AnchorProfilePage() {
   const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading, anchorSPOCs } = useApp();
@@ -16,6 +17,21 @@ export default function AnchorProfilePage() {
   
   const anchor = anchors.find((a) => a.id === id);
   
+  const combinedLeads = useMemo(() => {
+    if (!anchor) return [];
+    
+    const anchorDealers = dealers
+      .filter(d => anchor.dealerIds.includes(d.id))
+      .map(d => ({ ...d, type: 'Dealer' as const }));
+      
+    const anchorVendors = vendors
+      .filter(v => anchor.vendorIds.includes(v.id))
+      .map(v => ({ ...v, type: 'Vendor' as const }));
+
+    return [...anchorDealers, ...anchorVendors].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [anchor, dealers, vendors]);
+
+
   if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -33,8 +49,6 @@ export default function AnchorProfilePage() {
     );
   }
 
-  const anchorDealers = dealers.filter(d => anchor.dealerIds.includes(d.id));
-  const anchorVendors = vendors.filter(v => anchor.vendorIds.includes(v.id));
   const anchorActivityLogs = activityLogs.filter(log => log.anchorId === anchor.id);
   const anchorTasks = tasks.filter(task => task.associatedWith.anchorId === anchor.id);
   const spocsForAnchor = anchorSPOCs.filter(spoc => spoc.anchorId === anchor.id);
@@ -42,8 +56,7 @@ export default function AnchorProfilePage() {
 
   return <AnchorProfile 
             anchor={anchor}
-            dealers={anchorDealers}
-            vendors={anchorVendors}
+            leads={combinedLeads}
             activityLogs={anchorActivityLogs}
             tasks={anchorTasks}
             users={users}

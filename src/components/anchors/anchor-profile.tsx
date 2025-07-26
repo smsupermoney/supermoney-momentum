@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef } from 'react';
@@ -43,18 +42,17 @@ const activityIconMap: Record<string, React.ElementType> = {
     'Deletion': PenSquare,
 };
 
-
+type CombinedLead = (Dealer | Vendor) & { type: 'Dealer' | 'Vendor' };
 interface AnchorProfileProps {
   anchor: Anchor;
-  dealers: Dealer[];
-  vendors: Vendor[];
+  leads: CombinedLead[];
   activityLogs: ActivityLog[];
   tasks: Task[];
   users: User[];
   spocs: AnchorSPOC[];
 }
 
-export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs, spocs }: AnchorProfileProps) {
+export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs }: AnchorProfileProps) {
   const { addActivityLog, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -71,8 +69,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [emailConfig, setEmailConfig] = useState<{ recipientEmail: string, entity: { id: string; name: string; type: 'anchor' } } | null>(null);
 
-  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [selectedLead, setSelectedLead] = useState<CombinedLead | null>(null);
 
 
   const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
@@ -123,12 +120,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
     setIsEmailDialogOpen(true);
   };
   
-  const handleViewDetails = (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => {
-    if (type === 'Dealer') {
-        setSelectedDealer(spoke as Dealer);
-    } else {
-        setSelectedVendor(spoke as Vendor);
-    }
+  const handleViewDetails = (lead: CombinedLead) => {
+    setSelectedLead(lead);
   }
 
 
@@ -180,28 +173,28 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
             entity={emailConfig.entity}
         />
       )}
-      {selectedDealer && (
+      
+      {selectedLead && selectedLead.type === 'Dealer' && (
         <DealerDetailsDialog
-            dealer={selectedDealer}
-            open={!!selectedDealer}
-            onOpenChange={(open) => { if(!open) setSelectedDealer(null); }}
+            dealer={selectedLead as Dealer}
+            open={!!selectedLead}
+            onOpenChange={(open) => { if(!open) setSelectedLead(null); }}
         />
       )}
-      {selectedVendor && (
+      {selectedLead && selectedLead.type === 'Vendor' && (
         <VendorDetailsDialog
-            vendor={selectedVendor}
-            open={!!selectedVendor}
-            onOpenChange={(open) => { if(!open) setSelectedVendor(null); }}
+            vendor={selectedLead as Vendor}
+            open={!!selectedLead}
+            onOpenChange={(open) => { if(!open) setSelectedLead(null); }}
         />
       )}
 
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-5">
+        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="details">{t('anchors.profile.detailsTab')}</TabsTrigger>
           <TabsTrigger value="spocs">SPOCs ({spocs.length})</TabsTrigger>
-          <TabsTrigger value="dealers">{t('sidebar.dealers')} ({initialDealers.length})</TabsTrigger>
-          <TabsTrigger value="vendors">{t('sidebar.vendors')} ({initialVendors.length})</TabsTrigger>
+          <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
           <TabsTrigger value="interactions">{t('anchors.profile.interactionsTab', { count: initialLogs.length })}</TabsTrigger>
         </TabsList>
 
@@ -317,30 +310,23 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
             </Card>
         </TabsContent>
 
-        <TabsContent value="dealers" className="mt-4">
+        <TabsContent value="leads" className="mt-4">
           <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle>{t('anchors.profile.associatedDealers')} ({initialDealers.length})</CardTitle>
-                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addDealer')}</Button>}
+                    <CardTitle>Associated Leads ({leads.length})</CardTitle>
+                    <div className="flex gap-2">
+                      {isSalesRole && <Button variant="outline" onClick={() => openNewLeadDialog('Dealer')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addDealer')}</Button>}
+                      {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addVendor')}</Button>}
+                    </div>
                 </div>
+                 <CardDescription>All Dealers and Vendors associated with this anchor.</CardDescription>
             </CardHeader>
             <CardContent>
-                <SpokeTable spokes={initialDealers} type="Dealer" onUpdateSpoke={updateDealer} onViewDetails={handleViewDetails} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="vendors" className="mt-4">
-          <Card>
-             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>{t('anchors.profile.associatedVendors')} ({initialVendors.length})</CardTitle>
-                    {isSalesRole && <Button onClick={() => openNewLeadDialog('Vendor')}><PlusCircle className="h-4 w-4 mr-2" />{t('anchors.profile.addVendor')}</Button>}
-                </div>
-            </CardHeader>
-            <CardContent>
-                <SpokeTable spokes={initialVendors} type="Vendor" onUpdateSpoke={updateVendor} onViewDetails={handleViewDetails} />
+                <AnchorLeadsTable 
+                  leads={leads}
+                  onViewDetails={handleViewDetails}
+                />
             </CardContent>
           </Card>
         </TabsContent>
@@ -392,14 +378,9 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   );
 }
 
-function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Array<Dealer | Vendor>; type: 'Dealer' | 'Vendor'; onUpdateSpoke: (spoke: any) => void; onViewDetails: (spoke: Dealer | Vendor, type: 'Dealer' | 'Vendor') => void; }) {
-    const { currentUser, users } = useApp();
+function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onViewDetails: (lead: CombinedLead) => void; }) {
+    const { users } = useApp();
     const { t } = useLanguage();
-    const isSpecialist = currentUser?.role === 'Business Development';
-
-    const handleStatusChange = (spoke: Dealer | Vendor, newStatus: SpokeStatus) => {
-        onUpdateSpoke({...spoke, status: newStatus});
-    }
 
     const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
         switch (status) {
@@ -430,40 +411,31 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t('anchors.profile.spokeTable.name', { type })}</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Type</TableHead>
                             <TableHead>Phone</TableHead>
-                            <TableHead>{t('anchors.profile.spokeTable.status')}</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Assigned To</TableHead>
-                            <TableHead className="text-right">{t('anchors.profile.spokeTable.actions')}</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {spokes.length > 0 ? spokes.map(spoke => (
-                        <TableRow key={spoke.id}>
-                            <TableCell className="font-medium">{spoke.name}</TableCell>
-                            <TableCell>{spoke.contactNumber || 'N/A'}</TableCell>
+                        {leads.length > 0 ? leads.map(lead => (
+                        <TableRow key={lead.id}>
+                            <TableCell className="font-medium">{lead.name}</TableCell>
+                            <TableCell><Badge variant="outline">{lead.type}</Badge></TableCell>
+                            <TableCell>{lead.contactNumber || 'N/A'}</TableCell>
                             <TableCell>
-                                {isSpecialist ? (
-                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
-                                        <SelectTrigger className="w-[180px] h-8 text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                ) : (
-                                    <Badge variant={getStatusVariant(spoke.status)}>{spoke.status}</Badge>
-                                )}
+                               <Badge variant={getStatusVariant(lead.status)}>{lead.status}</Badge>
                             </TableCell>
-                            <TableCell>{getAssignedToName(spoke.assignedTo)}</TableCell>
+                            <TableCell>{getAssignedToName(lead.assignedTo)}</TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>
+                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(lead)}>View Details</Button>
                             </TableCell>
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</TableCell>
+                                <TableCell colSpan={6} className="h-24 text-center">No leads associated yet.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -471,33 +443,23 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
             </div>
             {/* Mobile Card View */}
             <div className="grid gap-4 md:hidden">
-                {spokes.length > 0 ? spokes.map(spoke => (
-                    <Card key={spoke.id}>
+                {leads.length > 0 ? leads.map(lead => (
+                    <Card key={lead.id}>
                         <CardContent className="p-4 space-y-3">
-                            <div>
-                                <p className="font-medium">{spoke.name}</p>
-                                <p className="text-sm text-muted-foreground">{spoke.contactNumber || 'N/A'}</p>
+                            <div className="flex justify-between">
+                                <p className="font-medium">{lead.name}</p>
+                                <Badge variant="outline">{lead.type}</Badge>
                             </div>
-                             <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(spoke.assignedTo)}</p>
+                            <p className="text-sm text-muted-foreground">{lead.contactNumber || 'N/A'}</p>
+                            <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(lead.assignedTo)}</p>
                             <div>
-                                {isSpecialist ? (
-                                    <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
-                                        <SelectTrigger className="w-full h-9 text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                ) : (
-                                    <Badge variant={getStatusVariant(spoke.status)}>{spoke.status}</Badge>
-                                )}
+                               <Badge variant={getStatusVariant(lead.status)}>{lead.status}</Badge>
                             </div>
-                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(spoke, type)}>{t('anchors.profile.spokeTable.viewDetails')}</Button>
+                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(lead)}>View Details</Button>
                         </CardContent>
                     </Card>
                 )) : (
-                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">{t('anchors.profile.spokeTable.noSpokes', { type: type.toLowerCase()+'s' })}</div>
+                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No leads associated yet.</div>
                 )}
             </div>
         </div>
