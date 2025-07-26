@@ -4,7 +4,7 @@
 import { useApp } from '@/contexts/app-context';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, BookUser } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -58,6 +58,12 @@ export function UserSwitcher() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="/USER_MANUAL.md" download="Supermoney_CRM_User_Manual.md" className="cursor-pointer">
+                <BookUser className="mr-2 h-4 w-4" />
+                <span>Download Manual</span>
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>{t('userSwitcher.logout')}</span>
