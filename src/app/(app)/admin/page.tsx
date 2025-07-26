@@ -219,73 +219,6 @@ function LenderManagement() {
     )
 }
 
-function BulkReassignment() {
-    const { users, reassignLeads, dealers, vendors } = useApp();
-    const [fromUserId, setFromUserId] = useState('');
-    const [toUserId, setToUserId] = useState('');
-    const { toast } = useToast();
-
-    const salesUsers = useMemo(() => users.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role)), [users]);
-
-    const leadCount = useMemo(() => {
-        if (!fromUserId) return 0;
-        const assignedDealers = dealers.filter(d => d.assignedTo === fromUserId).length;
-        const assignedVendors = vendors.filter(v => v.assignedTo === fromUserId).length;
-        return assignedDealers + assignedVendors;
-    }, [fromUserId, dealers, vendors]);
-
-    const handleReassignment = () => {
-        if (!fromUserId || !toUserId) {
-            toast({ variant: 'destructive', title: 'Selection Missing', description: 'Please select both a "from" and "to" user.' });
-            return;
-        }
-        reassignLeads(fromUserId, toUserId);
-        toast({ title: 'Leads Reassigned', description: `${leadCount} lead(s) have been reassigned.` });
-        setFromUserId('');
-        setToUserId('');
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Bulk Lead Reassignment</CardTitle>
-                <CardDescription>Move all assigned leads from one user to another.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="w-full sm:w-auto flex-1">
-                        <Label>From User</Label>
-                        <Select value={fromUserId} onValueChange={setFromUserId}>
-                            <SelectTrigger><SelectValue placeholder="Select user to move leads from" /></SelectTrigger>
-                            <SelectContent>
-                                {salesUsers.map(user => <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground mt-5 hidden sm:block"/>
-                    <div className="w-full sm:w-auto flex-1">
-                        <Label>To User</Label>
-                         <Select value={toUserId} onValueChange={setToUserId}>
-                            <SelectTrigger><SelectValue placeholder="Select user to move leads to" /></SelectTrigger>
-                            <SelectContent>
-                                {salesUsers.filter(u => u.uid !== fromUserId).map(user => <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-sm text-muted-foreground">
-                        {leadCount > 0 ? `${leadCount} lead(s) will be moved.` : 'Select a user to see how many leads will be moved.'}
-                    </p>
-                    <Button onClick={handleReassignment} disabled={!fromUserId || !toUserId || leadCount === 0}>
-                        Reassign Leads
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 export default function AdminPage() {
   const { dealers, vendors, users, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser, anchors, updateAnchor } = useApp();
   const { toast } = useToast();
@@ -366,7 +299,6 @@ export default function AdminPage() {
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
   const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
-  const canBulkReassign = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
 
 
   if (!canViewAdminPanel) {
@@ -445,7 +377,6 @@ export default function AdminPage() {
         </Card>
         
         {canManageLenders && <LenderManagement />}
-        {canBulkReassign && <BulkReassignment />}
 
         {/* Section for Admins & BD */}
         {canManageUsers && (

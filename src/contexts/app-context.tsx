@@ -52,7 +52,7 @@ interface AppContextType {
   lenders: Lender[];
   addLender: (lender: Omit<Lender, 'id'>) => void;
   deleteLender: (lenderId: string) => void;
-  reassignLeads: (fromUserId: string, toUserId: string) => void;
+  reassignSelectedLeads: (leadIds: string[], leadType: 'dealer' | 'vendor', toUserId: string) => void;
   sendEmail: (input: SendNotificationEmailInput) => Promise<void>;
   t: (key: string, params?: Record<string, string | number>) => string;
   anchorSPOCs: AnchorSPOC[];
@@ -1074,44 +1074,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: 'Lender Removed', description: `${lenderName} has been removed.` });
   };
 
-  const reassignLeads = (fromUserId: string, toUserId: string) => {
-    if (!currentUser || !['Admin', 'Business Development', 'BIU', 'ETB Manager'].includes(currentUser.role)) {
-      toast({ variant: 'destructive', title: 'Permission Denied', description: 'Only authorized users can reassign leads.' });
-      return;
-    }
-
-    const fromUser = users.find(u => u.uid === fromUserId);
+  const reassignSelectedLeads = (leadIds: string[], leadType: 'dealer' | 'vendor', toUserId: string) => {
+    if (!currentUser) return;
     const toUser = users.find(u => u.uid === toUserId);
-    if (!fromUser || !toUser) {
-      toast({ variant: 'destructive', title: 'User Not Found' });
-      return;
-    }
+    if (!toUser) return;
 
-    const updatedDealers = dealers.map(d => {
-      if (d.assignedTo === fromUserId) {
-        return { ...d, assignedTo: toUserId };
-      }
-      return d;
+    const leadUpdater = leadType === 'dealer' ? updateDealer : updateVendor;
+    const leadsToUpdate = (leadType === 'dealer' ? dealers : vendors).filter(lead => leadIds.includes(lead.id));
+
+    leadsToUpdate.forEach(lead => {
+        const updatedLead = { ...lead, assignedTo: toUserId };
+        // This will call either updateDealer or updateVendor
+        leadUpdater(updatedLead as any);
     });
-
-    const updatedVendors = vendors.map(v => {
-      if (v.assignedTo === fromUserId) {
-        return { ...v, assignedTo: toUserId };
-      }
-      return v;
-    });
-
-    setDealers(updatedDealers);
-    setVendors(updatedVendors);
-    
-    // In a real app with a backend, this would be a single transaction.
-    // For mock data, we just update the state.
 
     addActivityLog({
         timestamp: new Date().toISOString(),
         type: 'Assignment',
         title: 'Bulk Lead Reassignment',
-        outcome: `All leads reassigned from ${fromUser.name} to ${toUser.name} by ${currentUser.name}.`,
+        outcome: `${leadIds.length} ${leadType}(s) reassigned to ${toUser.name} by ${currentUser.name}.`,
         userName: 'System',
         userId: currentUser.uid,
         systemGenerated: true,
@@ -1214,7 +1195,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     lenders,
     addLender,
     deleteLender,
-    reassignLeads,
+    reassignSelectedLeads,
     sendEmail,
     anchorSPOCs,
     addAnchorSPOC,

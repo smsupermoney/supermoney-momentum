@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
 import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +36,7 @@ import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 
 export default function VendorsPage() {
-  const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor } = useApp();
+  const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor, reassignSelectedLeads } = useApp();
   const { t } = useLanguage();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -55,9 +56,11 @@ export default function VendorsPage() {
 
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isReassignConfirmOpen, setIsReassignConfirmOpen] = useState(false);
+  const [reassignToUserId, setReassignToUserId] = useState<string>('');
 
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
-  const canBulkDelete = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
+  const canBulkAction = currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
 
   
   const filteredVendors = vendors.filter(s => {
@@ -124,6 +127,18 @@ export default function VendorsPage() {
     setSelectedRows({});
     setIsDeleteConfirmOpen(false);
   };
+
+  const handleReassignSelected = () => {
+    const idsToReassign = Object.keys(selectedRows).filter(id => selectedRows[id]);
+    reassignSelectedLeads(idsToReassign, 'vendor', reassignToUserId);
+    toast({
+        title: `${idsToReassign.length} Vendor(s) Reassigned`,
+        description: `The selected vendors have been reassigned.`,
+    });
+    setSelectedRows({});
+    setReassignToUserId('');
+    setIsReassignConfirmOpen(false);
+  }
 
   const getAnchorName = (anchorId: string | null) => {
     if (!anchorId) return 'N/A';
@@ -234,6 +249,30 @@ export default function VendorsPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={isReassignConfirmOpen} onOpenChange={setIsReassignConfirmOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Reassign {numSelected} Lead(s)</AlertDialogTitle>
+                  <AlertDialogDescription>
+                     Select a user to reassign the selected leads to. This action cannot be undone.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                  <Select value={reassignToUserId} onValueChange={setReassignToUserId}>
+                    <SelectTrigger><SelectValue placeholder="Select user to assign to..." /></SelectTrigger>
+                    <SelectContent>
+                      {visibleUsers.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+              </div>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReassignSelected} disabled={!reassignToUserId}>
+                      Reassign Leads
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
 
       <div className="space-y-4 pb-4">
         <div className="relative">
@@ -292,12 +331,18 @@ export default function VendorsPage() {
                   </Select>
                  )}
             </div>
-            <div className="w-full sm:w-auto flex justify-end">
-              {canBulkDelete && numSelected > 0 && (
-                <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
-                  <Trash2 className="mr-2 h-4 w-4"/>
-                  Delete ({numSelected}) Selected
-                </Button>
+            <div className="w-full sm:w-auto flex justify-end gap-2">
+              {canBulkAction && numSelected > 0 && (
+                 <>
+                  <Button variant="outline" size="sm" onClick={() => setIsReassignConfirmOpen(true)}>
+                    <Users className="mr-2 h-4 w-4"/>
+                    Reassign ({numSelected})
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4"/>
+                    Delete ({numSelected})
+                  </Button>
+                </>
               )}
             </div>
         </div>
@@ -308,7 +353,7 @@ export default function VendorsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              {canBulkDelete && (
+              {canBulkAction && (
                 <TableHead padding="checkbox">
                   <Checkbox
                     checked={numSelected === filteredVendors.length && filteredVendors.length > 0}
@@ -332,7 +377,7 @@ export default function VendorsPage() {
           <TableBody>
             {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
               <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"} onClick={() => handleRowClick(vendor)} className="cursor-pointer">
-                 {canBulkDelete && (
+                 {canBulkAction && (
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRows[vendor.id] || false}
@@ -375,7 +420,7 @@ export default function VendorsPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={canBulkDelete ? 11 : 10} className="h-24 text-center">
+                <TableCell colSpan={canBulkAction ? 11 : 10} className="h-24 text-center">
                   {t('vendors.noVendors')}
                 </TableCell>
               </TableRow>
@@ -388,7 +433,7 @@ export default function VendorsPage() {
       <div className="grid gap-4 md:hidden">
           {filteredVendors.length > 0 ? filteredVendors.map(vendor => (
               <Card key={vendor.id} className="relative">
-                  {canBulkDelete && (
+                  {canBulkAction && (
                       <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                               className="h-5 w-5"

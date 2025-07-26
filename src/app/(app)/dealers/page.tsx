@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
 import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +36,7 @@ import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 
 export default function DealersPage() {
-  const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer } = useApp();
+  const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads } = useApp();
   const { t } = useLanguage();
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -55,9 +56,11 @@ export default function DealersPage() {
 
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isReassignConfirmOpen, setIsReassignConfirmOpen] = useState(false);
+  const [reassignToUserId, setReassignToUserId] = useState<string>('');
 
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
-  const canBulkDelete = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
+  const canBulkAction = currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
 
   const filteredDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
@@ -119,6 +122,18 @@ export default function DealersPage() {
     setSelectedRows({});
     setIsDeleteConfirmOpen(false);
   };
+
+  const handleReassignSelected = () => {
+    const idsToReassign = Object.keys(selectedRows).filter(id => selectedRows[id]);
+    reassignSelectedLeads(idsToReassign, 'dealer', reassignToUserId);
+    toast({
+        title: `${idsToReassign.length} Dealer(s) Reassigned`,
+        description: `The selected dealers have been reassigned.`,
+    });
+    setSelectedRows({});
+    setReassignToUserId('');
+    setIsReassignConfirmOpen(false);
+  }
 
   const getAnchorName = (anchorId: string | null) => {
     if (!anchorId) return 'N/A';
@@ -226,6 +241,30 @@ export default function DealersPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={isReassignConfirmOpen} onOpenChange={setIsReassignConfirmOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Reassign {numSelected} Lead(s)</AlertDialogTitle>
+                  <AlertDialogDescription>
+                     Select a user to reassign the selected leads to. This action cannot be undone.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                  <Select value={reassignToUserId} onValueChange={setReassignToUserId}>
+                    <SelectTrigger><SelectValue placeholder="Select user to assign to..." /></SelectTrigger>
+                    <SelectContent>
+                      {visibleUsers.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+              </div>
+              <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReassignSelected} disabled={!reassignToUserId}>
+                      Reassign Leads
+                  </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
 
       <div className="space-y-4 pb-4">
         <div className="relative">
@@ -284,12 +323,18 @@ export default function DealersPage() {
                   </Select>
                  )}
             </div>
-            <div className="w-full sm:w-auto flex justify-end">
-              {canBulkDelete && numSelected > 0 && (
+            <div className="w-full sm:w-auto flex justify-end gap-2">
+              {canBulkAction && numSelected > 0 && (
+                <>
+                <Button variant="outline" size="sm" onClick={() => setIsReassignConfirmOpen(true)}>
+                  <Users className="mr-2 h-4 w-4"/>
+                  Reassign ({numSelected})
+                </Button>
                 <Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}>
                   <Trash2 className="mr-2 h-4 w-4"/>
-                  Delete ({numSelected}) Selected
+                  Delete ({numSelected})
                 </Button>
+                </>
               )}
             </div>
         </div>
@@ -301,7 +346,7 @@ export default function DealersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              {canBulkDelete && (
+              {canBulkAction && (
                 <TableHead padding="checkbox">
                   <Checkbox
                     checked={numSelected === filteredDealers.length && filteredDealers.length > 0}
@@ -325,7 +370,7 @@ export default function DealersPage() {
           <TableBody>
             {filteredDealers.length > 0 ? filteredDealers.map(dealer => (
               <TableRow key={dealer.id} data-state={selectedRows[dealer.id] && "selected"} onClick={() => handleRowClick(dealer)} className="cursor-pointer">
-                {canBulkDelete && (
+                {canBulkAction && (
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedRows[dealer.id] || false}
@@ -368,7 +413,7 @@ export default function DealersPage() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={canBulkDelete ? 11 : 10} className="h-24 text-center">
+                <TableCell colSpan={canBulkAction ? 11 : 10} className="h-24 text-center">
                   {t('dealers.noDealers')}
                 </TableCell>
               </TableRow>
@@ -381,7 +426,7 @@ export default function DealersPage() {
       <div className="grid gap-4 md:hidden">
           {filteredDealers.length > 0 ? filteredDealers.map(dealer => (
               <Card key={dealer.id} className="relative">
-                  {canBulkDelete && (
+                  {canBulkAction && (
                       <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                               className="h-5 w-5"
