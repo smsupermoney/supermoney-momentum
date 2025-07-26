@@ -240,45 +240,45 @@ export default function DealersPage() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Status</SelectItem>
                       {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lead Types" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Lead Types</SelectItem>
                        {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Anchors</SelectItem>
                       {anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={productFilter} onValueChange={setProductFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Products</SelectItem>
+                        <SelectItem value="all">Products</SelectItem>
                         {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Zone" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Zones</SelectItem>
+                        <SelectItem value="all">Zones</SelectItem>
                         {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  {canShowAssignedToFilter && (
                   <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                      <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="all">All Users</SelectItem>
+                          <SelectItem value="all">Users</SelectItem>
                           {visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
                       </SelectContent>
                   </Select>
