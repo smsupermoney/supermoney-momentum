@@ -49,7 +49,7 @@ function QuickNav() {
     { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
   ];
 
-  const visibleNavLinks = allNavLinks.filter(link => link.roles.includes(currentUser.role as UserRole));
+  const visibleNavLinks = allNavItems.filter(link => link.roles.includes(currentUser.role as UserRole));
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
