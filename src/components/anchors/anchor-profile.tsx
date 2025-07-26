@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, SpokeStatus, TaskType, LeadStatus, Contact, AnchorSPOC } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -17,15 +17,16 @@ import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle, Globe } from 'lucide-react';
+import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle, Globe, Flame, Search } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 import { useLanguage } from '@/contexts/language-context';
 import { NewContactDialog } from './new-contact-dialog';
 import { cn } from '@/lib/utils';
-import { spokeStatuses } from '@/lib/types';
+import { spokeStatuses, LeadType, products } from '@/lib/types';
 import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
+import { Input } from '../ui/input';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -378,21 +379,37 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
   );
 }
 
+const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
+
 function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onViewDetails: (lead: CombinedLead) => void; }) {
-    const { users } = useApp();
+    const { users, currentUser } = useApp();
     const { t } = useLanguage();
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [leadTypeFilter, setLeadTypeFilter] = useState('all');
+    const [assignedToFilter, setAssignedToFilter] = useState('all');
+    
+    const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
+    const assignableUsers = useMemo(() => {
+      return users.filter(u => u.role === 'Area Sales Manager');
+    }, [users]);
+    
+    const filteredLeads = useMemo(() => leads.filter(lead => {
+        const searchMatch = searchQuery.length > 0 ? lead.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+        if (!searchMatch) return false;
+        if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+        if (leadTypeFilter !== 'all' && lead.leadType !== leadTypeFilter) return false;
+        if (assignedToFilter !== 'all' && lead.assignedTo !== assignedToFilter) return false;
+        return true;
+    }), [leads, searchQuery, statusFilter, leadTypeFilter, assignedToFilter]);
+
 
     const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
         switch (status) {
-            case 'Active':
-            case 'Already Onboarded':
-            case 'Disbursed':
-            case 'Approved PF Collected':
-            case 'Limit Live':
+            case 'Active': case 'Already Onboarded': case 'Disbursed': case 'Approved PF Collected': case 'Limit Live':
                 return 'default';
-            case 'Rejected':
-            case 'Not Interested':
-            case 'Closed':
+            case 'Rejected': case 'Not Interested': case 'Closed':
                 return 'destructive';
             default:
                 return 'secondary';
@@ -406,6 +423,42 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
 
     return (
         <div>
+             <div className="space-y-4 pb-4">
+                <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search by lead name..."
+                    className="w-full pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                </div>
+                <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="all">Status</SelectItem>
+                        {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="all">All Lead Types</SelectItem>
+                        {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    {canShowAssignedToFilter && (
+                    <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by User" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Users</SelectItem>
+                            {assignableUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    )}
+                </div>
+            </div>
             {/* Desktop Table View */}
             <div className="hidden rounded-lg border md:block">
                 <Table>
@@ -413,29 +466,34 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Type</TableHead>
-                            <TableHead>Phone</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Assigned To</TableHead>
+                            <TableHead>Lead Type</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {leads.length > 0 ? leads.map(lead => (
-                        <TableRow key={lead.id}>
-                            <TableCell className="font-medium">{lead.name}</TableCell>
+                        {filteredLeads.length > 0 ? filteredLeads.map(lead => (
+                        <TableRow key={lead.id} onClick={() => onViewDetails(lead)} className="cursor-pointer">
+                            <TableCell className="font-medium hover:text-primary">
+                                <div className="flex items-center gap-2">
+                                {lead.priority === 'High' && <Flame className="h-4 w-4 text-destructive" />}
+                                <span>{lead.name}</span>
+                                </div>
+                            </TableCell>
                             <TableCell><Badge variant="outline">{lead.type}</Badge></TableCell>
-                            <TableCell>{lead.contactNumber || 'N/A'}</TableCell>
                             <TableCell>
                                <Badge variant={getStatusVariant(lead.status)}>{lead.status}</Badge>
                             </TableCell>
                             <TableCell>{getAssignedToName(lead.assignedTo)}</TableCell>
+                            <TableCell>{lead.leadType || 'Fresh'}</TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" onClick={() => onViewDetails(lead)}>View Details</Button>
+                                <Button variant="ghost" size="sm">View Details</Button>
                             </TableCell>
                         </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">No leads associated yet.</TableCell>
+                                <TableCell colSpan={6} className="h-24 text-center">No leads found for this anchor.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -443,23 +501,25 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
             </div>
             {/* Mobile Card View */}
             <div className="grid gap-4 md:hidden">
-                {leads.length > 0 ? leads.map(lead => (
-                    <Card key={lead.id}>
+                {filteredLeads.length > 0 ? filteredLeads.map(lead => (
+                    <Card key={lead.id} onClick={() => onViewDetails(lead)} className="cursor-pointer">
                         <CardContent className="p-4 space-y-3">
                             <div className="flex justify-between">
-                                <p className="font-medium">{lead.name}</p>
+                                <p className="font-medium hover:text-primary pr-2 flex items-center gap-2">
+                                    {lead.priority === 'High' && <Flame className="h-5 w-5 text-destructive" />}
+                                    {lead.name}
+                                </p>
                                 <Badge variant="outline">{lead.type}</Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">{lead.contactNumber || 'N/A'}</p>
-                            <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(lead.assignedTo)}</p>
-                            <div>
-                               <Badge variant={getStatusVariant(lead.status)}>{lead.status}</Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge variant={getStatusVariant(lead.status)}>{lead.status}</Badge>
+                                <Badge variant="outline">{lead.leadType || 'Fresh'}</Badge>
                             </div>
-                            <Button variant="ghost" size="sm" className="w-full justify-start p-0 h-auto" onClick={() => onViewDetails(lead)}>View Details</Button>
+                            <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(lead.assignedTo)}</p>
                         </CardContent>
                     </Card>
                 )) : (
-                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No leads associated yet.</div>
+                     <div className="h-24 flex items-center justify-center text-center text-muted-foreground">No leads found for this anchor.</div>
                 )}
             </div>
         </div>

@@ -20,12 +20,13 @@ export default function AnchorProfilePage() {
   const combinedLeads = useMemo(() => {
     if (!anchor) return [];
     
+    // An anchor's leads are identified by their 'anchorId' field, not by IDs in the anchor object.
     const anchorDealers = dealers
-      .filter(d => anchor.dealerIds.includes(d.id))
+      .filter(d => d.anchorId === anchor.id)
       .map(d => ({ ...d, type: 'Dealer' as const }));
       
     const anchorVendors = vendors
-      .filter(v => anchor.vendorIds.includes(v.id))
+      .filter(v => v.anchorId === anchor.id)
       .map(v => ({ ...v, type: 'Vendor' as const }));
 
     return [...anchorDealers, ...anchorVendors].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

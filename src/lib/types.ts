@@ -1,6 +1,7 @@
 
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller';
 
 export interface User {
@@ -26,7 +27,8 @@ export type SpokeStatus = (typeof spokeStatuses)[number];
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskType = 'Call' | 'Email' | 'Meeting (Online)' | 'Meeting (In-person)' | 'KYC Document Collection' | 'Proposal Preparation' | 'Internal Review';
-export type LeadType = 'Fresh' | 'Renewal' | 'Adhoc' | 'Enhancement' | 'Cross sell' | 'Revive';
+export const leadTypes = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'] as const;
+export type LeadType = (typeof leadTypes)[number];
 
 export const products = ['Primary', 'Secondary', 'BL', 'LAP', 'WCDL', 'WCTL', 'PID', 'SID', 'Other'] as const;
 export type Product = (typeof products)[number];
