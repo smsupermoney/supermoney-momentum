@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { NewAnchorDialog } from '@/components/anchors/new-anchor-dialog';
 import type { Anchor, Contact, LeadStatus } from '@/lib/types';
-import { PlusCircle, Mail, Sparkles } from 'lucide-react';
+import { PlusCircle, Mail, Sparkles, Users } from 'lucide-react';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function AnchorsPage() {
-  const { anchors, currentUser } = useApp();
+  const { anchors, currentUser, dealers, vendors } = useApp();
   const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
@@ -56,6 +56,12 @@ export default function AnchorsPage() {
     });
     setIsEmailDialogOpen(true);
   }
+  
+  const getLeadCountForAnchor = (anchorId: string) => {
+    const dealerCount = dealers.filter(d => d.anchorId === anchorId).length;
+    const vendorCount = vendors.filter(v => v.anchorId === anchorId).length;
+    return dealerCount + vendorCount;
+  }
 
   return (
     <>
@@ -81,39 +87,51 @@ export default function AnchorsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {allActiveAnchors.map(anchor => {
           const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
+          const leadCount = getLeadCountForAnchor(anchor.id);
           return (
             <Link key={anchor.id} href={`/anchors/${anchor.id}`} className="block">
-              <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-              <CardHeader className="p-4">
+              <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer flex flex-col">
+              <CardHeader>
                   <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{anchor.name}</CardTitle>
                       <Badge variant={getStatusVariant(anchor.status)}>{anchor.status}</Badge>
                   </div>
                   <CardDescription>{anchor.industry}</CardDescription>
               </CardHeader>
-              <CardContent className="p-4 pt-0">
-                  {anchor.nextBestAction && (
-                    <div className="mb-2">
-                      <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
-                        <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
-                        <div className="flex flex-col">
-                            <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
-                            <span className="text-sm">{anchor.nextBestAction.recommendedAction}</span>
-                        </div>
-                      </Badge>
-                    </div>
-                  )}
-                  {primaryContact && (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      <p className="font-medium">{primaryContact.name}</p>
-                      <div className="flex items-center justify-between">
-                        <p>{primaryContact.email}</p>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleEmailClick(e, anchor, primaryContact)}>
-                            <Mail className="h-4 w-4" />
-                        </Button>
+              <CardContent className="flex-grow flex flex-col justify-between">
+                  <div>
+                    {anchor.nextBestAction && (
+                      <div className="mb-4">
+                        <Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto">
+                          <Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" />
+                          <div className="flex flex-col">
+                              <span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span>
+                              <span className="text-sm">{anchor.nextBestAction.recommendedAction}</span>
+                          </div>
+                        </Badge>
                       </div>
+                    )}
+                    {primaryContact && (
+                      <div className="text-sm text-muted-foreground">
+                        <p className="font-medium">{primaryContact.name}</p>
+                        <div className="flex items-center justify-between">
+                          <p>{primaryContact.email}</p>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => handleEmailClick(e, anchor, primaryContact)}>
+                              <Mail className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t -mx-6 mt-4 pt-3 px-6">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                       <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          <span>Total Leads</span>
+                       </div>
+                       <span className="font-bold text-foreground">{leadCount}</span>
                     </div>
-                  )}
+                  </div>
               </CardContent>
               </Card>
             </Link>
