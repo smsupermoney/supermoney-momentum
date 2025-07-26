@@ -63,7 +63,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
 
   const form = useForm<NewUserFormValues>({
     resolver: zodResolver(NewUserSchema),
-    defaultValues: { name: '', email: '', role: '', managerId: '', region: '' },
+    defaultValues: { name: '', email: '', role: '', managerId: '', region: '', territoryAccess: { states: [], cities: [] } },
   });
 
   const selectedRole = form.watch('role') as UserRole;
@@ -95,6 +95,7 @@ export function NewUserDialog({ open, onOpenChange }: NewUserDialogProps) {
         role: values.role as UserRole,
         managerId: showManagerDropdown ? values.managerId : null,
         region: values.region,
+        territoryAccess: values.territoryAccess || { states: [], cities: [] },
       };
       addUser(newUser);
       toast({

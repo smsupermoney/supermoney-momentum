@@ -2,6 +2,7 @@
 
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller';
 
 export interface User {
@@ -12,6 +13,10 @@ export interface User {
   role: UserRole;
   managerId?: string | null;
   region?: string;
+  territoryAccess?: {
+    states: string[];
+    cities: string[];
+  };
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';

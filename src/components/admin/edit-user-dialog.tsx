@@ -67,6 +67,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       role: user.role,
       managerId: user.managerId || '',
       region: user.region || '',
+      territoryAccess: user.territoryAccess || { states: [], cities: [] },
     },
   });
   
@@ -77,6 +78,7 @@ export function EditUserDialog({ user, open, onOpenChange }: EditUserDialogProps
       role: user.role,
       managerId: user.managerId || '',
       region: user.region || '',
+      territoryAccess: user.territoryAccess || { states: [], cities: [] },
     });
   }, [user, form]);
 

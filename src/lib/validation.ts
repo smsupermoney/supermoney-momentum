@@ -94,12 +94,18 @@ export const NewDailyActivitySchema = z.object({
     locationAddress: z.string().nullable().optional(),
 });
 
+const TerritoryAccessSchema = z.object({
+    states: z.array(z.string()),
+    cities: z.array(z.string()),
+}).optional();
+
 export const NewUserSchema = z.object({
     name: z.string().min(2, "User name is required."),
     email: z.string().email("A valid email is required."),
     role: z.enum(userRoles),
     region: z.enum(regions).optional().or(z.literal('')),
     managerId: z.string().optional(),
+    territoryAccess: TerritoryAccessSchema,
 });
 
 export const EditUserSchema = z.object({
@@ -108,4 +114,5 @@ export const EditUserSchema = z.object({
     role: z.enum(userRoles),
     region: z.enum(regions).optional().or(z.literal('')),
     managerId: z.string().optional().nullable(),
+    territoryAccess: TerritoryAccessSchema,
 });

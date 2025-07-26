@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useMemo } from "react";
 
 export default function AnchorProfilePage() {
-  const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading, anchorSPOCs } = useApp();
+  const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading, anchorSPOCs, currentUser } = useApp();
   const params = useParams();
   const id = params.id as string;
   const { t } = useLanguage();
@@ -32,6 +32,24 @@ export default function AnchorProfilePage() {
     return [...anchorDealers, ...anchorVendors].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [anchor, dealers, vendors]);
 
+  const visibleSpocs = useMemo(() => {
+    if (!currentUser || !currentUser.territoryAccess) {
+      // If user has no territory access defined, show all (or none, depending on policy)
+      // For this implementation, we'll assume they can see all if not restricted.
+      // Managers and Admins should see all.
+      if (currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role)) {
+         return anchorSPOCs.filter(spoc => spoc.anchorId === id);
+      }
+      return [];
+    }
+    
+    const { states, cities } = currentUser.territoryAccess;
+    return anchorSPOCs.filter(spoc => 
+      spoc.anchorId === id &&
+      (states.includes(spoc.territory.state) || cities.includes(spoc.territory.city))
+    );
+  }, [currentUser, anchorSPOCs, id]);
+
 
   if (isLoading) {
     return (
@@ -52,8 +70,6 @@ export default function AnchorProfilePage() {
 
   const anchorActivityLogs = activityLogs.filter(log => log.anchorId === anchor.id);
   const anchorTasks = tasks.filter(task => task.associatedWith.anchorId === anchor.id);
-  const spocsForAnchor = anchorSPOCs.filter(spoc => spoc.anchorId === anchor.id);
-
 
   return <AnchorProfile 
             anchor={anchor}
@@ -61,6 +77,6 @@ export default function AnchorProfilePage() {
             activityLogs={anchorActivityLogs}
             tasks={anchorTasks}
             users={users}
-            spocs={spocsForAnchor}
+            spocs={visibleSpocs}
          />;
 }
