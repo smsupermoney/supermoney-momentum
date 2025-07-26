@@ -9,7 +9,7 @@ import { isPast, isToday, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User, Activity, AlertCircle, Package, Handshake, IndianRupee } from 'lucide-react';
 import { UserRole, products as allProducts } from '@/lib/types';
-import { Tabs, TabsList, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
