@@ -24,7 +24,8 @@ import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
 import { useLanguage } from '@/contexts/language-context';
 import { NewContactDialog } from './new-contact-dialog';
 import { cn } from '@/lib/utils';
-import { spokeStatuses, LeadType, products } from '@/lib/types';
+import { spokeStatuses, leadTypes, products } from '@/lib/types';
+import { regions } from '@/lib/validation';
 import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
 import { Input } from '../ui/input';
 
@@ -379,8 +380,6 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
   );
 }
 
-const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
-
 function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onViewDetails: (lead: CombinedLead) => void; }) {
     const { users, currentUser } = useApp();
     const { t } = useLanguage();
@@ -389,6 +388,8 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
     const [statusFilter, setStatusFilter] = useState('all');
     const [leadTypeFilter, setLeadTypeFilter] = useState('all');
     const [assignedToFilter, setAssignedToFilter] = useState('all');
+    const [productFilter, setProductFilter] = useState('all');
+    const [zoneFilter, setZoneFilter] = useState('all');
     
     const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
     const assignableUsers = useMemo(() => {
@@ -401,8 +402,10 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
         if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
         if (leadTypeFilter !== 'all' && lead.leadType !== leadTypeFilter) return false;
         if (assignedToFilter !== 'all' && lead.assignedTo !== assignedToFilter) return false;
+        if (productFilter !== 'all' && lead.product !== productFilter) return false;
+        if (zoneFilter !== 'all' && lead.zone !== zoneFilter) return false;
         return true;
-    }), [leads, searchQuery, statusFilter, leadTypeFilter, assignedToFilter]);
+    }), [leads, searchQuery, statusFilter, leadTypeFilter, assignedToFilter, productFilter, zoneFilter]);
 
 
     const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
@@ -444,8 +447,22 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
                     <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
                         <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
                         <SelectContent>
-                        <SelectItem value="all">All Lead Types</SelectItem>
+                        <SelectItem value="all">Lead Types</SelectItem>
                         {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={productFilter} onValueChange={setProductFilter}>
+                      <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">All Products</SelectItem>
+                          {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={zoneFilter} onValueChange={setZoneFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Zone" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Zones</SelectItem>
+                            {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     {canShowAssignedToFilter && (

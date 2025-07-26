@@ -11,7 +11,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame } from 'lucide-react';
-import type { Vendor, SpokeStatus, LeadType } from '@/lib/types';
+import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -30,11 +30,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { spokeStatuses } from '@/lib/types';
+import { spokeStatuses, leadTypes, products } from '@/lib/types';
+import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
-
-
-const leadTypes: LeadType[] = ['Fresh', 'Renewal', 'Adhoc', 'Enhancement', 'Cross sell', 'Revive'];
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor } = useApp();
@@ -52,6 +50,8 @@ export default function VendorsPage() {
   const [leadTypeFilter, setLeadTypeFilter] = useState('all');
   const [anchorFilter, setAnchorFilter] = useState('all');
   const [assignedToFilter, setAssignedToFilter] = useState('all');
+  const [productFilter, setProductFilter] = useState('all');
+  const [zoneFilter, setZoneFilter] = useState('all');
 
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -89,6 +89,8 @@ export default function VendorsPage() {
     if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
     if (assignedToFilter !== 'all' && s.assignedTo !== assignedToFilter) return false;
+    if (productFilter !== 'all' && s.product !== productFilter) return false;
+    if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
 
     return true;
   });
@@ -246,24 +248,38 @@ export default function VendorsPage() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Status</SelectItem>
                       {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Lead Type" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Lead Types</SelectItem>
+                      <SelectItem value="all">Lead Types</SelectItem>
                        {leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}>
-                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Anchor" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Anchors</SelectItem>
+                      <SelectItem value="all">Anchors</SelectItem>
                       {anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+                 <Select value={productFilter} onValueChange={setProductFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Products</SelectItem>
+                        {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                 </Select>
+                 <Select value={zoneFilter} onValueChange={setZoneFilter}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Filter by Zone" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Zones</SelectItem>
+                        {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                     </SelectContent>
                  </Select>
                  {canShowAssignedToFilter && (
@@ -429,9 +445,3 @@ export default function VendorsPage() {
     </>
   );
 }
-
-    
-
-
-
-    
