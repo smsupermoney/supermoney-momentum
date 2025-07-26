@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -116,7 +117,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateDealer({ ...dealer, status: newStatus });
+    updateDealer({ id: dealer.id, status: newStatus });
     toast({
       title: 'Dealer Status Updated',
       description: `${dealer.name}'s status is now ${newStatus}.`,
@@ -124,7 +125,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateDealer({ ...dealer, assignedTo: newUserId });
+    updateDealer({ id: dealer.id, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${dealer.name} has been assigned to a new user.`,
@@ -151,23 +152,15 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
-    const updatedDealerData: Partial<Dealer> = {
-      ...dealer,
+    const updatedDealerData: Partial<Dealer> & { id: string } = {
+      id: dealer.id,
       ...values,
       leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
       initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
 
-    // Sanitize data before sending to validation/Firestore
-    Object.keys(updatedDealerData).forEach(key => {
-        const k = key as keyof typeof updatedDealerData;
-        if (updatedDealerData[k] === undefined) {
-            (updatedDealerData as any)[k] = null;
-        }
-    });
-
-    updateDealer(updatedDealerData as Dealer);
+    updateDealer(updatedDealerData);
     toast({
       title: "Dealer Updated",
       description: `${values.name} has been successfully updated.`

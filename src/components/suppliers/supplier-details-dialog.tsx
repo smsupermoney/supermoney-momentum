@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -116,7 +117,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateVendor({ ...vendor, status: newStatus });
+    updateVendor({ id: vendor.id, status: newStatus });
     toast({
       title: 'Vendor Status Updated',
       description: `${vendor.name}'s status is now ${newStatus}.`,
@@ -124,7 +125,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateVendor({ ...vendor, assignedTo: newUserId });
+    updateVendor({ id: vendor.id, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
       description: `${vendor.name} has been assigned to a new user.`,
@@ -151,23 +152,15 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
-    const updatedVendorData: Partial<Vendor> = {
-      ...vendor,
+    const updatedVendorData: Partial<Vendor> & {id: string} = {
+      id: vendor.id,
       ...values,
       leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
       initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
     
-    // Sanitize data before sending to validation/Firestore
-    Object.keys(updatedVendorData).forEach(key => {
-        const k = key as keyof typeof updatedVendorData;
-        if (updatedVendorData[k] === undefined) {
-            (updatedVendorData as any)[k] = null;
-        }
-    });
-
-    updateVendor(updatedVendorData as Vendor);
+    updateVendor(updatedVendorData);
     toast({
       title: "Vendor Updated",
       description: `${values.name} has been successfully updated.`

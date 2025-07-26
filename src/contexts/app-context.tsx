@@ -30,11 +30,11 @@ interface AppContextType {
   updateAnchor: (anchor: Anchor) => void;
   dealers: Dealer[];
   addDealer: (dealer: Omit<Dealer, 'id'>) => void;
-  updateDealer: (dealer: Dealer) => void;
+  updateDealer: (dealer: Partial<Dealer> & { id: string }) => void;
   deleteDealer: (dealerId: string) => void;
   vendors: Vendor[];
   addVendor: (vendor: Omit<Vendor, 'id'>) => void;
-  updateVendor: (vendor: Vendor) => void;
+  updateVendor: (vendor: Partial<Vendor> & { id: string }) => void;
   deleteVendor: (vendorId: string) => void;
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
@@ -200,14 +200,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (dealersToUpdate.length > 0) {
       console.log(`Correcting status for ${dealersToUpdate.length} assigned dealer(s) marked as unassigned.`);
       dealersToUpdate.forEach(dealer => {
-        updateDealer({ ...dealer, status: 'New' });
+        updateDealer({ id: dealer.id, status: 'New' });
       });
     }
   
     if (vendorsToUpdate.length > 0) {
       console.log(`Correcting status for ${vendorsToUpdate.length} assigned vendor(s) marked as unassigned.`);
       vendorsToUpdate.forEach(vendor => {
-        updateVendor({ ...vendor, status: 'New' });
+        updateVendor({ id: vendor.id, status: 'New' });
       });
     }
   
@@ -255,7 +255,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         leadsToReassign.forEach(lead => {
             const leadType = 'contactNumber' in lead ? 'Dealer' : 'Vendor';
             const updateFunction = leadType === 'Dealer' ? updateDealer : updateVendor;
-            updateFunction({...lead, assignedTo: harshitaUser.uid});
+            updateFunction({id: lead.id, assignedTo: harshitaUser.uid});
             addActivityLog({
                 dealerId: leadType === 'Dealer' ? lead.id : undefined,
                 vendorId: leadType === 'Vendor' ? lead.id : undefined,
@@ -578,7 +578,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const updateDealer = async (updatedDealer: Dealer) => {
+  const updateDealer = async (updatedDealer: Partial<Dealer> & { id: string }) => {
     try {
         UpdateSpokeSchema.parse(updatedDealer);
     } catch (e) {
@@ -590,23 +590,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     const oldDealer = dealers.find(d => d.id === updatedDealer.id);
     const dataToSave = { ...updatedDealer };
-    Object.keys(dataToSave).forEach(key => {
-        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
-            delete dataToSave[key as keyof typeof dataToSave];
-        }
-    });
 
     if(firebaseEnabled) {
-      await firestoreService.updateDealer(dataToSave);
+      await firestoreService.updateDealer(dataToSave as Dealer);
     }
-    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...dataToSave, updatedAt: new Date().toISOString()} : d));
+    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...d, ...dataToSave, updatedAt: new Date().toISOString()} : d));
     
     if (currentUser && oldDealer) {
         let logMessage = '';
-        if (oldDealer.status !== updatedDealer.status) {
+        if (oldDealer.status !== updatedDealer.status && updatedDealer.status) {
             logMessage = `Status changed from '${oldDealer.status}' to '${updatedDealer.status}'.`;
         }
-        if (oldDealer.assignedTo !== updatedDealer.assignedTo) {
+        if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
              logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
         }
@@ -741,7 +736,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateVendor = async (updatedVendor: Vendor) => {
+  const updateVendor = async (updatedVendor: Partial<Vendor> & { id: string }) => {
      try {
         UpdateSpokeSchema.parse(updatedVendor);
     } catch (e) {
@@ -753,23 +748,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     const oldVendor = vendors.find(s => s.id === updatedVendor.id);
     const dataToSave = { ...updatedVendor };
-    Object.keys(dataToSave).forEach(key => {
-        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
-            delete dataToSave[key as keyof typeof dataToSave];
-        }
-    });
 
     if(firebaseEnabled) {
-      await firestoreService.updateVendor(dataToSave);
+      await firestoreService.updateVendor(dataToSave as Vendor);
     }
-    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...dataToSave, updatedAt: new Date().toISOString()} : s));
+    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...s, ...dataToSave, updatedAt: new Date().toISOString()} : s));
 
     if (currentUser && oldVendor) {
         let logMessage = '';
-        if (oldVendor.status !== updatedVendor.status) {
+        if (oldVendor.status !== updatedVendor.status && updatedVendor.status) {
             logMessage = `Status changed from '${oldVendor.status}' to '${updatedVendor.status}'.`;
         }
-        if (oldVendor.assignedTo !== updatedVendor.assignedTo) {
+        if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
              const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
              logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
         }
@@ -1083,7 +1073,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const leadsToUpdate = (leadType === 'dealer' ? dealers : vendors).filter(lead => leadIds.includes(lead.id));
 
     leadsToUpdate.forEach(lead => {
-        const updatedLead = { ...lead, assignedTo: toUserId };
+        const updatedLead = { id: lead.id, assignedTo: toUserId };
         // This will call either updateDealer or updateVendor
         leadUpdater(updatedLead as any);
     });
