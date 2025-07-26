@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 
 export default function AnchorProfilePage() {
-  const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading } = useApp();
+  const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading, anchorSPOCs } = useApp();
   const params = useParams();
   const id = params.id as string;
   const { t } = useLanguage();
@@ -37,6 +37,8 @@ export default function AnchorProfilePage() {
   const anchorVendors = vendors.filter(v => anchor.vendorIds.includes(v.id));
   const anchorActivityLogs = activityLogs.filter(log => log.anchorId === anchor.id);
   const anchorTasks = tasks.filter(task => task.associatedWith.anchorId === anchor.id);
+  const spocsForAnchor = anchorSPOCs.filter(spoc => spoc.anchorId === anchor.id);
+
 
   return <AnchorProfile 
             anchor={anchor}
@@ -45,5 +47,6 @@ export default function AnchorProfilePage() {
             activityLogs={anchorActivityLogs}
             tasks={anchorTasks}
             users={users}
+            spocs={spocsForAnchor}
          />;
 }

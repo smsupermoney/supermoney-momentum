@@ -17,7 +17,7 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender, AnchorSPOC } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -287,4 +287,19 @@ export const addLender = async (lender: Omit<Lender, 'id'>): Promise<Lender> => 
 export const deleteLender = async (lenderId: string): Promise<void> => {
     if (!db) throw new Error("Firestore not initialized");
     await deleteDoc(doc(db, 'lenders', lenderId));
+};
+
+// --- Anchor SPOC Service ---
+export const getAnchorSPOCs = async (): Promise<AnchorSPOC[]> => {
+    if (!db) return [];
+    const spocsCollection = collection(db, 'anchorSPOCs');
+    const q = query(spocsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshotToData<Omit<AnchorSPOC, 'id'>>(snapshot);
+};
+
+export const addAnchorSPOC = async (spoc: Omit<AnchorSPOC, 'id'>): Promise<AnchorSPOC> => {
+    if (!db) throw new Error("Firestore not initialized");
+    const docRef = await addDoc(collection(db, 'anchorSPOCs'), spoc);
+    return { id: docRef.id, ...spoc };
 };

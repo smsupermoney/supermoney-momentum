@@ -3,7 +3,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC } from '@/lib/types';
 import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
 import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
@@ -55,6 +55,8 @@ interface AppContextType {
   reassignLeads: (fromUserId: string, toUserId: string) => void;
   sendEmail: (input: SendNotificationEmailInput) => Promise<void>;
   t: (key: string, params?: Record<string, string | number>) => string;
+  anchorSPOCs: AnchorSPOC[];
+  addAnchorSPOC: (spoc: Omit<AnchorSPOC, 'id'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -86,6 +88,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [dailyActivities, setDailyActivities] = useState<DailyActivity[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lenders, setLenders] = useState<Lender[]>([]);
+  const [anchorSPOCs, setAnchorSPOCs] = useState<AnchorSPOC[]>([]);
+
 
   const loadMockData = useCallback(() => {
     setUsers(mockUsers);
@@ -96,6 +100,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setActivityLogs(mockActivityLogs);
     setDailyActivities(mockDailyActivities);
     setLenders([{ id: 'lender-1', name: 'HDFC Bank'}, { id: 'lender-2', name: 'ICICI Bank'}]);
+    setAnchorSPOCs([]);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -137,7 +142,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const allUsers = await firestoreService.getUsers();
             setUsers(allUsers);
     
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData] = await Promise.all([
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData, spocsData] = await Promise.all([
               firestoreService.getAnchors(),
               firestoreService.getDealers(),
               firestoreService.getVendors(),
@@ -145,6 +150,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               firestoreService.getActivityLogs(),
               firestoreService.getDailyActivities(),
               firestoreService.getLenders(),
+              firestoreService.getAnchorSPOCs(),
             ]);
     
             setAnchors(anchorsData);
@@ -154,6 +160,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setActivityLogs(activityLogsData);
             setDailyActivities(dailyActivitiesData);
             setLenders(lendersData);
+            setAnchorSPOCs(spocsData);
           } else {
             console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
             await logout();
@@ -434,7 +441,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    const anchorToSave = { ...anchorData, status: 'Active' as const };
+    const anchorToSave = { ...anchorData, status: 'Active' as const, spocIds: [] };
     let newAnchor: Anchor;
 
     if (firebaseEnabled) {
@@ -1137,6 +1144,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         });
     }
   };
+
+  const addAnchorSPOC = async (spocData: Omit<AnchorSPOC, 'id'>) => {
+      if (!currentUser) return;
+      if (firebaseEnabled) {
+          const newSpoc = await firestoreService.addAnchorSPOC(spocData);
+          setAnchorSPOCs(prev => [...prev, newSpoc]);
+          // Also update the anchor's spocIds array
+          const anchor = anchors.find(a => a.id === spocData.anchorId);
+          if (anchor) {
+              const updatedAnchor = { ...anchor, spocIds: [...(anchor.spocIds || []), newSpoc.id] };
+              updateAnchor(updatedAnchor);
+          }
+      } else {
+          const newSpoc = { ...spocData, id: generateUniqueId('spoc') };
+          setAnchorSPOCs(prev => [...prev, newSpoc]);
+          const anchor = anchors.find(a => a.id === spocData.anchorId);
+           if (anchor) {
+              const updatedAnchor = { ...anchor, spocIds: [...(anchor.spocIds || []), newSpoc.id] };
+              updateAnchor(updatedAnchor);
+          }
+      }
+  };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -1186,6 +1215,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     deleteLender,
     reassignLeads,
     sendEmail,
+    anchorSPOCs,
+    addAnchorSPOC,
     t
   };
 
@@ -1199,5 +1230,3 @@ export const useApp = () => {
   }
   return context;
 };
-
-    

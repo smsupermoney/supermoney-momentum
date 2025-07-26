@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller';
 
 export interface User {
@@ -38,6 +39,26 @@ export interface Contact {
     email: string;
     phone: string;
     isPrimary: boolean;
+}
+
+export interface AnchorSPOC {
+  id: string;
+  anchorId: string;
+  spocDetails: {
+    name: string;
+    email: string;
+    phone: string;
+    designation: string;
+  };
+  territory: {
+    region: string;
+    state: string;
+    city: string;
+  };
+  isActive: boolean;
+  createdAt: string;
+  createdBy: string;
+  lastModified: string;
 }
 
 export type NextBestActionType = 'Send Follow-up Email' | 'Schedule a Demo Call' | 'Send Industry Case Study' | 'Address a Specific Question' | 'Nurture (Wait)' | 'Mark as Unqualified';
@@ -96,6 +117,7 @@ export interface Anchor {
   dealerIds: string[];
   vendorIds: string[];
   contacts: Contact[];
+  spocIds?: string[];
   nextBestAction?: NextBestAction;
   createdBy?: string;
   createdAt: string;

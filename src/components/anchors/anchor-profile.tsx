@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, SpokeStatus, TaskType, LeadStatus, Contact } from '@/lib/types';
+import type { Anchor, Dealer, Vendor, ActivityLog, Task, User, SpokeStatus, TaskType, LeadStatus, Contact, AnchorSPOC } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle } from 'lucide-react';
+import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle, Globe } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
@@ -26,6 +26,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { NewContactDialog } from './new-contact-dialog';
 import { cn } from '@/lib/utils';
 import { spokeStatuses } from '@/lib/types';
+import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -50,9 +51,10 @@ interface AnchorProfileProps {
   activityLogs: ActivityLog[];
   tasks: Task[];
   users: User[];
+  spocs: AnchorSPOC[];
 }
 
-export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs }: AnchorProfileProps) {
+export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initialVendors, activityLogs: initialLogs, spocs }: AnchorProfileProps) {
   const { addActivityLog, updateAnchor, updateDealer, updateVendor, currentUser } = useApp();
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -61,6 +63,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
+  const [isNewSpocOpen, setIsNewSpocOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Vendor'>('Dealer');
   const [activeTab, setActiveTab] = useState('details'); 
   const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -112,7 +115,7 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
     }, 100); 
   };
   
-  const handleEmailClick = (contact: Contact) => {
+  const handleEmailClick = (contact: Contact | AnchorSPOC['spocDetails']) => {
     setEmailConfig({
         recipientEmail: contact.email,
         entity: { id: anchor.id, name: anchor.name, type: 'anchor' }
@@ -167,6 +170,8 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
       <NewContactDialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen} anchor={anchor} />
+      <NewAnchorSPOCDialog open={isNewSpocOpen} onOpenChange={setIsNewSpocOpen} anchor={anchor} />
+
       {emailConfig && (
         <ComposeEmailDialog 
             open={isEmailDialogOpen} 
@@ -192,8 +197,9 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
 
 
       <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full overflow-x-auto justify-start">
+        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="details">{t('anchors.profile.detailsTab')}</TabsTrigger>
+          <TabsTrigger value="spocs">SPOCs ({spocs.length})</TabsTrigger>
           <TabsTrigger value="dealers">{t('sidebar.dealers')} ({initialDealers.length})</TabsTrigger>
           <TabsTrigger value="vendors">{t('sidebar.vendors')} ({initialVendors.length})</TabsTrigger>
           <TabsTrigger value="interactions">{t('anchors.profile.interactionsTab', { count: initialLogs.length })}</TabsTrigger>
@@ -271,6 +277,44 @@ export function AnchorProfile({ anchor, dealers: initialDealers, vendors: initia
                 </Card>
             }
           </div>
+        </TabsContent>
+
+        <TabsContent value="spocs" className="mt-4">
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Territory SPOCs</CardTitle>
+                        {canAddContact && <Button variant="outline" onClick={() => setIsNewSpocOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add SPOC</Button>}
+                    </div>
+                    <CardDescription>Single Points of Contact for specific regions, states, or cities.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                       {spocs.length > 0 ? spocs.map(spoc => (
+                         <div key={spoc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b pb-4 last:border-b-0">
+                            <div className="flex items-center gap-3">
+                                <Globe className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="font-semibold">{spoc.spocDetails.name}</p>
+                                    <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
+                                    <p className="text-xs text-muted-foreground">{spoc.spocDetails.email} &bull; {spoc.spocDetails.phone}</p>
+                                </div>
+                            </div>
+                             <div className="flex flex-col sm:items-end gap-1 w-full sm:w-auto">
+                                <Badge variant="secondary">{spoc.territory.region} / {spoc.territory.state} / {spoc.territory.city}</Badge>
+                                <Button variant="ghost" size="sm" className="h-8 w-full sm:w-auto" onClick={() => handleEmailClick(spoc.spocDetails)}>
+                                    <Mail className="mr-2 h-4 w-4" /> Email SPOC
+                                </Button>
+                            </div>
+                        </div>
+                       )) : (
+                        <div className="text-center text-muted-foreground py-8">
+                            <p>No territory-specific SPOCs have been added for this anchor yet.</p>
+                        </div>
+                       )}
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
 
         <TabsContent value="dealers" className="mt-4">
@@ -397,7 +441,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                         {spokes.length > 0 ? spokes.map(spoke => (
                         <TableRow key={spoke.id}>
                             <TableCell className="font-medium">{spoke.name}</TableCell>
-                            <TableCell>{spoke.contacts?.[0]?.phone || 'N/A'}</TableCell>
+                            <TableCell>{spoke.contactNumber || 'N/A'}</TableCell>
                             <TableCell>
                                 {isSpecialist ? (
                                     <Select onValueChange={(v) => handleStatusChange(spoke, v as SpokeStatus)} defaultValue={spoke.status}>
@@ -432,7 +476,7 @@ function SpokeTable({ spokes, type, onUpdateSpoke, onViewDetails }: { spokes: Ar
                         <CardContent className="p-4 space-y-3">
                             <div>
                                 <p className="font-medium">{spoke.name}</p>
-                                <p className="text-sm text-muted-foreground">{spoke.contacts?.[0]?.phone || 'N/A'}</p>
+                                <p className="text-sm text-muted-foreground">{spoke.contactNumber || 'N/A'}</p>
                             </div>
                              <p className="text-sm"><span className="font-medium">Assigned To:</span> {getAssignedToName(spoke.assignedTo)}</p>
                             <div>
