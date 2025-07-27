@@ -5,12 +5,24 @@ import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format, isToday, isThisWeek, isPast } from 'date-fns';
+import { format, isToday, isThisWeek, isPast, subDays, isAfter } from 'date-fns';
 import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/language-context';
+import { Pencil, Trash2 } from 'lucide-react';
+import { EditTaskDialog } from './edit-task-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TaskListProps {
   dueDateFilter?: string;
@@ -20,11 +32,13 @@ interface TaskListProps {
 }
 
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assignedToFilter }: TaskListProps) {
-  const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, visibleUserIds } = useApp();
+  const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, deleteTask, visibleUserIds } = useApp();
   const { t } = useLanguage();
   const [completedTask, setCompletedTask] = useState<Task | null>(null);
   const [isLogOutcomeOpen, setIsLogOutcomeOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   
   const getVisibleTasks = () => {
     if (!currentUser) return [];
@@ -34,10 +48,18 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
     return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
   }
   
+  const canModify = currentUser && ['Admin', 'BIU'].includes(currentUser.role);
+  
   const filteredTasks = getVisibleTasks()
     .filter(task => task.status !== 'Completed')
     .filter(task => {
-        if (!dueDateFilter || dueDateFilter === 'all') return true;
+        // Default view: last 3 days or overdue
+        if (dueDateFilter === 'all' || !dueDateFilter) {
+            const threeDaysAgo = subDays(new Date(), 3);
+            const isRecent = isAfter(new Date(task.createdAt), threeDaysAgo);
+            const isTaskOverdue = isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
+            return isRecent || isTaskOverdue;
+        }
         const dueDate = new Date(task.dueDate);
         if (dueDateFilter === 'today') return isToday(dueDate);
         if (dueDateFilter === 'this-week') return isThisWeek(dueDate, { weekStartsOn: 1 });
@@ -92,8 +114,39 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
       setCompletedTask(null);
   }
 
+  const handleDelete = () => {
+    if (taskToDelete) {
+        deleteTask(taskToDelete.id);
+        setTaskToDelete(null);
+    }
+  };
+
   return (
     <>
+      {taskToEdit && (
+        <EditTaskDialog
+          open={!!taskToEdit}
+          onOpenChange={() => setTaskToEdit(null)}
+          task={taskToEdit}
+        />
+      )}
+      <AlertDialog open={!!taskToDelete} onOpenChange={() => setTaskToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the task: "{taskToDelete?.title}".
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                    Delete Task
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Desktop Table */}
       <div className="hidden rounded-lg border md:block">
         <Table>
@@ -119,9 +172,15 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
                 <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
                 <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
                 <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right flex items-center justify-end gap-2">
                   {task.status !== 'Completed' && (
                       <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)}>{t('tasks.list.complete')}</Button>
+                  )}
+                  {canModify && (
+                    <>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setTaskToEdit(task)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setTaskToDelete(task)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </>
                   )}
                 </TableCell>
               </TableRow>
@@ -154,9 +213,17 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
                 <Badge variant="outline">{task.type}</Badge>
                 <Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge>
               </div>
-              {task.status !== 'Completed' && (
-                  <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)} className="w-full">{t('tasks.list.complete')} Task</Button>
-              )}
+              <div className="flex items-center gap-2 pt-2 border-t">
+                  {task.status !== 'Completed' && (
+                      <Button variant="outline" size="sm" onClick={() => handleCompleteClick(task)} className="flex-1">{t('tasks.list.complete')} Task</Button>
+                  )}
+                  {canModify && (
+                    <>
+                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => setTaskToEdit(task)}><Pencil className="mr-2 h-4 w-4" /> Edit</Button>
+                    <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={() => setTaskToDelete(task)}><Trash2 className="mr-2 h-4 w-4" /> Delete</Button>
+                    </>
+                  )}
+              </div>
             </CardContent>
           </Card>
         )) : (

@@ -232,6 +232,10 @@ export const updateTask = async (task: Task) => {
     const { id, ...taskData } = task;
     await updateDoc(doc(db, 'tasks', id), { ...taskData });
 };
+export const deleteTask = async (taskId: string) => {
+    if (!db) throw new Error("Firestore not initialized");
+    await deleteDoc(doc(db, 'tasks', taskId));
+};
 
 
 // --- ActivityLog Service ---
@@ -268,6 +272,12 @@ export const updateDailyActivity = async (activity: DailyActivity) => {
     const { id, ...activityData } = activity;
     const activityDocRef = doc(db, 'daily_activities', id);
     await updateDoc(activityDocRef, { ...activityData, updatedAt: new Date().toISOString() });
+};
+
+export const deleteDailyActivity = async (activityId: string): Promise<void> => {
+    if (!db) throw new Error("Firestore not initialized");
+    const activityDocRef = doc(db, 'daily_activities', activityId);
+    await deleteDoc(activityDocRef);
 };
 
 // --- Lender Service ---

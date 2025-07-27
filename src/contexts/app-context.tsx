@@ -39,10 +39,13 @@ interface AppContextType {
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
   updateTask: (task: Task) => void;
+  deleteTask: (taskId: string) => void;
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id'>) => void;
   dailyActivities: DailyActivity[];
   addDailyActivity: (activity: Omit<DailyActivity, 'id'>) => void;
+  updateDailyActivity: (activity: DailyActivity) => void;
+  deleteDailyActivity: (activityId: string) => void;
   visibleUserIds: string[];
   visibleUsers: User[];
   notifications: Notification[];
@@ -580,7 +583,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateDealer = async (updatedDealer: Partial<Dealer> & { id: string }) => {
     try {
-        UpdateSpokeSchema.parse(updatedDealer);
+        UpdateSpokeSchema.partial().parse(updatedDealer);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
@@ -609,11 +612,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (logMessage) {
             addActivityLog({
                 dealerId: updatedDealer.id,
-                anchorId: updatedDealer.anchorId || undefined,
+                anchorId: updatedDealer.anchorId || oldDealer.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Dealer Lead Updated`,
-                outcome: `Dealer '${updatedDealer.name}' updated by ${currentUser.name}. ${logMessage}`,
+                outcome: `Dealer '${updatedDealer.name || oldDealer.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
@@ -626,7 +629,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 const notification = {
                     userId: assignedUser.uid,
                     title: 'New Lead Assignment',
-                    description: `${currentUser.name} assigned you a new dealer lead: ${updatedDealer.name}.`,
+                    description: `${currentUser.name} assigned you a new dealer lead: ${updatedDealer.name || oldDealer.name}.`,
                     href: '/dealers',
                     timestamp: new Date().toISOString(),
                     icon: 'Users'
@@ -639,7 +642,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                   type: 'NewLeadAssignment',
                   context: {
                     assigneeName: assignedUser.name,
-                    leadName: updatedDealer.name,
+                    leadName: updatedDealer.name || oldDealer.name,
                     leadType: 'Dealer',
                     assignerName: currentUser.name,
                   }
@@ -738,7 +741,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateVendor = async (updatedVendor: Partial<Vendor> & { id: string }) => {
      try {
-        UpdateSpokeSchema.parse(updatedVendor);
+        UpdateSpokeSchema.partial().parse(updatedVendor);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for vendor update:", e.flatten().fieldErrors);
@@ -767,11 +770,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (logMessage) {
             addActivityLog({
                 vendorId: updatedVendor.id,
-                anchorId: updatedVendor.anchorId || undefined,
+                anchorId: updatedVendor.anchorId || oldVendor.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Vendor Lead Updated`,
-                outcome: `Vendor '${updatedVendor.name}' updated by ${currentUser.name}. ${logMessage}`,
+                outcome: `Vendor '${updatedVendor.name || oldVendor.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
@@ -784,7 +787,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 const notification = {
                     userId: assignedUser.uid,
                     title: 'New Lead Assignment',
-                    description: `${currentUser.name} assigned you a new vendor lead: ${updatedVendor.name}.`,
+                    description: `${currentUser.name} assigned you a new vendor lead: ${updatedVendor.name || oldVendor.name}.`,
                     href: '/suppliers',
                     timestamp: new Date().toISOString(),
                     icon: 'Users'
@@ -797,7 +800,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                   type: 'NewLeadAssignment',
                   context: {
                     assigneeName: assignedUser.name,
-                    leadName: updatedVendor.name,
+                    leadName: updatedVendor.name || oldVendor.name,
                     leadType: 'Vendor',
                     assignerName: currentUser.name,
                   }
@@ -899,6 +902,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
          });
     }
   };
+
+  const deleteTask = async (taskId: string) => {
+    if (!currentUser || !['Admin', 'BIU'].includes(currentUser.role)) {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to delete tasks.' });
+        return;
+    }
+    if (firebaseEnabled) {
+        await firestoreService.deleteTask(taskId);
+    }
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    toast({ title: 'Task Deleted' });
+  }
   
   const addDailyActivity = async (activityData: Omit<DailyActivity, 'id'>) => {
      try {
@@ -923,6 +938,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     const newActivity = { ...dataToSave, id: generateUniqueId('daily-activity') } as DailyActivity;
     setDailyActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.activityTimestamp).getTime() - new Date(a.activityTimestamp).getTime()));
+  };
+
+  const updateDailyActivity = async (activity: DailyActivity) => {
+      if (firebaseEnabled) {
+          await firestoreService.updateDailyActivity(activity);
+      }
+      setDailyActivities(prev => prev.map(a => a.id === activity.id ? activity : a));
+  };
+  
+  const deleteDailyActivity = async (activityId: string) => {
+      if (firebaseEnabled) {
+          await firestoreService.deleteDailyActivity(activityId);
+      }
+      setDailyActivities(prev => prev.filter(a => a.id !== activityId));
+      toast({ title: 'Activity Deleted' });
   };
 
   const addUser = async (userData: Omit<User, 'uid'|'id'>) => {
@@ -1172,10 +1202,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     tasks,
     addTask,
     updateTask,
+    deleteTask,
     activityLogs,
     addActivityLog,
     dailyActivities,
     addDailyActivity,
+    updateDailyActivity,
+    deleteDailyActivity,
     visibleUsers,
     visibleUserIds,
     notifications,
