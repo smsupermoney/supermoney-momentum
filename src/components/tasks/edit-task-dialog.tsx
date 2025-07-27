@@ -83,6 +83,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     }
   };
 
+  const watchedDueDate = form.watch('dueDate');
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
@@ -112,7 +114,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
             )}/>
             <Calendar
               mode="single"
-              selected={parse(form.watch('dueDate'), 'dd/MM/yyyy', new Date())}
+              selected={watchedDueDate ? parse(watchedDueDate, 'dd/MM/yyyy', new Date()) : undefined}
               onSelect={(date) => {
                 if (date) form.setValue('dueDate', format(date, 'dd/MM/yyyy'));
               }}
