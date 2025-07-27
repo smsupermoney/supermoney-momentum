@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { isPast, isToday, subDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { User, Activity, AlertCircle, Package, Handshake, IndianRupee } from 'lucide-react';
-import { UserRole, products as allProducts } from '@/lib/types';
+import { UserRole, products as allProducts, spokeStatuses } from '@/lib/types';
 import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -17,6 +17,7 @@ export function TeamProgressCard() {
     const { currentUser, visibleUsers, dealers, vendors, tasks, activityLogs } = useApp();
     const [period, setPeriod] = useState<'1d' | '7d' | '30d'>('7d');
     const [regionFilter, setRegionFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const regions = useMemo(() => {
         const allRegions = new Set(visibleUsers.map(u => u.region).filter(Boolean));
@@ -39,10 +40,15 @@ export function TeamProgressCard() {
         
         const startDate = subDays(new Date(), daysToSubtract);
 
+        const allLeads = [...dealers, ...vendors];
+
         return filteredUsers.map(member => {
-            const memberDealers = dealers.filter(d => d.assignedTo === member.uid && d.status === 'New').length;
-            const memberVendors = vendors.filter(v => v.assignedTo === member.uid && v.status === 'New').length;
-            const totalNewLeads = memberDealers + memberVendors;
+            const memberLeads = allLeads.filter(l => l.assignedTo === member.uid);
+
+            const leadsByStatus = statusFilter === 'all'
+                ? memberLeads.filter(l => l.status !== 'Closed' && l.status !== 'Rejected' && l.status !== 'Not Interested').length
+                : memberLeads.filter(l => l.status === statusFilter).length;
+            
             const memberTasks = tasks.filter(t => t.assignedTo === member.uid);
             const memberActivities = activityLogs.filter(log => log.userId === member.uid && new Date(log.timestamp) >= startDate);
             const overdueTasks = memberTasks.filter(t => 
@@ -51,9 +57,9 @@ export function TeamProgressCard() {
                 t.status !== 'Completed'
             ).length;
 
-            return { id: member.uid, name: member.name, role: member.role, newLeads: totalNewLeads, overdueTasks, activities: memberActivities.length };
+            return { id: member.uid, name: member.name, role: member.role, newLeads: leadsByStatus, overdueTasks, activities: memberActivities.length };
         });
-    }, [filteredUsers, dealers, vendors, tasks, activityLogs, period]);
+    }, [filteredUsers, dealers, vendors, tasks, activityLogs, period, statusFilter]);
 
     const productProgressData = useMemo(() => {
         const allLeads = [...dealers, ...vendors];
@@ -78,6 +84,7 @@ export function TeamProgressCard() {
     }
     
     const activityColumnTitle = `Activities (${period})`;
+    const leadColumnTitle = statusFilter === 'all' ? 'Active Leads' : `Leads in '${statusFilter}'`;
 
     return (
         <Card>
@@ -89,10 +96,17 @@ export function TeamProgressCard() {
                     </div>
                      <div className="flex flex-col sm:flex-row gap-2">
                         <Select value={regionFilter} onValueChange={setRegionFilter}>
-                          <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="Filter by Region" /></SelectTrigger>
+                          <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Filter by Region" /></SelectTrigger>
                           <SelectContent>
                             {regions.map(r => <SelectItem key={r} value={r}>{r === 'all' ? 'All Regions' : r}</SelectItem>)}
                           </SelectContent>
+                        </Select>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Active Leads</SelectItem>
+                                {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
                         </Select>
                         <Tabs value={period} onValueChange={(value) => setPeriod(value as '1d' | '7d' | '30d')} className="w-full sm:w-auto">
                             <TabsList className="grid w-full grid-cols-3">
@@ -116,7 +130,7 @@ export function TeamProgressCard() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead><User className="inline-block h-4 w-4 mr-2" />Member</TableHead>
-                                        <TableHead><Handshake className="inline-block h-4 w-4 mr-2" />New Leads</TableHead>
+                                        <TableHead><Handshake className="inline-block h-4 w-4 mr-2" />{leadColumnTitle}</TableHead>
                                         <TableHead><AlertCircle className="inline-block h-4 w-4 mr-2" />Overdue Tasks</TableHead>
                                         <TableHead><Activity className="inline-block h-4 w-4 mr-2" />{activityColumnTitle}</TableHead>
                                     </TableRow>
@@ -141,7 +155,7 @@ export function TeamProgressCard() {
                                 <Card key={member.id} className="p-0">
                                     <CardHeader className="p-3 pb-2"><CardTitle className="text-base">{member.name}</CardTitle><CardDescription className="text-xs">{member.role}</CardDescription></CardHeader>
                                     <CardContent className="p-3 pt-0 text-sm space-y-2">
-                                        <div className="flex justify-between items-center"><span className="text-muted-foreground">New Leads</span><Badge variant="secondary">{member.newLeads}</Badge></div>
+                                        <div className="flex justify-between items-center"><span className="text-muted-foreground">{leadColumnTitle}</span><Badge variant="secondary">{member.newLeads}</Badge></div>
                                         <div className="flex justify-between items-center"><span className="text-muted-foreground">Overdue Tasks</span><Badge variant={member.overdueTasks > 0 ? 'destructive' : 'default'}>{member.overdueTasks}</Badge></div>
                                         <div className="flex justify-between items-center"><span className="text-muted-foreground">{activityColumnTitle}</span><Badge variant="outline">{member.activities}</Badge></div>
                                     </CardContent>
