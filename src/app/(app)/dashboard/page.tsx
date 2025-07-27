@@ -207,8 +207,8 @@ function SalesDashboard() {
 function ManagerDashboard() {
     return (
         <div className="grid gap-4">
-            <StaleLeadsCard />
             <TeamProgressCard />
+            <StaleLeadsCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -223,8 +223,8 @@ function ManagerDashboard() {
 function AdminDashboard() {
     return (
         <div className="grid gap-4">
-            <StaleLeadsCard />
             <TeamProgressCard />
+            <StaleLeadsCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
