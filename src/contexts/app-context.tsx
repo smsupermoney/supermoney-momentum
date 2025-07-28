@@ -60,6 +60,7 @@ interface AppContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
   anchorSPOCs: AnchorSPOC[];
   addAnchorSPOC: (spoc: Omit<AnchorSPOC, 'id'>) => void;
+  updateAnchorSPOC: (spoc: AnchorSPOC) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -1168,6 +1169,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           }
       }
   };
+
+  const updateAnchorSPOC = async (spocData: AnchorSPOC) => {
+      if (!currentUser) return;
+      if (firebaseEnabled) {
+          await firestoreService.updateAnchorSPOC(spocData);
+      }
+      setAnchorSPOCs(prev => prev.map(s => s.id === spocData.id ? spocData : s));
+  };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -1222,6 +1231,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     sendEmail,
     anchorSPOCs,
     addAnchorSPOC,
+    updateAnchorSPOC,
     t
   };
 

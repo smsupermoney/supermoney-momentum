@@ -316,3 +316,10 @@ export const addAnchorSPOC = async (spoc: Omit<AnchorSPOC, 'id'>): Promise<Ancho
     const docRef = await addDoc(collection(db, 'anchorSPOCs'), spoc);
     return { id: docRef.id, ...spoc };
 };
+
+export const updateAnchorSPOC = async (spoc: AnchorSPOC) => {
+    if (!db) throw new Error("Firestore not initialized");
+    const { id, ...spocData } = spoc;
+    const docRef = doc(db, 'anchorSPOCs', id);
+    await updateDoc(docRef, { ...spocData, lastModified: new Date().toISOString() });
+};

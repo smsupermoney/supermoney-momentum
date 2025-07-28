@@ -29,6 +29,7 @@ import { regions } from '@/lib/validation';
 import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
 import { Input } from '../ui/input';
 import { EditContactDialog } from './edit-contact-dialog';
+import { EditAnchorSPOCDialog } from './edit-anchor-spoc-dialog';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -66,6 +67,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState<Contact | null>(null);
   const [isNewSpocOpen, setIsNewSpocOpen] = useState(false);
+  const [spocToEdit, setSpocToEdit] = useState<AnchorSPOC | null>(null);
   const [leadType, setLeadType] = useState<'Dealer' | 'Vendor'>('Dealer');
   const [activeTab, setActiveTab] = useState('details'); 
   const activityTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -77,7 +79,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
 
 
   const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
-  const canAddContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canAddOrEditContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
   const canViewCentralSpocs = currentUser && !['Zonal Sales Manager', 'Area Sales Manager'].includes(currentUser.role);
 
 
@@ -177,6 +179,14 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
         />
       )}
       <NewAnchorSPOCDialog open={isNewSpocOpen} onOpenChange={setIsNewSpocOpen} anchor={anchor} />
+      {spocToEdit && (
+        <EditAnchorSPOCDialog 
+            open={!!spocToEdit}
+            onOpenChange={() => setSpocToEdit(null)}
+            spoc={spocToEdit}
+            anchor={anchor}
+        />
+      )}
 
       {emailConfig && (
         <ComposeEmailDialog 
@@ -232,7 +242,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <CardTitle>{t('anchors.profile.keyContacts')}</CardTitle>
-                                {canAddContact && <Button variant="outline" size="sm" onClick={() => setIsNewContactOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add Contact</Button>}
+                                {canAddOrEditContact && <Button variant="outline" size="sm" onClick={() => setIsNewContactOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add Contact</Button>}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -250,7 +260,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
                                             <Mail className="h-4 w-4" />
                                         </Button>
-                                         {canAddContact && (
+                                         {canAddOrEditContact && (
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setContactToEdit(contact)}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -297,7 +307,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Territory SPOCs</CardTitle>
-                        {canAddContact && <Button variant="outline" onClick={() => setIsNewSpocOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add SPOC</Button>}
+                        {canAddOrEditContact && <Button variant="outline" onClick={() => setIsNewSpocOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add SPOC</Button>}
                     </div>
                     <CardDescription>Single Points of Contact for specific regions, states, or cities.</CardDescription>
                 </CardHeader>
@@ -311,7 +321,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                                     <div>
                                         <p className="font-semibold">{spoc.spocDetails.name}</p>
                                         <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
-                                        <p className="text-xs text-muted-foreground">{spoc.spocDetails.email} &bull; {spoc.spocDetails.phone}</p>
+                                        <p className="text-xs text-muted-foreground">{spoc.spocDetails.email || 'N/A'} &bull; {spoc.spocDetails.phone || 'N/A'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -320,14 +330,21 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                                     {spoc.territories.map((territory, index) => (
                                         <Badge key={index} variant="secondary" className="font-normal">
                                             <Globe className="h-3 w-3 mr-1.5"/>
-                                            {territory.city}, {territory.state}
+                                            {territory.city || territory.state || territory.region || 'N/A'}
                                             {territory.division && <span className="ml-1.5 pl-1.5 border-l border-muted-foreground/50">{territory.division}</span>}
                                         </Badge>
                                     ))}
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-8 w-full sm:w-auto" onClick={() => handleEmailClick(spoc.spocDetails)}>
-                                    <Mail className="mr-2 h-4 w-4" /> Email SPOC
-                                </Button>
+                                <div className="flex items-center gap-1 w-full justify-end">
+                                    <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => handleEmailClick(spoc.spocDetails)} disabled={!spoc.spocDetails.email}>
+                                        <Mail className="mr-2 h-4 w-4" /> Email
+                                    </Button>
+                                    {canAddOrEditContact && (
+                                        <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => setSpocToEdit(spoc)}>
+                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                        )) : (
