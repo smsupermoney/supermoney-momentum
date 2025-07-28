@@ -21,6 +21,20 @@ import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 import { products } from '@/lib/types';
 
+// Helper function to truncate long strings for Excel export
+const truncateForExcel = (data: any[]): any[] => {
+  const MAX_CELL_LENGTH = 32000; // A safe limit below Excel's 32,767
+  return data.map(row => {
+    const newRow = { ...row };
+    for (const key in newRow) {
+      if (typeof newRow[key] === 'string' && newRow[key].length > MAX_CELL_LENGTH) {
+        newRow[key] = newRow[key].substring(0, MAX_CELL_LENGTH) + '... [TRUNCATED]';
+      }
+    }
+    return newRow;
+  });
+};
+
 
 // Main Page Component
 export default function ReportsPage() {
@@ -128,13 +142,13 @@ export default function ReportsPage() {
 
         // 2. Create workbook and worksheets
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedUsers), "Users");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedAnchors), "Anchors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDealers), "Dealers");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedVendors), "Vendors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedTasks), "Tasks");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedActivityLogs), "Interaction Logs");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDailyActivities), "Daily Activities");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedUsers)), "Users");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedAnchors)), "Anchors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedDealers)), "Dealers");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedVendors)), "Vendors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedTasks)), "Tasks");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedActivityLogs)), "Interaction Logs");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedDailyActivities)), "Daily Activities");
 
         // 3. Trigger download
         XLSX.writeFile(wb, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
@@ -260,8 +274,7 @@ function SalespersonDashboard() {
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
+            </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
@@ -649,3 +662,5 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+    
