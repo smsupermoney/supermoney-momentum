@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -12,7 +12,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
-import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum } from '@/lib/types';
+import type { Dealer, SpokeStatus } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -34,6 +34,7 @@ import {
 import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
+import { LeadsSummary } from '@/components/leads/leads-summary';
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads } = useApp();
@@ -62,7 +63,7 @@ export default function DealersPage() {
   const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
   const canBulkAction = currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
 
-  const filteredDealers = dealers.filter(d => {
+  const visibleDealers = dealers.filter(d => {
     if (d.status === 'Active') return false;
 
     if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development' && currentUser.role !== 'BIU') {
@@ -73,13 +74,16 @@ export default function DealersPage() {
         }
       } else {
         const isAssignedToMe = assignedUser.uid === currentUser.uid;
-        const isMyReport = assignedUser.managerId === currentUser.uid;
+        const isMyReport = visibleUsers.some(visUser => visUser.uid === assignedUser.uid);
         if (!isAssignedToMe && !isMyReport) {
           return false;
         }
       }
     }
-    
+    return true;
+  });
+
+  const filteredDealers = visibleDealers.filter(d => {
     const searchMatch = searchQuery.length > 0 ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
 
     if (!searchMatch) return false;
@@ -208,6 +212,10 @@ export default function DealersPage() {
         </div>
       </PageHeader>
       
+      <div className="mb-6">
+        <LeadsSummary leads={visibleDealers} type="Dealer" />
+      </div>
+
       <NewLeadDialog type="Dealer" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
       <BulkUploadDialog type="Dealer" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
       {selectedDealer && (

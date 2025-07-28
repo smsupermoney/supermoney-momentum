@@ -34,6 +34,7 @@ import {
 import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
+import { LeadsSummary } from '@/components/leads/leads-summary';
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor, reassignSelectedLeads } = useApp();
@@ -63,7 +64,7 @@ export default function VendorsPage() {
   const canBulkAction = currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
 
   
-  const filteredVendors = vendors.filter(s => {
+  const visibleVendors = vendors.filter(s => {
     if (s.status === 'Active') return false;
     
     // Filter based on roles
@@ -77,14 +78,16 @@ export default function VendorsPage() {
       } else {
         // If assigned, show to the assigned user OR their manager
         const isAssignedToMe = assignedUser.uid === currentUser.uid;
-        const isMyReport = assignedUser.managerId === currentUser.uid;
-
+        const isMyReport = visibleUsers.some(visUser => visUser.uid === assignedUser.uid);
         if (!isAssignedToMe && !isMyReport) {
           return false;
         }
       }
     }
-    
+    return true;
+  });
+  
+  const filteredVendors = visibleVendors.filter(s => {
     const searchMatch = searchQuery.length > 0 ? s.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
 
     if (!searchMatch) return false;
@@ -216,6 +219,10 @@ export default function VendorsPage() {
         </div>
       </PageHeader>
       
+      <div className="mb-6">
+        <LeadsSummary leads={visibleVendors} type="Vendor" />
+      </div>
+
       <NewLeadDialog type="Vendor" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
       <BulkUploadDialog type="Vendor" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
       {selectedVendor && (
