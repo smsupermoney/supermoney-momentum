@@ -55,8 +55,20 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       name: '',
       contactNumber: '',
       anchorId: anchorId || '',
+      email: '',
+      gstin: '',
+      city: '',
+      state: '',
+      zone: '',
+      product: '',
+      leadSource: '',
+      lenderId: '',
+      spoc: '',
       leadType: 'Fresh',
       priority: 'Normal',
+      remarks: [],
+      dealValue: undefined,
+      initialLeadDate: null,
     },
   });
 
@@ -65,8 +77,20 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       name: '',
       contactNumber: '',
       anchorId: anchorId || '',
+      email: '',
+      gstin: '',
+      city: '',
+      state: '',
+      zone: '',
+      product: '',
+      leadSource: '',
+      lenderId: '',
+      spoc: '',
       leadType: 'Fresh',
       priority: 'Normal',
+      remarks: [],
+      dealValue: undefined,
+      initialLeadDate: null,
     });
     onOpenChange(false);
   }
@@ -99,10 +123,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const scoreResult = await spokeScoring(scoringInput);
         
         const commonData = {
+          ...values,
           leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
-          name: values.name,
-          contactNumber: values.contactNumber || null,
-          email: values.email || null,
           assignedTo: isManagerCreating ? null : currentUser.uid,
           status: isManagerCreating ? 'Unassigned Lead' : 'New',
           anchorId: finalAnchorId,
@@ -110,8 +132,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadDate: new Date().toISOString(),
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
-          leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
-          priority: values.priority as 'High' | 'Normal',
           remarks: [],
         };
 
