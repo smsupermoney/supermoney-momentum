@@ -33,20 +33,25 @@ export default function AnchorProfilePage() {
   }, [anchor, dealers, vendors]);
 
   const visibleSpocs = useMemo(() => {
-    if (!currentUser || !currentUser.territoryAccess) {
-      // If user has no territory access defined, show all (or none, depending on policy)
-      // For this implementation, we'll assume they can see all if not restricted.
-      // Managers and Admins should see all.
-      if (currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role)) {
-         return anchorSPOCs.filter(spoc => spoc.anchorId === id);
-      }
-      return [];
+    if (!currentUser) return [];
+
+    const spocsForAnchor = anchorSPOCs.filter(spoc => spoc.anchorId === id);
+
+    if (!currentUser.territoryAccess || currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'National Sales Manager' || currentUser.role === 'Regional Sales Manager') {
+      return spocsForAnchor;
     }
     
     const { states, cities } = currentUser.territoryAccess;
-    return anchorSPOCs.filter(spoc => 
-      spoc.anchorId === id &&
-      (states.includes(spoc.territory.state) || cities.includes(spoc.territory.city))
+    if (states.length === 0 && cities.length === 0) {
+      // If user has territoryAccess object but it's empty, they see no territory SPOCs.
+      return [];
+    }
+
+    return spocsForAnchor.filter(spoc => 
+      // Check if ANY of the SPOC's territories match the user's assigned territories
+      spoc.territories.some(territory => 
+        (territory.state && states.includes(territory.state)) || (territory.city && cities.includes(territory.city))
+      )
     );
   }, [currentUser, anchorSPOCs, id]);
 
