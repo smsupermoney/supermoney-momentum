@@ -106,7 +106,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             lenderId: vendor.lenderId || '',
             remarks: vendor.remarks || [],
             leadType: vendor.leadType || 'Fresh',
-            dealValue: vendor.dealValue || undefined,
+            dealValue: vendor.dealValue === null ? undefined : vendor.dealValue,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
             spoc: vendor.spoc || '',
             initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : null,
@@ -152,18 +152,24 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
+    // Sanitize data before submitting
+    const cleanedValues = { ...values };
+    if (isNaN(cleanedValues.dealValue as number)) {
+        cleanedValues.dealValue = undefined;
+    }
+
     const updatedVendorData: Partial<Vendor> & {id: string} = {
       id: vendor.id,
-      ...values,
-      leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
-      initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
+      ...cleanedValues,
+      leadDate: cleanedValues.leadDate ? cleanedValues.leadDate.toISOString() : new Date().toISOString(),
+      initialLeadDate: cleanedValues.initialLeadDate ? cleanedValues.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
     
     updateVendor(updatedVendorData);
     toast({
       title: "Vendor Updated",
-      description: `${values.name} has been successfully updated.`
+      description: `${cleanedValues.name} has been successfully updated.`
     });
     setIsSubmitting(false);
     onOpenChange(false);

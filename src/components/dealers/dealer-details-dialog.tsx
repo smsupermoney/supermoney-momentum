@@ -106,7 +106,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           lenderId: dealer.lenderId || '',
           remarks: dealer.remarks || [],
           leadType: dealer.leadType || 'Fresh',
-          dealValue: dealer.dealValue || undefined,
+          dealValue: dealer.dealValue === null ? undefined : dealer.dealValue,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
           spoc: dealer.spoc || '',
           initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : null,
@@ -152,18 +152,24 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
+    // Sanitize data before submitting
+    const cleanedValues = { ...values };
+    if (isNaN(cleanedValues.dealValue as number)) {
+        cleanedValues.dealValue = undefined;
+    }
+
     const updatedDealerData: Partial<Dealer> & { id: string } = {
       id: dealer.id,
-      ...values,
-      leadDate: values.leadDate ? values.leadDate.toISOString() : new Date().toISOString(),
-      initialLeadDate: values.initialLeadDate ? values.initialLeadDate.toISOString() : null,
+      ...cleanedValues,
+      leadDate: cleanedValues.leadDate ? cleanedValues.leadDate.toISOString() : new Date().toISOString(),
+      initialLeadDate: cleanedValues.initialLeadDate ? cleanedValues.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
 
     updateDealer(updatedDealerData);
     toast({
       title: "Dealer Updated",
-      description: `${values.name} has been successfully updated.`
+      description: `${cleanedValues.name} has been successfully updated.`
     });
     setIsSubmitting(false);
     onOpenChange(false);
