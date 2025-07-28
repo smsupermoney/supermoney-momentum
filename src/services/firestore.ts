@@ -1,5 +1,6 @@
 
 
+
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -128,6 +129,7 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
     role: userData.role || 'Area Sales Manager', // Default role if missing
     managerId: userData.managerId !== undefined ? userData.managerId : null,
     region: userData.region || 'Unassigned',
+    territoryAccess: userData.territoryAccess || { states: [], cities: [] },
   };
   
   // If data was missing and we had to add defaults, update the document in Firestore.
@@ -138,6 +140,7 @@ export const checkAndCreateUser = async (authUser: { email: string | null; displ
         role: finalUserData.role,
         managerId: finalUserData.managerId,
         region: finalUserData.region,
+        territoryAccess: finalUserData.territoryAccess,
       }, { merge: true });
   }
 

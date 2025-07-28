@@ -76,6 +76,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
 
   const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
   const canAddContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
+  const canViewCentralSpocs = currentUser && !['Zonal Sales Manager', 'Area Sales Manager'].includes(currentUser.role);
 
 
   const handleLogActivity = () => {
@@ -216,35 +217,37 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                         <div className="sm:col-span-2"><div className="text-muted-foreground">{t('anchors.profile.address')}</div><div>{anchor.address || 'N/A'}</div></div>
                     </CardContent>
                 </Card>
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle>{t('anchors.profile.keyContacts')}</CardTitle>
-                            {canAddContact && <Button variant="outline" size="sm" onClick={() => setIsNewContactOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add Contact</Button>}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                           {anchor.contacts.map(contact => (
-                             <div key={contact.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                                <div className="flex items-center gap-3">
-                                    <UserIcon className="h-5 w-5 text-muted-foreground" />
-                                    <div>
-                                        <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">{t('anchors.profile.primary')}</Badge>}</div>
-                                        <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2">{contact.designation} <span className="hidden sm:inline">&bull;</span> {contact.email} <span className="hidden sm:inline">&bull;</span> {contact.phone}</div>
+                 {canViewCentralSpocs && (
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>{t('anchors.profile.keyContacts')}</CardTitle>
+                                {canAddContact && <Button variant="outline" size="sm" onClick={() => setIsNewContactOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add Contact</Button>}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                               {anchor.contacts.map(contact => (
+                                 <div key={contact.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <UserIcon className="h-5 w-5 text-muted-foreground" />
+                                        <div>
+                                            <div className="font-medium flex items-center gap-2">{contact.name} {contact.isPrimary && <Badge variant="outline">{t('anchors.profile.primary')}</Badge>}</div>
+                                            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2">{contact.designation} <span className="hidden sm:inline">&bull;</span> {contact.email} <span className="hidden sm:inline">&bull;</span> {contact.phone}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 w-full sm:w-auto">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
+                                            <Mail className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">{t('anchors.profile.logInteraction')}</Button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 w-full sm:w-auto">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
-                                        <Mail className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">{t('anchors.profile.logInteraction')}</Button>
-                                </div>
+                               ))}
                             </div>
-                           ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                 )}
             </div>
             {anchor.leadScoreReason && 
                 <Card className="bg-secondary">
@@ -286,17 +289,27 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                 <CardContent>
                     <div className="space-y-4">
                        {spocs.length > 0 ? spocs.map(spoc => (
-                         <div key={spoc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b pb-4 last:border-b-0">
-                            <div className="flex items-center gap-3">
-                                <Globe className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <p className="font-semibold">{spoc.spocDetails.name}</p>
-                                    <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
-                                    <p className="text-xs text-muted-foreground">{spoc.spocDetails.email} &bull; {spoc.spocDetails.phone}</p>
+                         <div key={spoc.id} className="flex flex-col sm:flex-row items-start justify-between gap-2 border-b pb-4 last:border-b-0">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3">
+                                    <UserIcon className="h-5 w-5 text-muted-foreground mt-1" />
+                                    <div>
+                                        <p className="font-semibold">{spoc.spocDetails.name}</p>
+                                        <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
+                                        <p className="text-xs text-muted-foreground">{spoc.spocDetails.email} &bull; {spoc.spocDetails.phone}</p>
+                                    </div>
                                 </div>
                             </div>
-                             <div className="flex flex-col sm:items-end gap-1 w-full sm:w-auto">
-                                <Badge variant="secondary">{spoc.territory.region} / {spoc.territory.state} / {spoc.territory.city}</Badge>
+                            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                <div className="flex flex-wrap gap-1">
+                                    {spoc.territories.map((territory, index) => (
+                                        <Badge key={index} variant="secondary" className="font-normal">
+                                            <Globe className="h-3 w-3 mr-1.5"/>
+                                            {territory.city}, {territory.state}
+                                            {territory.division && <span className="ml-1.5 pl-1.5 border-l border-muted-foreground/50">{territory.division}</span>}
+                                        </Badge>
+                                    ))}
+                                </div>
                                 <Button variant="ghost" size="sm" className="h-8 w-full sm:w-auto" onClick={() => handleEmailClick(spoc.spocDetails)}>
                                     <Mail className="mr-2 h-4 w-4" /> Email SPOC
                                 </Button>

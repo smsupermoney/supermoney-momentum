@@ -3,6 +3,7 @@
 
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller';
 
 export interface User {
@@ -48,6 +49,12 @@ export interface Contact {
     isPrimary: boolean;
 }
 
+export interface Territory {
+  region: string;
+  state: string;
+  city: string;
+  division?: string;
+}
 export interface AnchorSPOC {
   id: string;
   anchorId: string;
@@ -57,11 +64,7 @@ export interface AnchorSPOC {
     phone: string;
     designation: string;
   };
-  territory: {
-    region: string;
-    state: string;
-    city: string;
-  };
+  territories: Territory[];
   isActive: boolean;
   createdAt: string;
   createdBy: string;
