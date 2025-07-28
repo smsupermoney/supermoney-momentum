@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format, differenceInDays } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter, endOfMonth } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -24,7 +24,7 @@ import { products } from '@/lib/types';
 
 // Main Page Component
 export default function ReportsPage() {
-  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } from useApp();
+  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } = useApp();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = () => {
@@ -61,14 +61,13 @@ export default function ReportsPage() {
         
         const getSpokeData = (spoke: Dealer | Vendor) => ({
             Name: spoke.name,
-            'Contact Number': spoke.contacts?.[0]?.phone || 'N/A',
-            Email: spoke.contacts?.[0]?.email || 'N/A',
+            'Contact Number': spoke.contactNumber,
+            Email: spoke.email || 'N/A',
             'Onboarding Status': spoke.status,
             'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
             'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
             'Product Interest': spoke.product || 'N/A',
-            'Lead Type': spoke.leadType || 'Fresh',
-            'Lead Source': spoke.leadSource || 'N/A',
+            'Lead Type': spoke.leadType || 'N/A',
             'Lead Score': spoke.leadScore,
             'Lead Score Reason': spoke.leadScoreReason,
             'Potential Deal Value (INR)': spoke.dealValue,
@@ -268,7 +267,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </Header>
+                </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -361,24 +360,24 @@ function LeadsDashboard() {
     const activeSpokes = totalSpokes.filter(s => s.status === 'Active');
     const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 
-  return (
-    <div className="grid gap-4">
-      <AdminDataChat />
-      <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
-      <Card>
-          <CardHeader>
-             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    return (
+        <div className="grid gap-4">
+        <AdminDataChat />
+        <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
-                  <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
+                    <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
+                    <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <Select value={productFilter} onValueChange={setProductFilter}>
-                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
-                      <SelectContent>
+                        <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                        <SelectContent>
                         <SelectItem value="all">All Products</SelectItem>
                         {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                      </SelectContent>
+                        </SelectContent>
                     </Select>
                     <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
                         <TabsList className="grid w-full grid-cols-3">
@@ -388,54 +387,54 @@ function LeadsDashboard() {
                         </TabsList>
                     </Tabs>
                 </div>
-             </div>
-          </CardHeader>
-          <CardContent>
-              <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
-                  <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                      <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                      <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
-                      <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
+                    <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                        <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
+                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                         {pipelineValueData.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                            <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
                         ))}
-                      </Bar>
-                  </BarChart>
-              </ChartContainer>
-          </CardContent>
-      </Card>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-              <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
-              <CardDescription>Top performers for {periodLabel}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-                <TableBody>
-                    {activityCounts.map((user, index) => (
-                        <TableRow key={user.name}>
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
-                                    <div><p className="font-medium">{user.name}</p></div>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <span className="text-lg font-bold">{user.activities}</span>
-                                <span className="text-sm text-muted-foreground"> activities</span>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                     {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
-                </TableBody>
-            </Table>
-          </CardContent>
+                        </Bar>
+                    </BarChart>
+                </ChartContainer>
+            </CardContent>
         </Card>
-        <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
-        <div className="lg:col-span-1 space-y-4">
-             <Card className="lg:col-span-1">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
+                <CardDescription>Top performers for {periodLabel}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableBody>
+                        {activityCounts.map((user, index) => (
+                            <TableRow key={user.name}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                        <div><p className="font-medium">{user.name}</p></div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <span className="text-lg font-bold">{user.activities}</span>
+                                    <span className="text-sm text-muted-foreground"> activities</span>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
+                    </TableBody>
+                </Table>
+            </CardContent>
+            </Card>
+            <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
+            <div className="lg:col-span-1 space-y-4">
+                <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
                     <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
@@ -446,10 +445,10 @@ function LeadsDashboard() {
                 </CardContent>
             </Card>
             <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+        </div>
+    );
 }
 
 
@@ -650,18 +649,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    
