@@ -17,7 +17,7 @@ import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle, Globe, Flame, Search } from 'lucide-react';
+import { Mail, Phone, Calendar, PenSquare, PlusCircle, User as UserIcon, History, MessageSquare, CheckCircle, Globe, Flame, Search, Pencil } from 'lucide-react';
 import { ComposeEmailDialog } from '../email/compose-email-dialog';
 import { DealerDetailsDialog } from '../dealers/dealer-details-dialog';
 import { VendorDetailsDialog } from '../suppliers/supplier-details-dialog';
@@ -28,6 +28,7 @@ import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
 import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
 import { Input } from '../ui/input';
+import { EditContactDialog } from './edit-contact-dialog';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -63,6 +64,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
+  const [contactToEdit, setContactToEdit] = useState<Contact | null>(null);
   const [isNewSpocOpen, setIsNewSpocOpen] = useState(false);
   const [leadType, setLeadType] = useState<'Dealer' | 'Vendor'>('Dealer');
   const [activeTab, setActiveTab] = useState('details'); 
@@ -166,6 +168,14 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
       <NewLeadDialog type={leadType} open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} anchorId={anchor.id} />
       <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} prefilledAnchorId={anchor.id} />
       <NewContactDialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen} anchor={anchor} />
+      {contactToEdit && (
+        <EditContactDialog 
+            open={!!contactToEdit}
+            onOpenChange={() => setContactToEdit(null)}
+            anchor={anchor}
+            contact={contactToEdit}
+        />
+      )}
       <NewAnchorSPOCDialog open={isNewSpocOpen} onOpenChange={setIsNewSpocOpen} anchor={anchor} />
 
       {emailConfig && (
@@ -240,6 +250,11 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEmailClick(contact)}>
                                             <Mail className="h-4 w-4" />
                                         </Button>
+                                         {canAddContact && (
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setContactToEdit(contact)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                         <Button variant="outline" size="sm" onClick={() => handleLogInteractionClick(contact.name)} className="w-full sm:w-auto">{t('anchors.profile.logInteraction')}</Button>
                                     </div>
                                 </div>

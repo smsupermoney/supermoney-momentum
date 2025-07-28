@@ -38,21 +38,20 @@ import { regions } from '@/lib/validation';
 import { IndianStatesAndCities } from '@/lib/india-states-cities';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
-import { ScrollArea } from '../ui/scroll-area';
 
 const territorySchema = z.object({
-  region: z.string().min(1, 'Region is required.'),
-  state: z.string().min(1, 'State is required.'),
-  city: z.string().min(1, 'City is required.'),
+  region: z.string().optional(),
+  state: z.string().optional(),
+  city: z.string().optional(),
   division: z.string().optional(),
 });
 
 const formSchema = z.object({
   name: z.string().min(2, 'SPOC name is required.'),
-  email: z.string().email('Invalid email address.'),
-  phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }),
+  email: z.string().email('Invalid email address.').optional().or(z.literal('')),
+  phone: z.string().optional(),
   designation: z.string().min(2, 'Designation is required.'),
-  territories: z.array(territorySchema).min(1, 'At least one territory is required.'),
+  territories: z.array(territorySchema),
 });
 
 type NewSPOCFormValues = z.infer<typeof formSchema>;
@@ -87,7 +86,13 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
   const watchedTerritories = form.watch('territories');
 
   const handleClose = () => {
-    form.reset();
+    form.reset({
+        name: '',
+        email: '',
+        phone: '',
+        designation: '',
+        territories: [{ region: '', state: '', city: '', division: '' }],
+    });
     onOpenChange(false);
   };
 
@@ -103,8 +108,8 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
         anchorId: anchor.id,
         spocDetails: {
           name: values.name,
-          email: values.email,
-          phone: values.phone,
+          email: values.email || '',
+          phone: values.phone || '',
           designation: values.designation,
         },
         territories: values.territories,
@@ -154,10 +159,10 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
               )}/>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormField name="email" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="contact@company.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" placeholder="contact@company.com" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField name="phone" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="9876543210" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Phone (Optional)</FormLabel><FormControl><Input placeholder="9876543210" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
               </div>
               
@@ -166,10 +171,8 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
               <div className="space-y-4">
                 {fields.map((field, index) => {
                   const selectedRegion = watchedTerritories?.[index]?.region;
-                  const selectedState = watchedTerritories?.[index]?.state;
                   const statesForRegion = IndianStatesAndCities.find(r => r.region === selectedRegion)?.states || [];
-                  const citiesForState = statesForRegion.find(s => s.name === selectedState)?.cities || [];
-
+                  
                   return (
                     <Card key={field.id} className="p-4 bg-secondary relative">
                         <div className="flex justify-between items-center mb-2">
@@ -198,12 +201,10 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
                                 </FormItem>
                             )}/>
                         </div>
-                         <FormField control={form.control} name={`territories.${index}.city`} render={({ field }) => (
+                        <FormField control={form.control} name={`territories.${index}.city`} render={({ field }) => (
                             <FormItem className="mt-4"><FormLabel>City</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedState}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select city..." /></SelectTrigger></FormControl>
-                                    <SelectContent>{citiesForState.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                                </Select><FormMessage />
+                                <FormControl><Input placeholder="e.g. Pune" {...field} /></FormControl>
+                                <FormMessage />
                             </FormItem>
                         )}/>
                         <FormField control={form.control} name={`territories.${index}.division`} render={({ field }) => (
