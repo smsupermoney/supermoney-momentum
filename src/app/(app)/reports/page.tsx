@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -7,7 +8,7 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter, endOfMonth } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -274,7 +275,8 @@ function SalespersonDashboard() {
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
-            </CardContent>
+            </ChartContainer>
+          </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
@@ -662,5 +664,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-    
