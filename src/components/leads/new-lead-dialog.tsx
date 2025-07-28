@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Dealer, Vendor, LeadType as LeadTypeEnum } from '@/lib/types';
+import type { Dealer, Vendor, LeadType as LeadTypeEnum, UserRole } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
 import { Loader2 } from 'lucide-react';
 import { generateUniqueId } from '@/lib/utils';
@@ -41,6 +41,8 @@ interface NewLeadDialogProps {
   onOpenChange: (open: boolean) => void;
   anchorId?: string;
 }
+
+const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'];
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
   const { addDealer, addVendor, currentUser, anchors } = useApp();
@@ -77,7 +79,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         return;
     }
     try {
-        const isSpecialist = currentUser.role === 'Business Development';
+        const isManagerCreating = managerRoles.includes(currentUser.role);
         const finalAnchorId = anchorId || values.anchorId || null;
         
         if (!finalAnchorId) {
@@ -101,8 +103,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           name: values.name,
           contactNumber: values.contactNumber,
           email: values.email,
-          assignedTo: isSpecialist ? null : currentUser.uid,
-          status: isSpecialist ? 'Unassigned Lead' : (finalAnchorId ? 'New' : 'Unassigned Lead'),
+          assignedTo: isManagerCreating ? null : currentUser.uid,
+          status: isManagerCreating ? 'Unassigned Lead' : 'New',
           anchorId: finalAnchorId,
           createdAt: new Date().toISOString(),
           leadDate: new Date().toISOString(),
