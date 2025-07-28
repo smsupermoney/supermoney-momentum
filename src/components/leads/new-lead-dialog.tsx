@@ -101,8 +101,8 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const commonData = {
           leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
           name: values.name,
-          contactNumber: values.contactNumber,
-          email: values.email,
+          contactNumber: values.contactNumber || null,
+          email: values.email || null,
           assignedTo: isManagerCreating ? null : currentUser.uid,
           status: isManagerCreating ? 'Unassigned Lead' : 'New',
           anchorId: finalAnchorId,
@@ -113,7 +113,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadType: (values.leadType as LeadTypeEnum) || 'Fresh',
           priority: values.priority as 'High' | 'Normal',
           remarks: [],
-        }
+        };
 
         if (type === 'Dealer') {
           addDealer(commonData as Omit<Dealer, 'id'>);

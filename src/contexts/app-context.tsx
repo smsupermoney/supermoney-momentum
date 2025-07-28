@@ -75,6 +75,17 @@ const getAllSubordinates = (managerId: string, users: User[]): User[] => {
     return subordinates;
 };
 
+// Helper to ensure no 'undefined' values are passed to Firestore
+const sanitizeForFirestore = <T extends {}>(obj: T): T => {
+    const sanitizedObj = { ...obj };
+    for (const key in sanitizedObj) {
+        if (sanitizedObj[key] === undefined) {
+            (sanitizedObj as any)[key] = null;
+        }
+    }
+    return sanitizedObj;
+};
+
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { t: translate } = useLanguage();
@@ -401,17 +412,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addActivityLog = async (logData: Omit<ActivityLog, 'id'>) => {
+    const sanitizedLog = sanitizeForFirestore(logData);
     if (firebaseEnabled) {
-      const dataToSave = {
-        ...logData,
-        anchorId: logData.anchorId || null,
-        dealerId: logData.dealerId || null,
-        vendorId: logData.vendorId || null,
-        taskId: logData.taskId || null,
-      };
-      await firestoreService.addActivityLog(dataToSave);
+      await firestoreService.addActivityLog(sanitizedLog);
     }
-    const newLog = { ...logData, id: generateUniqueId('log') };
+    const newLog = { ...sanitizedLog, id: generateUniqueId('log') };
     setActivityLogs(prev => [newLog, ...prev]);
   };
 
@@ -445,7 +450,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    const anchorToSave = { ...anchorData, status: 'Active' as const, spocIds: [] };
+    const anchorToSave = sanitizeForFirestore({ ...anchorData, status: 'Active' as const, spocIds: [] });
     let newAnchor: Anchor;
 
     if (firebaseEnabled) {
@@ -504,18 +509,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldAnchor = anchors.find(a => a.id === anchor.id);
+    const sanitizedAnchor = sanitizeForFirestore(anchor);
     if (firebaseEnabled) {
-      await firestoreService.updateAnchor(anchor);
+      await firestoreService.updateAnchor(sanitizedAnchor);
     }
-    setAnchors(prev => prev.map(a => a.id === anchor.id ? {...anchor, updatedAt: new Date().toISOString()} : a));
+    setAnchors(prev => prev.map(a => a.id === sanitizedAnchor.id ? {...sanitizedAnchor, updatedAt: new Date().toISOString()} : a));
 
-    if (oldAnchor && oldAnchor.status !== anchor.status && currentUser) {
+    if (oldAnchor && oldAnchor.status !== sanitizedAnchor.status && currentUser) {
         addActivityLog({
-            anchorId: anchor.id,
+            anchorId: sanitizedAnchor.id,
             timestamp: new Date().toISOString(),
             type: 'Status Change',
-            title: `Status changed to ${anchor.status}`,
-            outcome: `Anchor status was updated from '${oldAnchor.status}' to '${anchor.status}' by ${currentUser.name}.`,
+            title: `Status changed to ${sanitizedAnchor.status}`,
+            outcome: `Anchor status was updated from '${oldAnchor.status}' to '${sanitizedAnchor.status}' by ${currentUser.name}.`,
             userName: 'System',
             userId: currentUser.uid,
             systemGenerated: true,
@@ -549,10 +555,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    
+    const sanitizedData = sanitizeForFirestore(dealerData);
 
     if(firebaseEnabled) {
-      const docRef = await firestoreService.addDealer(dealerData);
-      const newDealer = { ...dealerData, id: docRef.id };
+      const docRef = await firestoreService.addDealer(sanitizedData);
+      const newDealer = { ...sanitizedData, id: docRef.id };
       setDealers(prev => [newDealer, ...prev]);
       addActivityLog({
         dealerId: newDealer.id,
@@ -566,7 +574,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         systemGenerated: true,
       });
     } else {
-        const newDealer = { ...dealerData, id: generateUniqueId('dealer') };
+        const newDealer = { ...sanitizedData, id: generateUniqueId('dealer') };
         setDealers(prev => [newDealer, ...prev]);
         addActivityLog({
             dealerId: newDealer.id,
@@ -593,7 +601,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldDealer = dealers.find(d => d.id === updatedDealer.id);
-    const dataToSave = { ...updatedDealer };
+    const dataToSave = sanitizeForFirestore(updatedDealer);
 
     if(firebaseEnabled) {
       await firestoreService.updateDealer(dataToSave as Dealer);
@@ -708,9 +716,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
+    
+    const sanitizedData = sanitizeForFirestore(vendorData);
+
     if (firebaseEnabled) {
-      const docRef = await firestoreService.addVendor(vendorData);
-      const newVendor = { ...vendorData, id: docRef.id };
+      const docRef = await firestoreService.addVendor(sanitizedData);
+      const newVendor = { ...sanitizedData, id: docRef.id };
       setVendors(prev => [newVendor, ...prev]);
        addActivityLog({
           vendorId: newVendor.id,
@@ -724,7 +735,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           systemGenerated: true,
       });
     } else {
-        const newVendor = { ...vendorData, id: generateUniqueId('vendor') };
+        const newVendor = { ...sanitizedData, id: generateUniqueId('vendor') };
         setVendors(prev => [newVendor, ...prev]);
          addActivityLog({
           vendorId: newVendor.id,
@@ -751,7 +762,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldVendor = vendors.find(s => s.id === updatedVendor.id);
-    const dataToSave = { ...updatedVendor };
+    const dataToSave = sanitizeForFirestore(updatedVendor);
 
     if(firebaseEnabled) {
       await firestoreService.updateVendor(dataToSave as Vendor);
@@ -851,10 +862,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     if (!currentUser) return;
+    const sanitizedTask = sanitizeForFirestore(taskData);
     if (firebaseEnabled) {
-      await firestoreService.addTask(taskData);
+      await firestoreService.addTask(sanitizedTask);
     }
-    const newTask = { ...taskData, id: generateUniqueId('task') };
+    const newTask = { ...sanitizedTask, id: generateUniqueId('task') };
     setTasks(prev => [newTask, ...prev]);
     addActivityLog({
         taskId: newTask.id,
@@ -882,21 +894,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     const oldTask = tasks.find(t => t.id === updatedTask.id);
+    const sanitizedTask = sanitizeForFirestore(updatedTask);
     if (firebaseEnabled) {
-      await firestoreService.updateTask(updatedTask);
+      await firestoreService.updateTask(sanitizedTask);
     }
-    setTasks(prev => prev.map(t => t.id === updatedTask.id ? {...updatedTask, updatedAt: new Date().toISOString()} : t));
+    setTasks(prev => prev.map(t => t.id === sanitizedTask.id ? {...sanitizedTask, updatedAt: new Date().toISOString()} : t));
 
-    if (currentUser && oldTask && oldTask.status !== updatedTask.status) {
+    if (currentUser && oldTask && oldTask.status !== sanitizedTask.status) {
          addActivityLog({
-            taskId: updatedTask.id,
-            anchorId: updatedTask.associatedWith.anchorId,
-            dealerId: updatedTask.associatedWith.dealerId,
-            vendorId: updatedTask.associatedWith.vendorId,
+            taskId: sanitizedTask.id,
+            anchorId: sanitizedTask.associatedWith.anchorId,
+            dealerId: sanitizedTask.associatedWith.dealerId,
+            vendorId: sanitizedTask.associatedWith.vendorId,
             timestamp: new Date().toISOString(),
             type: 'Status Change',
             title: `Task status changed`,
-            outcome: `Task '${updatedTask.title}' status changed from '${oldTask.status}' to '${updatedTask.status}' by ${currentUser.name}.`,
+            outcome: `Task '${sanitizedTask.title}' status changed from '${oldTask.status}' to '${sanitizedTask.status}' by ${currentUser.name}.`,
             userName: 'System',
             userId: currentUser.uid,
             systemGenerated: true,
@@ -926,14 +939,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    const dataToSave = { ...activityData };
-    // Sanitize data before sending to Firestore
-    Object.keys(dataToSave).forEach(key => {
-        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
-            (dataToSave as any)[key] = null;
-        }
-    });
-
+    const dataToSave = sanitizeForFirestore(activityData);
+    
     if (firebaseEnabled) {
       await firestoreService.addDailyActivity(dataToSave);
     }
@@ -942,10 +949,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateDailyActivity = async (activity: DailyActivity) => {
+      const sanitizedActivity = sanitizeForFirestore(activity);
       if (firebaseEnabled) {
-          await firestoreService.updateDailyActivity(activity);
+          await firestoreService.updateDailyActivity(sanitizedActivity);
       }
-      setDailyActivities(prev => prev.map(a => a.id === activity.id ? activity : a));
+      setDailyActivities(prev => prev.map(a => a.id === sanitizedActivity.id ? sanitizedActivity : a));
   };
   
   const deleteDailyActivity = async (activityId: string) => {
@@ -967,9 +975,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     if (!currentUser) return;
+    const sanitizedUser = sanitizeForFirestore(userData);
      if (firebaseEnabled) {
         try {
-            const newUser = await firestoreService.addUser(userData);
+            const newUser = await firestoreService.addUser(sanitizedUser);
             setUsers(prev => [newUser, ...prev]);
              addActivityLog({
                 timestamp: new Date().toISOString(),
@@ -985,7 +994,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Database Error', description: 'Could not save the new user.' });
         }
     } else { // mock mode
-        const newUser = { id: generateUniqueId('user'), uid: generateUniqueId('user'), ...userData };
+        const newUser = { id: generateUniqueId('user'), uid: generateUniqueId('user'), ...sanitizedUser };
         setUsers(prev => [newUser, ...prev]);
          addActivityLog({
             timestamp: new Date().toISOString(),
@@ -1018,15 +1027,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     if (!currentUser) return;
+    const sanitizedUser = sanitizeForFirestore(updatedUser);
      if (firebaseEnabled) {
-        await firestoreService.updateUser(updatedUser);
+        await firestoreService.updateUser(sanitizedUser);
      }
-     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+     setUsers(prev => prev.map(u => u.id === sanitizedUser.id ? sanitizedUser : u));
      addActivityLog({
         timestamp: new Date().toISOString(),
         type: 'Status Change', // Using status change for generic update
         title: 'User Profile Updated',
-        outcome: `User profile for '${updatedUser.name}' was updated by ${currentUser.name}.`,
+        outcome: `User profile for '${sanitizedUser.name}' was updated by ${currentUser.name}.`,
         userName: 'System',
         userId: currentUser.uid,
         systemGenerated: true,
@@ -1076,11 +1086,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const addLender = async (lenderData: Omit<Lender, 'id'>) => {
+    const sanitizedLender = sanitizeForFirestore(lenderData);
     if (firebaseEnabled) {
-      const newLender = await firestoreService.addLender(lenderData);
+      const newLender = await firestoreService.addLender(sanitizedLender);
       setLenders(prev => [...prev, newLender]);
     } else {
-      const newLender = { ...lenderData, id: generateUniqueId('lender') };
+      const newLender = { ...sanitizedLender, id: generateUniqueId('lender') };
       setLenders(prev => [...prev, newLender]);
     }
     toast({ title: 'Lender Added', description: `${lenderData.name} has been added.` });
@@ -1150,19 +1161,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addAnchorSPOC = async (spocData: Omit<AnchorSPOC, 'id'>) => {
       if (!currentUser) return;
+      const sanitizedSpoc = sanitizeForFirestore(spocData);
       if (firebaseEnabled) {
-          const newSpoc = await firestoreService.addAnchorSPOC(spocData);
+          const newSpoc = await firestoreService.addAnchorSPOC(sanitizedSpoc);
           setAnchorSPOCs(prev => [...prev, newSpoc]);
           // Also update the anchor's spocIds array
-          const anchor = anchors.find(a => a.id === spocData.anchorId);
+          const anchor = anchors.find(a => a.id === sanitizedSpoc.anchorId);
           if (anchor) {
               const updatedAnchor = { ...anchor, spocIds: [...(anchor.spocIds || []), newSpoc.id] };
               updateAnchor(updatedAnchor);
           }
       } else {
-          const newSpoc = { ...spocData, id: generateUniqueId('spoc') };
+          const newSpoc = { ...sanitizedSpoc, id: generateUniqueId('spoc') };
           setAnchorSPOCs(prev => [...prev, newSpoc]);
-          const anchor = anchors.find(a => a.id === spocData.anchorId);
+          const anchor = anchors.find(a => a.id === sanitizedSpoc.anchorId);
            if (anchor) {
               const updatedAnchor = { ...anchor, spocIds: [...(anchor.spocIds || []), newSpoc.id] };
               updateAnchor(updatedAnchor);
@@ -1172,10 +1184,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateAnchorSPOC = async (spocData: AnchorSPOC) => {
       if (!currentUser) return;
+      const sanitizedSpoc = sanitizeForFirestore(spocData);
       if (firebaseEnabled) {
-          await firestoreService.updateAnchorSPOC(spocData);
+          await firestoreService.updateAnchorSPOC(sanitizedSpoc);
       }
-      setAnchorSPOCs(prev => prev.map(s => s.id === spocData.id ? spocData : s));
+      setAnchorSPOCs(prev => prev.map(s => s.id === sanitizedSpoc.id ? sanitizedSpoc : s));
   };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
