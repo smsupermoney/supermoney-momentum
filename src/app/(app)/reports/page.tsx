@@ -24,7 +24,7 @@ import { products } from '@/lib/types';
 
 // Main Page Component
 export default function ReportsPage() {
-  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } = useApp();
+  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } from useApp();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = () => {
@@ -170,12 +170,11 @@ export default function ReportsPage() {
     switch(currentUser.role) {
         case 'Admin':
         case 'Business Development':
-             return <AdminReports />;
         case 'National Sales Manager':
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager':
-             return <ManagerReports />;
-        case 'Area Sales Manager': return <SalesReports />;
+             return <LeadsDashboard />;
+        case 'Area Sales Manager': return <SalespersonDashboard />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
   }
@@ -200,15 +199,14 @@ export default function ReportsPage() {
   );
 }
 
-// Reports for Sales Role
-function SalesReports() {
-  const { currentUser, tasks, anchors, activityLogs, t, dealers, vendors } = useApp();
+// Reports for individual Salesperson
+function SalespersonDashboard() {
+  const { currentUser, tasks, activityLogs, t, dealers, vendors } = useApp();
   const userTasks = tasks.filter(t => t.assignedTo === currentUser?.uid);
   const userDealers = dealers.filter(d => d.assignedTo === currentUser?.uid);
   const userVendors = vendors.filter(v => v.assignedTo === currentUser?.uid);
   const userLogs = activityLogs.filter(l => l.userName === currentUser?.name);
 
-  // Task Summary Calculation
   const today = new Date();
   const overdueTasks = userTasks.filter(t => isBefore(new Date(t.dueDate), today) && t.status !== 'Completed').length;
   const todayTasks = userTasks.filter(t => isToday(new Date(t.dueDate)) && t.status !== 'Completed').length;
@@ -234,9 +232,8 @@ function SalesReports() {
     'Meeting': weeklyLogs.filter(l => l.type.includes('Meeting')).length,
   };
   
-  // Follow-up Ratio (mocked)
   const completedTasks = userTasks.filter(t => t.status === 'Completed').length;
-  const followUpRatio = completedTasks > 0 ? 65 : 0; // Static mock value
+  const followUpRatio = completedTasks > 0 ? 65 : 0; // Mocked
 
   return (
     <div className="grid gap-4">
@@ -271,7 +268,7 @@ function SalesReports() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </CardHeader>
+                </Header>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -285,141 +282,16 @@ function SalesReports() {
   );
 }
 
-// Reports for Managers (ZSM, RSM, NSM)
-function ManagerReports() {
-    const { currentUser, anchors, dealers, vendors, activityLogs, visibleUserIds, visibleUsers, tasks, t } = useApp();
-    const [period, setPeriod] = useState('this_month');
-    
-    const teamLeads = [...dealers, ...vendors].filter(a => visibleUserIds.includes(a.assignedTo || ''));
-    const teamLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
-    const teamTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
-    const teamUsers = visibleUsers.filter(u => u.uid !== currentUser?.uid);
-
-    const getFiscalYearStart = (date: Date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        // Fiscal year starts in April (month index 3)
-        return month >= 3 ? new Date(year, 3, 1) : new Date(year - 1, 3, 1);
-    }
-
-    const { periodLeads, periodLogs, periodLabel } = useMemo(() => {
-        const now = new Date();
-        let interval: Interval;
-        let label = t('reports.month');
-
-        switch (period) {
-            case 'this_quarter':
-                interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
-                label = t('reports.quarter');
-                break;
-            case 'ytd':
-                interval = { start: getFiscalYearStart(now), end: now };
-                label = t('reports.ytd');
-                break;
-            case 'this_month':
-            default:
-                interval = { start: startOfMonth(now), end: endOfMonth(now) };
-                break;
-        }
-        return {
-            periodLeads: teamLeads.filter(a => isWithinInterval(new Date(a.createdAt), interval)),
-            periodLogs: teamLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
-            periodLabel: label
-        };
-    }, [period, teamLeads, teamLogs, t]);
-
-    const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Follow Up'];
-    const pipelineValueData = pipelineStages.map(stage => ({
-        name: stage,
-        value: periodLeads.filter(a => a.status === stage).length
-    }));
-
-    const activityCounts = teamUsers
-        .map(user => ({
-            name: user.name,
-            activities: periodLogs.filter(log => log.userName === user.name).length
-        }))
-        .sort((a, b) => b.activities - a.activities);
-
-    return (
-        <div className="grid gap-4">
-            <div className="grid lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-3 space-y-4">
-                    <Card>
-                        <CardHeader>
-                           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <CardTitle>{t('reports.teamPipeline')}</CardTitle>
-                                    <CardDescription>{t('reports.teamPipelineDescription')}</CardDescription>
-                                </div>
-                                <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-                                    <TabsList className="grid w-full grid-cols-3">
-                                        <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
-                                        <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
-                                        <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                           </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer config={{ value: { label: "Leads" } }} className="h-[300px]">
-                                <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                                    <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" leads" allowDecimals={false}/>
-                                    <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
-                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                        {pipelineValueData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
-                    <OverdueTasksByExecutive tasks={teamTasks} users={teamUsers} />
-                </div>
-                <div className="lg:col-span-2 space-y-4">
-                    <KeyHighlights period={periodLabel} anchors={anchors} activityLogs={periodLogs} users={teamUsers} />
-                    <Card>
-                        <CardHeader><CardTitle>{t('reports.activityLeaderboard', { period: periodLabel })}</CardTitle></CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableBody>
-                                    {activityCounts.map((user, index) => (
-                                        <TableRow key={user.name}>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
-                                                    <div><p className="font-medium">{user.name}</p></div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <span className="text-lg font-bold">{user.activities}</span>
-                                                <span className="text-sm text-muted-foreground"> activities</span>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                    <StatCard title={t('reports.totalTeamLeads')} value={teamLeads.length} description={t('reports.totalTeamLeadsDescription')} icon={Users} />
-                </div>
-            </div>
-        </div>
-    )
-}
-
-
-// Reports for Admin Role
-function AdminReports() {
-    const { anchors, users, dealers, vendors, activityLogs, tasks, t } = useApp();
+// Leads Dashboard for Admins and Managers
+function LeadsDashboard() {
+    const { anchors, users, dealers, vendors, activityLogs, tasks, t, visibleUserIds } = useApp();
     const [period, setPeriod] = useState('this_month');
     const [productFilter, setProductFilter] = useState('all');
 
     const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
-    const allSpokes = useMemo(() => [...dealers, ...vendors], [dealers, vendors]);
+    const allSpokes = useMemo(() => {
+        return [...dealers, ...vendors].filter(spoke => visibleUserIds.includes(spoke.assignedTo || ''));
+    }, [dealers, vendors, visibleUserIds]);
     
     const getFiscalYearStart = (date: Date) => {
         const year = date.getFullYear();
@@ -450,13 +322,15 @@ function AdminReports() {
         if (productFilter !== 'all') {
           filteredSpokes = filteredSpokes.filter(s => s.product === productFilter);
         }
+        
+        const periodActivityLogs = activityLogs.filter(l => visibleUserIds.includes(l.userId));
 
         return {
           periodSpokes: filteredSpokes,
-          periodLogs: activityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
+          periodLogs: periodActivityLogs.filter(l => isWithinInterval(new Date(l.timestamp), interval)),
           periodLabel: label
         };
-    }, [period, productFilter, allSpokes, activityLogs, t]);
+    }, [period, productFilter, allSpokes, activityLogs, t, visibleUserIds]);
     
     const pipelineStages: SpokeStatus[] = ['New', 'Onboarding', 'Partial Docs', 'Active', 'Disbursed'];
     const pipelineValueData = pipelineStages.map(stage => ({
@@ -466,7 +340,7 @@ function AdminReports() {
             .reduce((sum, s) => sum + (s.dealValue || 0), 0) / 100, // in Cr (value is in Lakhs)
     }));
     
-    const activityCounts = salesUsers
+    const activityCounts = salesUsers.filter(u => visibleUserIds.includes(u.uid))
         .map(user => ({
             name: user.name,
             activities: periodLogs.filter(log => log.userName === user.name).length
@@ -479,13 +353,13 @@ function AdminReports() {
     const allOnboardingCount = getCount('Onboarding') + getCount('Partial Docs') + getCount('Active');
     const allActiveCount = getCount('Active');
     
-    const invitedToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
+    const newToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
     const onboardingToActive = allOnboardingCount > 0 ? (allActiveCount / allOnboardingCount) * 100 : 0;
 
     const activeAnchors = anchors.filter(a => a.status === 'Active');
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.status === 'Active');
-    const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / activeSpokes.length) * 100 : 0;
+    const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 
   return (
     <div className="grid gap-4">
@@ -559,7 +433,7 @@ function AdminReports() {
             </Table>
           </CardContent>
         </Card>
-        <OverdueTasksByExecutive tasks={tasks} users={users.filter(u => u.role !== 'Admin')} />
+        <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
         <div className="lg:col-span-1 space-y-4">
              <Card className="lg:col-span-1">
                 <CardHeader>
@@ -567,7 +441,7 @@ function AdminReports() {
                     <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-2">
-                    <ConversionRateItem from="New" to="Onboarding" value={invitedToOnboarding} />
+                    <ConversionRateItem from="New" to="Onboarding" value={newToOnboarding} />
                     <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
                 </CardContent>
             </Card>
