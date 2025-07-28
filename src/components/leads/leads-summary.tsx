@@ -8,11 +8,12 @@ import type { Dealer, Vendor, User, SpokeStatus } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Clock, Handshake, ListChecks, Users } from 'lucide-react';
+import { Clock, Handshake, ListChecks, Users, ChevronDown } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { subHours, isBefore } from 'date-fns';
 import { spokeStatuses } from '@/lib/types';
+import { Separator } from '../ui/separator';
 
 interface LeadsSummaryProps {
   leads: (Dealer | Vendor)[];
@@ -68,68 +69,66 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
 
     return (
         <Card>
-            <CardHeader>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <CardTitle>{type} Leads Summary</CardTitle>
-                        <CardDescription>A quick overview of your assigned leads.</CardDescription>
-                    </div>
-                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpokeStatus | 'all')}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Filter by Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="p-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
+                    {/* Left Side: Title and Stats */}
                     <div className="space-y-4">
-                        <StatCard
-                          title="Total Leads"
-                          value={summaryData.totalLeads}
-                          icon={Handshake}
-                          description={statusFilter !== 'all' ? `in "${statusFilter}" status` : 'across all statuses'}
-                        />
-                         <StatCard
-                          title="Stale Leads"
-                          value={staleHours === '24' ? summaryData.stale24h : summaryData.stale72h}
-                          icon={Clock}
-                          description={`No status change in the last ${staleHours} hours`}
-                        >
-                            <RadioGroup defaultValue="24" onValueChange={(value) => setStaleHours(value as '24' | '72')} className="flex items-center space-x-4 mt-2">
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="24" id="r1" /><Label htmlFor="r1">24h</Label></div>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="72" id="r2" /><Label htmlFor="r2">72h</Label></div>
-                            </RadioGroup>
-                         </StatCard>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                             <div>
+                                <h3 className="text-lg font-semibold">{type} Leads Summary</h3>
+                                <p className="text-sm text-muted-foreground">A quick overview of your assigned leads.</p>
+                            </div>
+                            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as SpokeStatus | 'all')}>
+                                <SelectTrigger className="w-full sm:w-auto min-w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
+                            <div>
+                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Handshake className="h-4 w-4" /> Total Leads</div>
+                                <div className="text-3xl font-bold mt-1">{summaryData.totalLeads}</div>
+                                <p className="text-xs text-muted-foreground">{statusFilter !== 'all' ? `in "${statusFilter}"` : 'across all statuses'}</p>
+                            </div>
+                             <div>
+                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Clock className="h-4 w-4" /> Stale Leads</div>
+                                <div className="text-3xl font-bold mt-1">{staleHours === '24' ? summaryData.stale24h : summaryData.stale72h}</div>
+                                <RadioGroup defaultValue="24" onValueChange={(value) => setStaleHours(value as '24' | '72')} className="flex items-center space-x-3 mt-1">
+                                    <div className="flex items-center space-x-1"><RadioGroupItem value="24" id="r1" /><Label htmlFor="r1" className="text-xs">24h</Label></div>
+                                    <div className="flex items-center space-x-1"><RadioGroupItem value="72" id="r2" /><Label htmlFor="r2" className="text-xs">72h</Label></div>
+                                </RadioGroup>
+                            </div>
+                        </div>
                     </div>
 
+                    {/* Right Side: Team Breakdown */}
                     {isManager && summaryData.byUser && (
-                        <Card className="md:col-span-2">
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4"/> Team Breakdown</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="item-1">
-                                        <AccordionTrigger>View leads by team member</AccordionTrigger>
-                                        <AccordionContent>
-                                            <div className="mt-2 space-y-2 max-h-48 overflow-y-auto pr-2">
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Users className="h-4 w-4" /> Team Breakdown</div>
+                            <div className="rounded-lg border p-2">
+                                <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                                    <AccordionItem value="item-1" className="border-b-0">
+                                        <AccordionTrigger className="p-2 text-sm hover:no-underline rounded-md hover:bg-secondary">
+                                            <span>View leads by team member</span>
+                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                                        </AccordionTrigger>
+                                        <AccordionContent className="pt-2">
+                                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
                                                 {summaryData.byUser.map(userStat => (
                                                     <div key={userStat.name} className="flex justify-between items-center text-sm p-2 rounded-md bg-secondary">
                                                         <span>{userStat.name}</span>
                                                         <span className="font-bold">{userStat.totalLeads} leads</span>
                                                     </div>
                                                 ))}
+                                                {summaryData.byUser.length === 0 && <p className="p-2 text-center text-xs text-muted-foreground">No leads found for team members with this filter.</p>}
                                             </div>
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     )}
                 </div>
             </CardContent>
