@@ -137,7 +137,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
-            const commonData = {
+            const commonData: Omit<Dealer | Vendor, 'id'> & {id?: string} = {
               leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
