@@ -106,10 +106,10 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           lenderId: dealer.lenderId || '',
           remarks: dealer.remarks || [],
           leadType: dealer.leadType || 'Fresh',
-          dealValue: dealer.dealValue,
+          dealValue: dealer.dealValue || undefined,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
           spoc: dealer.spoc || '',
-          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
+          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : null,
           anchorId: dealer.anchorId || '',
           priority: dealer.priority || 'Normal',
         });
@@ -286,7 +286,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                 </FormControl>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
                               </PopoverContent>
                             </Popover>
                             <FormMessage />

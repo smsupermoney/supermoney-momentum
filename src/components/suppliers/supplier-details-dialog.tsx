@@ -106,10 +106,10 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             lenderId: vendor.lenderId || '',
             remarks: vendor.remarks || [],
             leadType: vendor.leadType || 'Fresh',
-            dealValue: vendor.dealValue,
+            dealValue: vendor.dealValue || undefined,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
             spoc: vendor.spoc || '',
-            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
+            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : null,
             anchorId: vendor.anchorId || '',
             priority: vendor.priority || 'Normal',
         });
@@ -287,7 +287,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                                 </FormControl>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
                               </PopoverContent>
                             </Popover>
                             <FormMessage />
