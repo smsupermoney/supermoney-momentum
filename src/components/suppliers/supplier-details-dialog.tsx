@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -152,7 +151,6 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
-    // Sanitize data before submitting
     const cleanedValues = { ...values };
     if (isNaN(cleanedValues.dealValue as number)) {
         cleanedValues.dealValue = undefined;
