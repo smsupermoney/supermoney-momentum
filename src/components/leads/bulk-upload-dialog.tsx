@@ -120,15 +120,6 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const associatedAnchor = anchorName ? anchors.find(a => a.name.toLowerCase() === anchorName.toLowerCase()) : null;
             const finalAnchorId = anchorId || associatedAnchor?.id;
             
-            if (anchorName && !associatedAnchor) {
-              errors.push({ row: rowNumber, messages: [`Anchor named '${anchorName}' not found.`] });
-              continue;
-            }
-            if (!finalAnchorId) {
-                errors.push({ row: rowNumber, messages: ['Anchor Name is required and must be valid.'] });
-                continue;
-            }
-
             const targetUser = assignedToEmail ? users.find(u => u.email.toLowerCase() === assignedToEmail.toLowerCase()) : null;
             const finalAssignedToId = targetUser?.uid || null;
             
@@ -137,13 +128,9 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
-            const commonData: Omit<Dealer | Vendor, 'id'> & {id?: string} = {
-              leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              assignedTo: finalAssignedToId,
-              anchorId: finalAnchorId,
+            const rawData = {
               name: name || '',
+              anchorId: finalAnchorId,
               contactNumber: contactNumber || '',
               email: email || '',
               city: city || '',
@@ -153,14 +140,24 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               leadSource: leadSource || '',
               leadType: (leadType as LeadTypeEnum) || 'Fresh',
               priority: (priority === 'High' ? 'High' : 'Normal'),
-              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
               lenderId: targetLender?.id || null,
               remarks: remarksStr ? [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
               dealValue: dealValueStr ? parseFloat(dealValueStr) : undefined,
               spoc: spoc || '',
-              leadDate: parsedLeadDate?.toISOString() || new Date().toISOString(),
+              leadDate: parsedLeadDate?.toISOString(),
               initialLeadDate: parsedInitialLeadDate?.toISOString() || null,
-              tat: tatStr ? parseInt(tatStr, 10) : undefined
+            };
+
+            const validatedData = NewSpokeSchema.parse(rawData);
+
+            const commonData: Omit<Dealer | Vendor, 'id'> & {id?: string} = {
+              ...validatedData,
+              leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              assignedTo: finalAssignedToId,
+              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
+              tat: tatStr ? parseInt(tatStr, 10) : undefined,
             };
 
             // Final sanitization to remove any lingering 'undefined' values before sending to Firestore
