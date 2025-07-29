@@ -276,7 +276,6 @@ function SalespersonDashboard() {
                     </FunnelChart>
                 </ResponsiveContainer>
             </ChartContainer>
-          </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
@@ -599,7 +598,7 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
         <Card>
             <CardHeader>
                 <CardTitle>{t('reports.aiHighlights')}</CardTitle>
-                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardDescription>
+                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardHeader>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -664,3 +663,5 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+    
