@@ -275,7 +275,8 @@ function SalespersonDashboard() {
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
-            </CardContent>
+            </ChartContainer>
+          </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
@@ -451,8 +452,8 @@ function LeadsDashboard() {
                 <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
-                    <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
-                </CardHeader>
+                    <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardHeader>
+                </CardContent>
                 <CardContent className="space-y-4 pt-2">
                     <ConversionRateItem from="New" to="Onboarding" value={newToOnboarding} />
                     <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
