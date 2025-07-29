@@ -8,12 +8,12 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,15 +46,15 @@ export default function ReportsPage() {
         setIsDownloading(true);
 
         // 1. Prepare data
-        const processedUsers = users.map(u => ({
+        const processedUsers = truncateForExcel(users.map(u => ({
             Name: u.name,
             Email: u.email,
             Role: u.role,
             Region: u.region || 'N/A',
             Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A'
-        }));
+        })));
 
-        const processedAnchors = anchors.map(a => {
+        const processedAnchors = truncateForExcel(anchors.map(a => {
             const primaryContact = a.contacts.find(c => c.isPrimary) || a.contacts[0];
             return {
                 Name: a.name,
@@ -72,7 +72,7 @@ export default function ReportsPage() {
                 'Created By': users.find(u => u.uid === a.createdBy)?.name || 'N/A',
                 'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'),
             }
-        });
+        }));
         
         const getSpokeData = (spoke: Dealer | Vendor) => ({
             Name: spoke.name,
@@ -89,10 +89,10 @@ export default function ReportsPage() {
             'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
         });
         
-        const processedDealers = dealers.map(getSpokeData);
-        const processedVendors = vendors.map(getSpokeData);
+        const processedDealers = truncateForExcel(dealers.map(getSpokeData));
+        const processedVendors = truncateForExcel(vendors.map(getSpokeData));
 
-        const processedTasks = tasks.map(t => {
+        const processedTasks = truncateForExcel(tasks.map(t => {
             let associatedWith = 'N/A';
             if (t.associatedWith.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === t.associatedWith.anchorId)?.name}`;
             else if (t.associatedWith.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === t.associatedWith.dealerId)?.name}`;
@@ -109,9 +109,9 @@ export default function ReportsPage() {
                 Description: t.description,
                 'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'),
             }
-        });
+        }));
         
-        const processedActivityLogs = activityLogs.map(log => {
+        const processedActivityLogs = truncateForExcel(activityLogs.map(log => {
              let associatedWith = 'N/A';
             if (log.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === log.anchorId)?.name}`;
             else if (log.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === log.dealerId)?.name}`;
@@ -126,9 +126,9 @@ export default function ReportsPage() {
                 'Associated With': associatedWith,
                 'Related Task ID': log.taskId || 'N/A'
             }
-        });
+        }));
 
-        const processedDailyActivities = dailyActivities.map(activity => ({
+        const processedDailyActivities = truncateForExcel(dailyActivities.map(activity => ({
             'User': activity.userName,
             'Timestamp': format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'),
             'Type': activity.activityType,
@@ -139,17 +139,17 @@ export default function ReportsPage() {
             'Associated Anchor': activity.anchorName || 'N/A',
             'Associated Dealer': activity.dealerName || 'N/A',
             'Associated Vendor': activity.vendorName || 'N/A',
-        }));
+        })));
 
         // 2. Create workbook and worksheets
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedUsers)), "Users");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedAnchors)), "Anchors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedDealers)), "Dealers");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedVendors)), "Vendors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedTasks)), "Tasks");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedActivityLogs)), "Interaction Logs");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(truncateForExcel(processedDailyActivities)), "Daily Activities");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedUsers), "Users");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedAnchors), "Anchors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDealers), "Dealers");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedVendors), "Vendors");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedTasks), "Tasks");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedActivityLogs), "Interaction Logs");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDailyActivities), "Daily Activities");
 
         // 3. Trigger download
         XLSX.writeFile(wb, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
@@ -298,7 +298,7 @@ function SalespersonDashboard() {
 // Leads Dashboard for Admins and Managers
 function LeadsDashboard() {
     const { anchors, users, dealers, vendors, activityLogs, tasks, t, visibleUserIds } = useApp();
-    const [period, setPeriod] = useState('this_month');
+    const [period, setPeriod] = useState<'this_month' | 'this_quarter' | 'ytd'>('this_month');
     const [productFilter, setProductFilter] = useState('all');
 
     const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
@@ -663,18 +663,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    
