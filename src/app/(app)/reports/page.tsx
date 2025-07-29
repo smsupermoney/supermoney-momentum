@@ -275,8 +275,7 @@ function SalespersonDashboard() {
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
+            </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
@@ -394,7 +393,7 @@ function LeadsDashboard() {
                         {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                    <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                    <Tabs value={period} onValueChange={(v) => setPeriod(v as 'this_month' | 'this_quarter' | 'ytd')} className="w-full sm:w-auto">
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
                             <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
@@ -664,3 +663,18 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+    
+
+    
+
+
+
+
+    
+
+    
+
+    
+
+    
