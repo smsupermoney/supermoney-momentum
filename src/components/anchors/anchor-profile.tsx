@@ -327,7 +327,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                             </div>
                             <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                 <div className="flex flex-wrap gap-1">
-                                    {spoc.territories.map((territory, index) => (
+                                    {Array.isArray(spoc.territories) && spoc.territories.map((territory, index) => (
                                         <Badge key={index} variant="secondary" className="font-normal">
                                             <Globe className="h-3 w-3 mr-1.5"/>
                                             {territory.city || territory.state || territory.region || 'N/A'}
