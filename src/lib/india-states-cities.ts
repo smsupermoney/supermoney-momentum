@@ -34,6 +34,7 @@ export const IndianStatesAndCities = [
       { name: 'Arunachal Pradesh', cities: ['Itanagar'] },
       { name: 'Assam', cities: ['Guwahati', 'Dibrugarh', 'Silchar'] },
       { name: 'Bihar', cities: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'] },
+      { name: 'Chhattisgarh', cities: ['Raipur', 'Bhilai', 'Bilaspur', 'Korba'] },
       { name: 'Jharkhand', cities: ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro'] },
       { name: 'Manipur', cities: ['Imphal'] },
       { name: 'Meghalaya', cities: ['Shillong'] },
@@ -52,12 +53,6 @@ export const IndianStatesAndCities = [
       { name: 'Goa', cities: ['Panaji', 'Vasco da Gama', 'Margao'] },
       { name: 'Gujarat', cities: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar'] },
       { name: 'Maharashtra', cities: ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Aurangabad'] },
-    ]
-  },
-  {
-    region: 'Central',
-    states: [
-      { name: 'Chhattisgarh', cities: ['Raipur', 'Bhilai', 'Bilaspur', 'Korba'] },
       { name: 'Madhya Pradesh', cities: ['Indore', 'Bhopal', 'Jabalpur', 'Gwalior', 'Ujjain'] },
     ]
   },
