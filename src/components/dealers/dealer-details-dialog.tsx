@@ -108,7 +108,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           dealValue: dealer.dealValue === null ? undefined : dealer.dealValue,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
           spoc: dealer.spoc || '',
-          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : null,
+          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
           anchorId: dealer.anchorId || '',
           priority: dealer.priority || 'Normal',
         });
@@ -159,8 +159,6 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     const updatedDealerData: Partial<Dealer> & { id: string } = {
       id: dealer.id,
       ...cleanedValues,
-      leadDate: cleanedValues.leadDate ? cleanedValues.leadDate.toISOString() : new Date().toISOString(),
-      initialLeadDate: cleanedValues.initialLeadDate ? cleanedValues.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
 

@@ -108,7 +108,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             dealValue: vendor.dealValue === null ? undefined : vendor.dealValue,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
             spoc: vendor.spoc || '',
-            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : null,
+            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
             anchorId: vendor.anchorId || '',
             priority: vendor.priority || 'Normal',
         });
@@ -159,8 +159,6 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     const updatedVendorData: Partial<Vendor> & {id: string} = {
       id: vendor.id,
       ...cleanedValues,
-      leadDate: cleanedValues.leadDate ? cleanedValues.leadDate.toISOString() : new Date().toISOString(),
-      initialLeadDate: cleanedValues.initialLeadDate ? cleanedValues.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
     
