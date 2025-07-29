@@ -39,13 +39,13 @@ function QuickNav() {
   if (!currentUser) return null;
 
   const allNavItems = [
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
+    { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
+    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
+    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
+    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
+    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
+    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
     { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
   ];
 
@@ -135,6 +135,7 @@ export default function DashboardPage() {
     const renderDashboard = () => {
         switch (currentUser.role) {
             case 'Area Sales Manager':
+            case 'Internal Sales':
             case 'ETB Executive':
             case 'Telecaller':
                 return <SalesDashboard />;
@@ -154,7 +155,9 @@ export default function DashboardPage() {
 
     const getHeaderDescription = (role: string) => {
       switch (role) {
-          case 'Area Sales Manager': return t('dashboard.salesDescription');
+          case 'Area Sales Manager': 
+          case 'Internal Sales':
+            return t('dashboard.salesDescription');
           case 'Zonal Sales Manager': 
           case 'Regional Sales Manager':
           case 'National Sales Manager':
@@ -173,7 +176,7 @@ export default function DashboardPage() {
                 title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
             >
-              {['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(currentUser.role) && (
+              {['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(currentUser.role) && (
                 <Button variant="outline" onClick={handleSendDigest} disabled={isDigestLoading}>
                   {isDigestLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -182,7 +182,7 @@ export default function VendorsPage() {
               <div className="py-4">
                   <Select value={reassignToUserId} onValueChange={setReassignToUserId}>
                     <SelectTrigger><SelectValue placeholder="Select user to assign to..." /></SelectTrigger>
-                    <SelectContent>{visibleUsers.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
                   </Select>
               </div>
               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleReassignSelected} disabled={!reassignToUserId}>Reassign Leads</AlertDialogAction></AlertDialogFooter>

@@ -40,7 +40,7 @@ export function StaleLeadsCard() {
         }
         lastWorkingDay.setHours(0, 0, 0, 0);
 
-        const areaSalesManagers = users.filter(u => ['Area Sales Manager', 'ETB Executive', 'Telecaller'].includes(u.role) && visibleUserIds.includes(u.uid));
+        const areaSalesManagers = users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role) && visibleUserIds.includes(u.uid));
 
         const allStaleLeads: StaleLead[] = [];
         const allInactiveUsers: InactiveUser[] = [];

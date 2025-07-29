@@ -46,6 +46,7 @@ interface EditUserDialogProps {
 
 const managerRolesHierarchy: Record<string, UserRole[]> = {
     'Area Sales Manager': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
+    'Internal Sales': ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Regional Sales Manager': ['National Sales Manager', 'Admin'],
     'National Sales Manager': ['Admin'],

@@ -4,7 +4,8 @@
 
 
 
-export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller';
+
+export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
 
 export interface User {
   id: string; // Document ID from Firestore

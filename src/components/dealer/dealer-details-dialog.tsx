@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { Vendor, SpokeStatus, LeadType as LeadTypeEnum, Remark } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Dealer, SpokeStatus, LeadType as LeadTypeEnum, Remark, User } from '@/lib/types';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ import {
 import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
+import { Separator } from '../ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,18 +48,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import { Separator } from '../ui/separator';
 
 type FormValues = z.infer<typeof UpdateSpokeSchema>;
 
-interface VendorDetailsDialogProps {
-  vendor: Vendor;
+interface DealerDetailsDialogProps {
+  dealer: Dealer;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetailsDialogProps) {
-  const { updateVendor, currentUser, deleteVendor, lenders, users } = useApp();
+export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetailsDialogProps) {
+  const { updateDealer, currentUser, deleteDealer, lenders, users } = useApp();
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,52 +91,52 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
-    if (open && vendor) {
+    if (open && dealer) {
         form.reset({
-            name: vendor.name || '',
-            contactNumber: vendor.contactNumber || '',
-            email: vendor.email || '',
-            gstin: vendor.gstin || '',
-            city: vendor.city || '',
-            state: vendor.state || '',
-            zone: vendor.zone || '',
-            product: vendor.product || '',
-            leadSource: vendor.leadSource || '',
-            lenderId: vendor.lenderId || '',
-            remarks: vendor.remarks || [],
-            leadType: vendor.leadType || 'Fresh',
-            dealValue: vendor.dealValue === null ? undefined : vendor.dealValue,
-            leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
-            spoc: vendor.spoc || '',
-            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : null,
-            anchorId: vendor.anchorId || '',
-            priority: vendor.priority || 'Normal',
+          name: dealer.name || '',
+          contactNumber: dealer.contactNumber || '',
+          email: dealer.email || '',
+          gstin: dealer.gstin || '',
+          city: dealer.city || '',
+          state: dealer.state || '',
+          zone: dealer.zone || '',
+          product: dealer.product || '',
+          leadSource: dealer.leadSource || '',
+          lenderId: dealer.lenderId || '',
+          remarks: dealer.remarks || [],
+          leadType: dealer.leadType || 'Fresh',
+          dealValue: dealer.dealValue === null ? undefined : dealer.dealValue,
+          leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
+          spoc: dealer.spoc || '',
+          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : null,
+          anchorId: dealer.anchorId || '',
+          priority: dealer.priority || 'Normal',
         });
     }
-  }, [vendor, form, open]);
+  }, [dealer, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateVendor({ id: vendor.id, status: newStatus });
+    updateDealer({ id: dealer.id, status: newStatus });
     toast({
-      title: 'Vendor Status Updated',
-      description: `${vendor.name}'s status is now ${newStatus}.`,
+      title: 'Dealer Status Updated',
+      description: `${dealer.name}'s status is now ${newStatus}.`,
     });
   };
 
   const handleAssignmentChange = (newUserId: string) => {
-    updateVendor({ id: vendor.id, assignedTo: newUserId });
+    updateDealer({ id: dealer.id, assignedTo: newUserId });
     toast({
       title: 'Lead Re-assigned',
-      description: `${vendor.name} has been assigned to a new user.`,
-    })
-  }
+      description: `${dealer.name} has been assigned to a new user.`,
+    });
+  };
 
   const handleDelete = () => {
-    deleteVendor(vendor.id);
+    deleteDealer(dealer.id);
     onOpenChange(false);
   };
 
-   const handleAddRemark = () => {
+  const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
     const remark: Remark = {
         text: newRemark.trim(),
@@ -156,17 +156,17 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         cleanedValues.dealValue = undefined;
     }
 
-    const updatedVendorData: Partial<Vendor> & {id: string} = {
-      id: vendor.id,
+    const updatedDealerData: Partial<Dealer> & { id: string } = {
+      id: dealer.id,
       ...cleanedValues,
       leadDate: cleanedValues.leadDate ? cleanedValues.leadDate.toISOString() : new Date().toISOString(),
       initialLeadDate: cleanedValues.initialLeadDate ? cleanedValues.initialLeadDate.toISOString() : null,
       updatedAt: new Date().toISOString(),
     };
-    
-    updateVendor(updatedVendorData);
+
+    updateDealer(updatedDealerData);
     toast({
-      title: "Vendor Updated",
+      title: "Dealer Updated",
       description: `${cleanedValues.name} has been successfully updated.`
     });
     setIsSubmitting(false);
@@ -188,18 +188,18 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Edit Vendor: {vendor.name}</DialogTitle>
+            <DialogTitle>Edit Dealer: {dealer.name}</DialogTitle>
             <DialogDescription>
-              Update the status and details for this vendor lead.
+              Update the status and details for this dealer lead.
             </DialogDescription>
           </DialogHeader>
-           <div className="flex-1 overflow-y-auto pr-6 pl-1 -mr-6">
+          <div className="flex-1 overflow-y-auto pr-6 pl-1 -mr-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
+                          <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={dealer.status}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
                                   {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -209,7 +209,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       {canReassign && (
                           <div className="space-y-2">
                               <FormLabel>Assigned To</FormLabel>
-                              <Select onValueChange={handleAssignmentChange} defaultValue={vendor.assignedTo || ''}>
+                              <Select onValueChange={handleAssignmentChange} defaultValue={dealer.assignedTo || ''}>
                                   <SelectTrigger><SelectValue placeholder="Assign user..."/></SelectTrigger>
                                   <SelectContent>
                                       {assignableUsers.map(user => (
@@ -221,22 +221,21 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                   </div>
 
                   <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Vendor Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Dealer Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
 
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="contactNumber" render={({ field }) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField control={form.control} name={`contactNumber`} render={({ field }) => (
                         <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                    <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormField control={form.control} name={`email`} render={({ field }) => (
                         <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                   </div>
 
                   <FormField control={form.control} name="spoc" render={({ field }) => (
-                      <FormItem><FormLabel>Vendor SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Dealer SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
-
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
@@ -269,9 +268,9 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     <FormField control={form.control} name="dealValue" render={({ field }) => (
                         <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                </div>
-
-                {watchLeadType === 'Revive' && (
+                  </div>
+                  
+                  {watchLeadType === 'Revive' && (
                       <FormField
                         control={form.control}
                         name="initialLeadDate"
@@ -324,7 +323,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                         </Select><FormMessage />
                       </FormItem>
                   )}/>
-                  <FormField control={form.control} name="priority" render={({ field }) => (
+                   <FormField control={form.control} name="priority" render={({ field }) => (
                       <FormItem><FormLabel>Priority</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
@@ -335,7 +334,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                   )}/>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="lenderId" render={({ field }) => (
                       <FormItem><FormLabel>Lender</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a lender" /></SelectTrigger></FormControl>
@@ -384,15 +383,15 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       </Card>
                 </div>
                   
-                {vendor.leadScore && (
+                {dealer.leadScore && (
                     <Card className="bg-secondary">
                         <CardHeader className="p-4"><CardTitle className="text-base">AI Scoring Analysis</CardTitle></CardHeader>
                         <CardContent className="p-4 pt-0">
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-2xl font-bold text-primary">{vendor.leadScore}</span>
+                                <span className="text-2xl font-bold text-primary">{dealer.leadScore}</span>
                                 <span className="text-sm text-muted-foreground">/ 100</span>
                             </div>
-                            <p className="text-xs text-secondary-foreground italic">"{vendor.leadScoreReason}"</p>
+                            <p className="text-xs text-secondary-foreground italic">"{dealer.leadScoreReason}"</p>
                         </CardContent>
                     </Card>
                 )}
@@ -425,7 +424,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
               <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the lead for {vendor.name}.
+                      This action cannot be undone. This will permanently delete the lead for {dealer.name}.
                   </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

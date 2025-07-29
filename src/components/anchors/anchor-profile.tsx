@@ -78,9 +78,9 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
   const [selectedLead, setSelectedLead] = useState<CombinedLead | null>(null);
 
 
-  const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
+  const isSalesRole = currentUser && ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role);
   const canAddOrEditContact = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development');
-  const canViewCentralSpocs = currentUser && !['Zonal Sales Manager', 'Area Sales Manager'].includes(currentUser.role);
+  const canViewCentralSpocs = currentUser && !['Zonal Sales Manager', 'Area Sales Manager', 'Internal Sales'].includes(currentUser.role);
 
 
   const handleLogActivity = () => {
@@ -438,7 +438,7 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
     
     const canShowAssignedToFilter = currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role);
     const assignableUsers = useMemo(() => {
-      return users.filter(u => u.role === 'Area Sales Manager');
+      return users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales');
     }, [users]);
     
     const filteredLeads = useMemo(() => leads.filter(lead => {

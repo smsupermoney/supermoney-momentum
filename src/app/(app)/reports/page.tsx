@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -62,7 +63,7 @@ export default function ReportsPage() {
                 'Annual Turnover': a.annualTurnover,
                 'Credit Rating': a.creditRating || 'N/A',
                 Address: a.address || 'N/A',
-                'Lead Source': a.leadSource || 'N/A',
+                'Lead Source': 'N/A', // Deprecated field
                 'Lead Score': a.leadScore,
                 'Lead Score Reason': a.leadScoreReason,
                 'Primary Contact Name': primaryContact?.name || 'N/A',
@@ -187,7 +188,9 @@ export default function ReportsPage() {
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager':
              return <LeadsDashboard />;
-        case 'Area Sales Manager': return <SalespersonDashboard />;
+        case 'Area Sales Manager': 
+        case 'Internal Sales':
+             return <SalespersonDashboard />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
   }
@@ -301,7 +304,7 @@ function LeadsDashboard() {
     const [period, setPeriod] = useState<'this_month' | 'this_quarter' | 'ytd'>('this_month');
     const [productFilter, setProductFilter] = useState('all');
 
-    const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
+    const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Zonal Sales Manager');
     const allSpokes = useMemo(() => {
         return [...dealers, ...vendors].filter(spoke => visibleUserIds.includes(spoke.assignedTo || ''));
     }, [dealers, vendors, visibleUserIds]);
