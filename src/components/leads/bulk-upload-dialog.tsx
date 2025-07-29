@@ -128,6 +128,17 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
+            const dealValue = dealValueStr ? parseFloat(dealValueStr) : undefined;
+            if (dealValueStr && isNaN(dealValue)) {
+              throw new z.ZodError([{
+                code: z.ZodIssueCode.invalid_type,
+                expected: "number",
+                received: "nan",
+                path: ["dealValue"],
+                message: "Deal Value must be a valid number.",
+              }]);
+            }
+
             const rawData = {
               name: name || '',
               anchorId: finalAnchorId,
@@ -142,7 +153,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               priority: (priority === 'High' ? 'High' : 'Normal'),
               lenderId: targetLender?.id || null,
               remarks: remarksStr ? [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
-              dealValue: dealValueStr ? parseFloat(dealValueStr) : undefined,
+              dealValue: dealValue,
               spoc: spoc || '',
               leadDate: parsedLeadDate?.toISOString(),
               initialLeadDate: parsedInitialLeadDate?.toISOString() || null,
