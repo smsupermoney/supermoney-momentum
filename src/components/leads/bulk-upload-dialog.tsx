@@ -128,16 +128,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedLeadDate = parseDate(leadDateStr);
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
-            const dealValue = dealValueStr ? parseFloat(dealValueStr) : undefined;
-            if (dealValueStr && isNaN(dealValue)) {
-              throw new z.ZodError([{
-                code: z.ZodIssueCode.invalid_type,
-                expected: "number",
-                received: "nan",
-                path: ["dealValue"],
-                message: "Deal Value must be a valid number.",
-              }]);
-            }
+            const dealValue = (dealValueStr && !isNaN(parseFloat(dealValueStr))) ? parseFloat(dealValueStr) : undefined;
 
             const rawData = {
               name: name || '',
