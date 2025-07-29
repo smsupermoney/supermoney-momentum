@@ -592,7 +592,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const updateDealer = async (updatedDealer: Partial<Dealer> & { id: string }) => {
     try {
-        UpdateSpokeSchema.partial().parse(updatedDealer);
+        // Here we convert date objects to strings before validation
+        const dataToValidate = { ...updatedDealer };
+        if (dataToValidate.leadDate instanceof Date) {
+            dataToValidate.leadDate = dataToValidate.leadDate.toISOString();
+        }
+        if (dataToValidate.initialLeadDate instanceof Date) {
+            dataToValidate.initialLeadDate = dataToValidate.initialLeadDate.toISOString();
+        }
+        UpdateSpokeSchema.partial().parse(dataToValidate);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for dealer update:", e.flatten().fieldErrors);
@@ -753,6 +761,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateVendor = async (updatedVendor: Partial<Vendor> & { id: string }) => {
      try {
+        const dataToValidate = { ...updatedVendor };
+        if (dataToValidate.leadDate instanceof Date) {
+            dataToValidate.leadDate = dataToValidate.leadDate.toISOString();
+        }
+        if (dataToValidate.initialLeadDate instanceof Date) {
+            dataToValidate.initialLeadDate = dataToValidate.initialLeadDate.toISOString();
+        }
         UpdateSpokeSchema.partial().parse(updatedVendor);
     } catch (e) {
         if (e instanceof z.ZodError) {
