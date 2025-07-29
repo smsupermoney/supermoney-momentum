@@ -37,20 +37,29 @@ export default function AnchorProfilePage() {
 
     const spocsForAnchor = anchorSPOCs.filter(spoc => spoc.anchorId === id);
 
-    if (!currentUser.territoryAccess || currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'National Sales Manager' || currentUser.role === 'Regional Sales Manager') {
+    // Roles that see all SPOCs for the anchor
+    const unrestrictedRoles = ['Admin', 'Business Development', 'BIU', 'National Sales Manager', 'Regional Sales Manager'];
+    if (unrestrictedRoles.includes(currentUser.role)) {
       return spocsForAnchor;
     }
     
-    const { states, cities } = currentUser.territoryAccess;
-    if (states.length === 0 && cities.length === 0) {
-      // If user has territoryAccess object but it's empty, they see no territory SPOCs.
+    // ZSMs see SPOCs for their region
+    if (currentUser.role === 'Zonal Sales Manager' && currentUser.region) {
+      const userRegion = currentUser.region;
+      return spocsForAnchor.filter(spoc => 
+        spoc.territories.some(t => t.region === userRegion)
+      );
+    }
+    
+    // User has no specific region/territory access defined, so they see none.
+    if (!currentUser.region) {
       return [];
     }
 
+    // Default for other sales roles (e.g., Area Sales Manager) is their region.
     return spocsForAnchor.filter(spoc => 
-      // Check if ANY of the SPOC's territories match the user's assigned territories
       spoc.territories.some(territory => 
-        (territory.state && states.includes(territory.state)) || (territory.city && cities.includes(territory.city))
+        territory.region === currentUser.region
       )
     );
   }, [currentUser, anchorSPOCs, id]);
