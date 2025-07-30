@@ -22,8 +22,6 @@ interface LeadsSummaryProps {
 
 interface SummaryData {
     totalLeads: number;
-    stale24h: number;
-    stale72h: number;
     byUser?: {
         name: string;
         totalLeads: number;
@@ -33,23 +31,16 @@ interface SummaryData {
 export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
     const { currentUser, visibleUsers } = useApp();
     const [statusFilter, setStatusFilter] = useState<SpokeStatus | 'all'>('all');
-    const [staleHours, setStaleHours] = useState<'24' | '72'>('24');
 
     const isManager = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
 
     const summaryData = useMemo(() => {
-        const now = new Date();
-        const staleTime24 = subHours(now, 24);
-        const staleTime72 = subHours(now, 72);
-
         const filteredLeads = statusFilter === 'all'
             ? leads
             : leads.filter(l => l.status === statusFilter);
 
         const data: SummaryData = {
             totalLeads: filteredLeads.length,
-            stale24h: filteredLeads.filter(l => isBefore(new Date(l.updatedAt || l.createdAt), staleTime24)).length,
-            stale72h: filteredLeads.filter(l => isBefore(new Date(l.updatedAt || l.createdAt), staleTime72)).length,
         };
 
         if (isManager) {
@@ -86,19 +77,11 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
+                        <div className="grid grid-cols-1 gap-4 rounded-lg border p-4">
                             <div>
                                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Handshake className="h-4 w-4" /> Total Leads</div>
                                 <div className="text-3xl font-bold mt-1">{summaryData.totalLeads}</div>
                                 <p className="text-xs text-muted-foreground">{statusFilter !== 'all' ? `in "${statusFilter}"` : 'across all statuses'}</p>
-                            </div>
-                             <div>
-                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Clock className="h-4 w-4" /> Stale Leads</div>
-                                <div className="text-3xl font-bold mt-1">{staleHours === '24' ? summaryData.stale24h : summaryData.stale72h}</div>
-                                <RadioGroup defaultValue="24" onValueChange={(value) => setStaleHours(value as '24' | '72')} className="flex items-center space-x-3 mt-1">
-                                    <div className="flex items-center space-x-1"><RadioGroupItem value="24" id="r1" /><Label htmlFor="r1" className="text-xs">24h</Label></div>
-                                    <div className="flex items-center space-x-1"><RadioGroupItem value="72" id="r2" /><Label htmlFor="r2" className="text-xs">72h</Label></div>
-                                </RadioGroup>
                             </div>
                         </div>
                     </div>
@@ -134,20 +117,4 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
             </CardContent>
         </Card>
     )
-}
-
-function StatCard({ title, value, icon: Icon, description, children }: { title: string; value: string | number; icon: React.ElementType; description?: string, children?: React.ReactNode }) {
-  return (
-    <Card className="bg-secondary">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        {children}
-      </CardContent>
-    </Card>
-  );
 }
