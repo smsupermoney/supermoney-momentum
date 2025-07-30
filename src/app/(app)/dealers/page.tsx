@@ -11,7 +11,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
-import type { Dealer, SpokeStatus } from '@/lib/types';
+import type { Dealer, SpokeStatus, UserRole } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -64,26 +64,24 @@ export default function DealersPage() {
   
   const canShowAssignedToFilter = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role), [currentUser]);
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
+  
+  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
 
-  const visibleDealers = useMemo(() => dealers.filter(d => {
-    if (d.status === 'Active') return false;
-
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development' && currentUser.role !== 'BIU') {
-      const assignedUser = d.assignedTo ? users.find(u => u.uid === d.assignedTo) : null;
-      if (!assignedUser) {
-        if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
-          return false;
-        }
-      } else {
-        const isAssignedToMe = assignedUser.uid === currentUser.uid;
-        const isMyReport = visibleUsers.some(visUser => visUser.uid === assignedUser.uid);
-        if (!isAssignedToMe && !isMyReport) {
-          return false;
-        }
-      }
+  const visibleDealers = useMemo(() => {
+    if (!currentUser) return [];
+    
+    // Managers and Admins see all leads and can filter them.
+    if (managerialRoles.includes(currentUser.role)) {
+      return dealers;
     }
-    return true;
-  }), [dealers, users, currentUser, visibleUsers]);
+
+    // Other roles only see leads within their visibility scope.
+    return dealers.filter(d => {
+      // Standard user can see leads assigned to them or their subordinates.
+      return d.assignedTo && visibleUsers.some(visUser => visUser.uid === d.assignedTo);
+    });
+  }, [dealers, currentUser, visibleUsers]);
+
 
   const filteredDealers = useMemo(() => visibleDealers.filter(d => {
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;

@@ -11,7 +11,7 @@ import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
-import type { Vendor, SpokeStatus } from '@/lib/types';
+import type { Vendor, SpokeStatus, UserRole } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComposeEmailDialog } from '@/components/email/compose-email-dialog';
@@ -65,24 +65,23 @@ export default function VendorsPage() {
   const canShowAssignedToFilter = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role), [currentUser]);
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
 
-  const visibleVendors = useMemo(() => vendors.filter(s => {
-    if (s.status === 'Active') return false;
-    if (currentUser.role !== 'Admin' && currentUser.role !== 'Business Development' && currentUser.role !== 'BIU') {
-      const assignedUser = s.assignedTo ? users.find(u => u.uid === s.assignedTo) : null;
-      if (!assignedUser) {
-        if (!['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
-          return false;
-        }
-      } else {
-        const isAssignedToMe = assignedUser.uid === currentUser.uid;
-        const isMyReport = visibleUsers.some(visUser => visUser.uid === assignedUser.uid);
-        if (!isAssignedToMe && !isMyReport) {
-          return false;
-        }
-      }
+  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+
+  const visibleVendors = useMemo(() => {
+    if (!currentUser) return [];
+
+    // Managers and Admins see all leads and can filter them.
+    if (managerialRoles.includes(currentUser.role)) {
+      return vendors;
     }
-    return true;
-  }), [vendors, users, currentUser, visibleUsers]);
+
+    // Other roles only see leads within their visibility scope.
+    return vendors.filter(v => {
+      // Standard user can see leads assigned to them or their subordinates.
+      return v.assignedTo && visibleUsers.some(visUser => visUser.uid === v.assignedTo);
+    });
+  }, [vendors, currentUser, visibleUsers]);
+
 
   const filteredVendors = useMemo(() => visibleVendors.filter(s => {
     if (searchQuery && !s.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
