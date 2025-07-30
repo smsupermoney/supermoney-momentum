@@ -45,7 +45,7 @@ interface NewLeadDialogProps {
 const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'];
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
-  const { addDealer, addVendor, currentUser, anchors } = useApp();
+  const { addDealer, addVendor, currentUser, anchors, lenders } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -169,7 +169,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         <DialogHeader>
           <DialogTitle>+ New {type} Lead</DialogTitle>
           <DialogDescription>
-            Add a new {type.toLowerCase()} lead. Only Name, Contact Number, and Anchor are required.
+            Add a new {type.toLowerCase()} lead. Name and Anchor are required.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -227,7 +227,29 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   </FormItem>
                 )}
               />
-            
+            <FormField control={form.control} name="gstin" render={({ field }) => (
+                <FormItem><FormLabel>GSTIN (Optional)</FormLabel><FormControl><Input placeholder="Enter GSTIN" {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
+            <FormField
+              control={form.control}
+              name="lenderId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lender (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a lender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {lenders.map(lender => (<SelectItem key={lender.id} value={lender.id}>{lender.name}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="priority"

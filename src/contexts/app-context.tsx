@@ -531,16 +531,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addDealer = async (dealerData: Omit<Dealer, 'id'>) => {
     if (!currentUser) return;
     
-    // Check for duplicates
+    // A lead is a duplicate ONLY IF all of these are the same: name, anchorId, gstin, lenderId.
     const isDuplicate = dealers.some(
-      (dealer) => dealer.name === dealerData.name && dealer.anchorId === dealerData.anchorId
+      (d) =>
+        d.name === dealerData.name &&
+        d.anchorId === dealerData.anchorId &&
+        d.gstin === dealerData.gstin &&
+        d.lenderId === dealerData.lenderId
     );
 
     if (isDuplicate) {
       toast({
         variant: 'destructive',
         title: 'Duplicate Lead',
-        description: `A dealer named "${dealerData.name}" already exists for this anchor.`,
+        description: `A dealer with the same name, anchor, GSTIN, and lender already exists.`,
       });
       return;
     }
@@ -601,53 +605,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     const oldDealer = dealers.find(d => d.id === updatedDealer.id);
     
-    // Convert dates to string right before saving
-    const dataToSave = { ...updatedDealer };
-    if (dataToSave.leadDate instanceof Date) {
-        dataToSave.leadDate = dataToSave.leadDate.toISOString();
-    }
-    if (dataToSave.initialLeadDate instanceof Date) {
-        dataToSave.initialLeadDate = dataToSave.initialLeadDate.toISOString();
-    }
-    
-    const sanitizedData = sanitizeForFirestore(dataToSave);
+    const sanitizedData = sanitizeForFirestore(updatedDealer);
 
     if(firebaseEnabled) {
       await firestoreService.updateDealer(sanitizedData as Dealer);
     }
-    setDealers(prev => prev.map(d => d.id === updatedDealer.id ? {...d, ...sanitizedData, updatedAt: new Date().toISOString()} : d));
+    setDealers(prev => prev.map(d => d.id === sanitizedData.id ? {...d, ...sanitizedData, updatedAt: new Date().toISOString()} : d));
     
     if (currentUser && oldDealer) {
         let logMessage = '';
-        if (oldDealer.status !== updatedDealer.status && updatedDealer.status) {
-            logMessage = `Status changed from '${oldDealer.status}' to '${updatedDealer.status}'.`;
+        if (oldDealer.status !== sanitizedData.status && sanitizedData.status) {
+            logMessage = `Status changed from '${oldDealer.status}' to '${sanitizedData.status}'.`;
         }
-        if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
-             const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
+        if (oldDealer.assignedTo !== sanitizedData.assignedTo && sanitizedData.assignedTo) {
+             const assignedUser = users.find(u => u.uid === sanitizedData.assignedTo);
              logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
         }
 
         if (logMessage) {
             addActivityLog({
-                dealerId: updatedDealer.id,
-                anchorId: updatedDealer.anchorId || oldDealer.anchorId || undefined,
+                dealerId: sanitizedData.id,
+                anchorId: sanitizedData.anchorId || oldDealer.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Dealer Lead Updated`,
-                outcome: `Dealer '${updatedDealer.name || oldDealer.name}' updated by ${currentUser.name}. ${logMessage}`,
+                outcome: `Dealer '${sanitizedData.name || oldDealer.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
             });
         }
 
-        if (oldDealer.assignedTo !== updatedDealer.assignedTo && updatedDealer.assignedTo) {
-             const assignedUser = users.find(u => u.uid === updatedDealer.assignedTo);
+        if (oldDealer.assignedTo !== sanitizedData.assignedTo && sanitizedData.assignedTo) {
+             const assignedUser = users.find(u => u.uid === sanitizedData.assignedTo);
              if (assignedUser) {
                 const notification = {
                     userId: assignedUser.uid,
                     title: 'New Lead Assignment',
-                    description: `${currentUser.name} assigned you a new dealer lead: ${updatedDealer.name || oldDealer.name}.`,
+                    description: `${currentUser.name} assigned you a new dealer lead: ${sanitizedData.name || oldDealer.name}.`,
                     href: '/dealers',
                     timestamp: new Date().toISOString(),
                     icon: 'Users'
@@ -660,7 +655,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                   type: 'NewLeadAssignment',
                   context: {
                     assigneeName: assignedUser.name,
-                    leadName: updatedDealer.name || oldDealer.name,
+                    leadName: sanitizedData.name || oldDealer.name,
                     leadType: 'Dealer',
                     assignerName: currentUser.name,
                   }
@@ -702,16 +697,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const addVendor = async (vendorData: Omit<Vendor, 'id'>) => {
     if (!currentUser) return;
     
-    // Check for duplicates
+    // A lead is a duplicate ONLY IF all of these are the same: name, anchorId, gstin, lenderId.
     const isDuplicate = vendors.some(
-      (vendor) => vendor.name === vendorData.name && vendor.anchorId === vendorData.anchorId
+      (v) =>
+        v.name === vendorData.name &&
+        v.anchorId === vendorData.anchorId &&
+        v.gstin === vendorData.gstin &&
+        v.lenderId === vendorData.lenderId
     );
 
     if (isDuplicate) {
       toast({
         variant: 'destructive',
         title: 'Duplicate Lead',
-        description: `A vendor named "${vendorData.name}" already exists for this anchor.`,
+        description: `A vendor with the same name, anchor, GSTIN, and lender already exists.`,
       });
       return;
     }
@@ -772,53 +771,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
     const oldVendor = vendors.find(s => s.id === updatedVendor.id);
     
-    // Convert dates to string right before saving
-    const dataToSave = { ...updatedVendor };
-    if (dataToSave.leadDate instanceof Date) {
-        dataToSave.leadDate = dataToSave.leadDate.toISOString();
-    }
-    if (dataToSave.initialLeadDate instanceof Date) {
-        dataToSave.initialLeadDate = dataToSave.initialLeadDate.toISOString();
-    }
-    
-    const sanitizedData = sanitizeForFirestore(dataToSave);
+    const sanitizedData = sanitizeForFirestore(updatedVendor);
     
     if(firebaseEnabled) {
       await firestoreService.updateVendor(sanitizedData as Vendor);
     }
-    setVendors(prev => prev.map(s => s.id === updatedVendor.id ? {...s, ...sanitizedData, updatedAt: new Date().toISOString()} : s));
+    setVendors(prev => prev.map(s => s.id === sanitizedData.id ? {...s, ...sanitizedData, updatedAt: new Date().toISOString()} : s));
 
     if (currentUser && oldVendor) {
         let logMessage = '';
-        if (oldVendor.status !== updatedVendor.status && updatedVendor.status) {
-            logMessage = `Status changed from '${oldVendor.status}' to '${updatedVendor.status}'.`;
+        if (oldVendor.status !== sanitizedData.status && sanitizedData.status) {
+            logMessage = `Status changed from '${oldVendor.status}' to '${sanitizedData.status}'.`;
         }
-        if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
-             const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
+        if (oldVendor.assignedTo !== sanitizedData.assignedTo && sanitizedData.assignedTo) {
+             const assignedUser = users.find(u => u.uid === sanitizedData.assignedTo);
              logMessage += ` Re-assigned to ${assignedUser?.name || 'Unassigned'}.`;
         }
 
         if (logMessage) {
             addActivityLog({
-                vendorId: updatedVendor.id,
-                anchorId: updatedVendor.anchorId || oldVendor.anchorId || undefined,
+                vendorId: sanitizedData.id,
+                anchorId: sanitizedData.anchorId || oldVendor.anchorId || undefined,
                 timestamp: new Date().toISOString(),
                 type: 'Status Change',
                 title: `Vendor Lead Updated`,
-                outcome: `Vendor '${updatedVendor.name || oldVendor.name}' updated by ${currentUser.name}. ${logMessage}`,
+                outcome: `Vendor '${sanitizedData.name || oldVendor.name}' updated by ${currentUser.name}. ${logMessage}`,
                 userName: 'System',
                 userId: currentUser.uid,
                 systemGenerated: true,
             });
         }
         
-        if (oldVendor.assignedTo !== updatedVendor.assignedTo && updatedVendor.assignedTo) {
-             const assignedUser = users.find(u => u.uid === updatedVendor.assignedTo);
+        if (oldVendor.assignedTo !== sanitizedData.assignedTo && sanitizedData.assignedTo) {
+             const assignedUser = users.find(u => u.uid === sanitizedData.assignedTo);
              if (assignedUser) {
                 const notification = {
                     userId: assignedUser.uid,
                     title: 'New Lead Assignment',
-                    description: `${currentUser.name} assigned you a new vendor lead: ${updatedVendor.name || oldVendor.name}.`,
+                    description: `${currentUser.name} assigned you a new vendor lead: ${sanitizedData.name || oldVendor.name}.`,
                     href: '/suppliers',
                     timestamp: new Date().toISOString(),
                     icon: 'Users'
@@ -831,7 +821,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                   type: 'NewLeadAssignment',
                   context: {
                     assigneeName: assignedUser.name,
-                    leadName: updatedVendor.name || oldVendor.name,
+                    leadName: sanitizedData.name || oldVendor.name,
                     leadType: 'Vendor',
                     assignerName: currentUser.name,
                   }

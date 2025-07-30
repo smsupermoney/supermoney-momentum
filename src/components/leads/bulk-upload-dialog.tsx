@@ -55,10 +55,10 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
   }
 
   const handleDownloadSample = () => {
-    const headers = "Name,Contact Number,Email,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Priority,Lead Date (DD/MM/YYYY),Status,Assigned To Email,Deal Value (Cr),Lender,Remarks,SPOC,Initial Lead Date (DD/MM/YYYY),TAT";
+    const headers = "Name,Contact Number,Email,City,State,Zone,Anchor Name,Product,Lead Source,Lead Type,Priority,Lead Date (DD/MM/YYYY),Status,Assigned To Email,Deal Value (Cr),Lender,GSTIN,Remarks,SPOC,Initial Lead Date (DD/MM/YYYY),TAT";
     const sampleData = type === 'Dealer' 
-      ? ["Prime Autos,9876543210,contact@primeautos.com,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,High,26/07/2024,New,asm@supermoney.in,0.5,HDFC Bank,Initial discussion positive.,Ramesh Patel,,"]
-      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,Normal,10/05/2024,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,Re-engaged after 2 months.,Sunil Gupta,15/11/2023,120"];
+      ? ["Prime Autos,9876543210,contact@primeautos.com,Mumbai,Maharashtra,West,Reliance Retail,Primary,Connector,Fresh,High,26/07/2024,New,asm@supermoney.in,0.5,HDFC Bank,27AACCA1234A1Z5,Initial discussion positive.,Ramesh Patel,,"]
+      : ["Quality Supplies,8765432109,sales@qualitysupplies.co,Bengaluru,Karnataka,South,Tata Motors,BL,Conference / Event,Revive,Normal,10/05/2024,Partial Docs,zsm@supermoney.in,0.25,ICICI Bank,29AACCQ1234B1Z6,Re-engaged after 2 months.,Sunil Gupta,15/11/2023,120"];
     
     const csvContent = [headers, ...sampleData].join("\n");
     
@@ -113,7 +113,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const [
               name, contactNumber, email, city, state, zone,
               anchorName, product, leadSource, leadType, priority, leadDateStr,
-              statusStr, assignedToEmail, dealValueStr, lenderName, remarksStr,
+              statusStr, assignedToEmail, dealValueStr, lenderName, gstin, remarksStr,
               spoc, initialLeadDateStr, tatStr
             ] = columns;
 
@@ -143,6 +143,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               leadType: (leadType as LeadTypeEnum) || 'Fresh',
               priority: (priority === 'High' ? 'High' : 'Normal'),
               lenderId: targetLender?.id || null,
+              gstin: gstin || '',
               remarks: remarksStr ? [{ text: remarksStr, timestamp: new Date().toISOString(), userName: currentUser.name }] : [],
               dealValue: dealValue,
               spoc: spoc || '',
@@ -182,7 +183,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               errors.push({ row: rowNumber, messages: errorMessages });
             } else {
               console.error(`Unknown error processing row ${rowNumber}:`, row, err);
-              errors.push({ row: rowNumber, messages: ["An unexpected error occurred."] });
+              errors.push({ row: rowNumber, messages: [(err as Error).message || "An unexpected error occurred."] });
             }
           }
         }
