@@ -50,7 +50,7 @@ interface NewLeadDialogProps {
 const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'];
 
 export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDialogProps) {
-  const { addDealer, addVendor, currentUser, anchors, lenders } = useApp();
+  const { addDealer, addVendor, currentUser, anchors, lenders, users, visibleUsers } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,10 +74,15 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       remarks: [],
       dealValue: undefined,
       initialLeadDate: undefined,
+      assignedTo: currentUser?.uid,
     },
   });
 
   const watchLeadType = form.watch("leadType");
+  const isManagerCreating = currentUser && managerRoles.includes(currentUser.role);
+  
+  const assignableUsers = visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role));
+
 
   useEffect(() => {
     if (open) {
@@ -99,9 +104,10 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
             remarks: [],
             dealValue: undefined,
             initialLeadDate: undefined,
+            assignedTo: currentUser?.uid,
         });
     }
-  }, [open, anchorId, form]);
+  }, [open, anchorId, form, currentUser]);
 
   const handleClose = () => {
     form.reset();
@@ -116,7 +122,6 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         return;
     }
     try {
-        const isManagerCreating = managerRoles.includes(currentUser.role);
         const finalAnchorId = anchorId || values.anchorId || null;
         
         if (!finalAnchorId) {
@@ -135,11 +140,13 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
 
         const scoreResult = await spokeScoring(scoringInput);
         
+        const finalAssignedToId = isManagerCreating ? (values.assignedTo || null) : currentUser.uid;
+
         const commonData = {
           ...values,
           leadId: generateUniqueId(type === 'Dealer' ? 'dlr' : 'vnd'),
-          assignedTo: isManagerCreating ? null : currentUser.uid,
-          status: isManagerCreating ? 'Unassigned Lead' : 'New',
+          assignedTo: finalAssignedToId,
+          status: finalAssignedToId ? 'New' : 'Unassigned Lead',
           anchorId: finalAnchorId,
           createdAt: new Date().toISOString(),
           leadDate: new Date().toISOString(),
@@ -345,7 +352,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                                 variant={'outline'}
                                 className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                               >
-                                {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                {field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick initial date</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
@@ -385,27 +392,42 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Set lead priority" />
-                          </SelectTrigger>
-                        </FormControl>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                    <FormItem><FormLabel>Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Set lead priority" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="Normal">Normal</SelectItem>
-                          <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Normal">Normal</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
                         </SelectContent>
-                      </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 {isManagerCreating && (
+                    <FormField
+                    control={form.control}
+                    name="assignedTo"
+                    render={({ field }) => (
+                        <FormItem><FormLabel>Assign To (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {assignableUsers.map(user => (
+                                    <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                )}
+             </div>
             
             <DialogFooter className="pt-4">
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>

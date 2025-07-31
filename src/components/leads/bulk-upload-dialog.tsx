@@ -129,6 +129,8 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
             const parsedInitialLeadDate = parseDate(initialLeadDateStr);
 
             const dealValue = (dealValueStr && !isNaN(parseFloat(dealValueStr))) ? parseFloat(dealValueStr) : undefined;
+            
+            const status = (statusStr as SpokeStatus) || (finalAssignedToId ? 'New' : 'Unassigned Lead');
 
             const rawData = {
               name: name || '',
@@ -159,7 +161,7 @@ export function BulkUploadDialog({ type, open, onOpenChange, anchorId }: BulkUpl
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               assignedTo: finalAssignedToId,
-              status: finalAssignedToId ? (statusStr as SpokeStatus || 'New') : ('Unassigned Lead' as SpokeStatus),
+              status: status,
               tat: tatStr ? parseInt(tatStr, 10) : undefined,
             };
 

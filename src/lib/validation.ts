@@ -60,6 +60,7 @@ export const NewSpokeSchema = z.object({
   initialLeadDate: z.string().nullable().optional(),
   tat: z.number().int().optional(),
   priority: z.enum(['High', 'Normal']).optional(),
+  assignedTo: z.string().optional().nullable(),
 });
 
 
