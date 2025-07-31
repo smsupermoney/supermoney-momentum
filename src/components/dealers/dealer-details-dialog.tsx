@@ -281,7 +281,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                     variant={'outline'}
                                     className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                   >
-                                    {field.value && field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick initial date</span>}
+                                    {field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick initial date</span>}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>
