@@ -30,6 +30,10 @@ export function SalesPipelineCard() {
         if (currentUser && (currentUser.role === 'Area Sales Manager' || currentUser.role === 'Internal Sales')) {
             return currentUser.uid;
         }
+        const amitBisht = salesTeam.find(user => user.name === 'Amit Bisht');
+        if (amitBisht) {
+            return amitBisht.uid;
+        }
         return salesTeam.length > 0 ? salesTeam[0].uid : '';
     });
     
