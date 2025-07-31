@@ -303,7 +303,18 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   control={form.control}
                   name="dealValue"
                   render={({ field }) => (
-                      <FormItem><FormLabel>Deal Value (INR Cr)</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} /></FormControl><FormMessage /></FormItem>
+                      <FormItem>
+                        <FormLabel>Deal Value (INR Cr)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            value={field.value ?? ''} // Ensure value is never null/undefined for the input
+                            onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                   )}
               />
             </div>
@@ -410,4 +421,3 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     </Dialog>
   );
 }
-
