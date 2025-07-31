@@ -261,13 +261,14 @@ function SalespersonDashboard() {
                         </Funnel>
                     </FunnelChart>
                 </ResponsiveContainer>
-            </CardContent>
+            </ChartContainer>
+          </CardContent>
         </Card>
         <div className="md:col-span-2 space-y-4">
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </Header>
+                </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -636,7 +637,7 @@ function ActivityStat({ icon: Icon, label, value }: { icon: React.ElementType, l
   )
 }
 
-function ConversionRateItem({from, to, value}: {from: string, to: string, value: number}) {
+function ConversionRateItem({from, to, value}: {from, to: string, value: number}) {
     return (
         <div>
             <div className="flex justify-between items-center text-sm font-medium">
@@ -649,18 +650,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-    
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    
