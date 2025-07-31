@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import type { SpokeStatus } from '@/lib/types';
 import { ChartContainer, ChartTooltipContent } from '../ui/chart';
 
@@ -89,8 +89,9 @@ export function SalesPipelineCard() {
                         <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 30 }}>
                              <XAxis type="number" hide />
                              <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={10} width={100} />
-                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                             <Bar dataKey="value" radius={5}>
+                             <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent hideIndicator />} />
+                             <Bar dataKey="value" radius={5} barSize={25}>
+                                <LabelList dataKey="value" position="right" offset={8} className="fill-foreground" fontSize={12} />
                                 {chartData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.fill} />
                                 ))}
@@ -106,4 +107,3 @@ export function SalesPipelineCard() {
         </Card>
     );
 }
-
