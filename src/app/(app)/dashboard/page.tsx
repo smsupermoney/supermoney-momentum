@@ -31,6 +31,7 @@ import { generateDailyDigest } from '@/ai/flows/generate-daily-digest-flow';
 import { isPast, isToday } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
 
 
 function QuickNav() {
@@ -197,6 +198,7 @@ export default function DashboardPage() {
 function SalesDashboard() {
     return (
         <div className="grid gap-4">
+            <div className="mb-6"><SalesPipelineCard /></div>
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -210,6 +212,7 @@ function SalesDashboard() {
 function ManagerDashboard() {
     return (
         <div className="grid gap-4">
+            <div className="mb-6"><SalesPipelineCard /></div>
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
@@ -226,6 +229,7 @@ function ManagerDashboard() {
 function AdminDashboard() {
     return (
         <div className="grid gap-4">
+            <div className="mb-6"><SalesPipelineCard /></div>
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
