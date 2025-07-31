@@ -159,7 +159,6 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     const updatedVendorData: Partial<Vendor> & {id: string} = {
       id: vendor.id,
       ...cleanedValues,
-      updatedAt: new Date().toISOString(),
     };
     
     updateVendor(updatedVendorData);
@@ -177,7 +176,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
   const assignableUsers = useMemo(() => {
     if (!canReassign) return [];
-    return users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales');
+    return users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role));
   }, [canReassign, users]);
 
 

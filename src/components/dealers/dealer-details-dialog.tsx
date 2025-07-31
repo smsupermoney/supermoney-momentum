@@ -159,7 +159,6 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     const updatedDealerData: Partial<Dealer> & { id: string } = {
       id: dealer.id,
       ...cleanedValues,
-      updatedAt: new Date().toISOString(),
     };
 
     updateDealer(updatedDealerData);
@@ -177,7 +176,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const assignableUsers = useMemo(() => {
     if (!canReassign) return [];
-    return users.filter(u => u.role === 'Area Sales Manager');
+    return users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role));
   }, [canReassign, users]);
 
 
