@@ -21,10 +21,10 @@ export interface User {
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';
 
 export const spokeStatuses = [
-    'New', 'Partial Docs', 'Follow Up', 'Already Onboarded', 'Disbursed', 
-    'Not reachable', 'Active', 'Unassigned Lead', 'Rejected', 'Not Interested', 
+    'New', 'Partial Docs', 'Follow Up', 'Disbursed',
+    'Active', 'Unassigned Lead', 'Rejected', 'Not Interested', 
     'Onboarding', 'Approved PF Collected', 'Awaiting Sanction', 'Closed', 
-    'Limit Live', 'Login Pending', 'On Hold', 'Queries Raised', 'Relook'
+    'On Hold', 'Queries Raised', 'Relook'
 ] as const;
 export type SpokeStatus = (typeof spokeStatuses)[number];
 

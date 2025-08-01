@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -69,7 +70,7 @@ export function SalesPipelineCard() {
         
         const leadsReceived = leadsInPeriod.length;
 
-        const statusOrder: SpokeStatus[] = ['New', 'Follow Up', 'Partial Docs', 'Onboarding', 'Awaiting Sanction', 'Approved PF Collected', 'Limit Live', 'Disbursed', 'Rejected', 'Not Interested', 'Closed'];
+        const statusOrder: SpokeStatus[] = ['New', 'Follow Up', 'Partial Docs', 'Onboarding', 'Awaiting Sanction', 'Approved PF Collected', 'Disbursed', 'Rejected', 'Not Interested', 'Closed'];
 
         const statusCounts = statusOrder.reduce((acc, status) => {
             const count = leadsInPeriod.filter(l => l.status === status).length;
@@ -153,4 +154,3 @@ export function SalesPipelineCard() {
         </Card>
     );
 }
-

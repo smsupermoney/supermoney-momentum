@@ -137,9 +137,12 @@ export default function VendorsPage() {
 
   const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
-        case 'Active': case 'Already Onboarded': case 'Disbursed': case 'Approved PF Collected': case 'Limit Live': return 'default';
-        case 'Rejected': case 'Not Interested': case 'Closed': return 'destructive';
-        default: return 'secondary';
+        case 'Active': case 'Disbursed': case 'Approved PF Collected':
+            return 'default';
+        case 'Rejected': case 'Not Interested': case 'Closed':
+            return 'destructive';
+        default:
+            return 'secondary';
     }
   };
 
@@ -235,7 +238,7 @@ export default function VendorsPage() {
                   <div className="flex items-center gap-2">{vendor.priority === 'High' && <Flame className="h-4 w-4 text-destructive" />}<span>{vendor.name}</span></div>
                   {vendor.nextBestAction && <Badge variant="secondary" className="mt-1.5 justify-start py-1 px-2 text-left h-auto font-normal"><Sparkles className="mr-1.5 h-3 w-3 text-primary shrink-0" /><span className="text-xs">{vendor.nextBestAction.recommendedAction}</span></Badge>}
                 </TableCell>
-                <TableCell onClick={() => setSelectedVendor(vendor)}>{vendor.contactNumber || 'N/A'}</TableCell>
+                <TableCell onClick={() => setSelectedVendor(vendor)}>{(vendor.contactNumbers && vendor.contactNumbers[0]?.value) || 'N/A'}</TableCell>
                 <TableCell onClick={() => setSelectedVendor(vendor)}>{vendor.dealValue ? vendor.dealValue.toFixed(2) : 'N/A'}</TableCell>
                 <TableCell onClick={() => setSelectedVendor(vendor)}>{vendor.state || 'N/A'}</TableCell>
                 <TableCell onClick={() => setSelectedVendor(vendor)}>{vendor.leadType || 'Fresh'}</TableCell>
@@ -260,7 +263,7 @@ export default function VendorsPage() {
                     <CardContent className="space-y-2">
                       {vendor.nextBestAction && <div className="mb-2"><Badge variant="secondary" className="w-full justify-start py-1.5 px-2 text-left h-auto"><Sparkles className="mr-2 h-4 w-4 text-primary shrink-0" /><div className="flex flex-col"><span className="font-semibold text-xs text-primary">{t('common.nextBestAction')}</span><span className="text-sm">{vendor.nextBestAction.recommendedAction}</span></div></Badge></div>}
                       <div className="flex items-center gap-2"><Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge><Badge variant="outline">{vendor.leadType || 'Fresh'}</Badge></div>
-                        <p className="text-sm text-muted-foreground pt-2">{vendor.contactNumber || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground pt-2">{(vendor.contactNumbers && vendor.contactNumbers[0]?.value) || 'N/A'}</p>
                         <p className="text-sm text-muted-foreground">Deal Value: {vendor.dealValue ? `${vendor.dealValue.toFixed(2)} Cr` : 'N/A'}</p>
                         <p className="text-sm text-muted-foreground">{getAssignedToName(vendor.assignedTo)}</p>
                         <p className="text-xs text-muted-foreground">TAT: {getTatDays(vendor.createdAt, vendor.tat)}</p>

@@ -405,7 +405,7 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
 
     const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
         switch (status) {
-            case 'Active': case 'Already Onboarded': case 'Disbursed': case 'Approved PF Collected': case 'Limit Live':
+            case 'Active': case 'Disbursed': case 'Approved PF Collected':
                 return 'default';
             case 'Rejected': case 'Not Interested': case 'Closed':
                 return 'destructive';

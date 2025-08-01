@@ -64,7 +64,6 @@ export default function ReportsPage() {
                 'Annual Turnover': a.annualTurnover,
                 'Credit Rating': a.creditRating || 'N/A',
                 Address: a.address || 'N/A',
-                'Lead Source': 'N/A', // Deprecated field
                 'Lead Score': a.leadScore,
                 'Lead Score Reason': a.leadScoreReason,
                 'Primary Contact Name': primaryContact?.name || 'N/A',
@@ -77,7 +76,7 @@ export default function ReportsPage() {
         
         const getSpokeData = (spoke: Dealer | Vendor) => ({
             Name: spoke.name,
-            'Contact Number': spoke.contactNumber,
+            'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '),
             Email: spoke.email || 'N/A',
             'Onboarding Status': spoke.status,
             'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
