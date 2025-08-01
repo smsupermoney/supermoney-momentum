@@ -94,6 +94,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   });
 
   const watchLeadType = form.watch("leadType");
+  const canEditAsApprover = currentUser && ['Business Development', 'BIU'].includes(currentUser.role);
 
   useEffect(() => {
     if (open && vendor) {
@@ -121,11 +122,21 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   }, [vendor, form, open]);
 
   const handleStatusChange = (newStatus: SpokeStatus) => {
-    updateVendor({ id: vendor.id, status: newStatus });
-    toast({
-      title: 'Vendor Status Updated',
-      description: `${vendor.name}'s status is now ${newStatus}.`,
-    });
+    let finalStatus = newStatus;
+    // If a non-approver tries to set to "Partial Docs", set to "Awaiting Docs Approval" instead
+    if (newStatus === 'Partial Docs' && !canEditAsApprover) {
+        finalStatus = 'Awaiting Docs Approval';
+        toast({
+            title: 'Status Pending Approval',
+            description: `${vendor.name}'s status has been set to 'Awaiting Docs Approval' for review.`,
+        });
+    } else {
+        toast({
+            title: 'Vendor Status Updated',
+            description: `${vendor.name}'s status is now ${newStatus}.`,
+        });
+    }
+    updateVendor({ id: vendor.id, status: finalStatus });
   };
 
   const handleAssignmentChange = (newUserId: string) => {
@@ -303,13 +314,13 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                                     variant={'outline'}
                                     className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                   >
-                                    {field.value instanceof Date ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                    {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                                <Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={field.onChange} initialFocus />
                               </PopoverContent>
                             </Popover>
                             <FormMessage />
