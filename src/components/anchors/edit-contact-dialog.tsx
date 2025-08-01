@@ -140,3 +140,4 @@ export function EditContactDialog({ open, onOpenChange, anchor, contact }: EditC
     </Dialog>
   );
 }
+

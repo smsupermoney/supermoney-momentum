@@ -38,10 +38,14 @@ export const RemarkSchema = z.object({
   userName: z.string(),
 });
 
+const ContactNumberSchema = z.object({
+  value: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).or(z.literal(''))
+});
+
 export const NewSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
-  contactNumber: z.string().optional().or(z.literal('')),
+  contactNumbers: z.array(ContactNumberSchema).optional(),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
   
   // Optional fields from now on

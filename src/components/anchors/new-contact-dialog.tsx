@@ -128,3 +128,4 @@ export function NewContactDialog({ open, onOpenChange, anchor }: NewContactDialo
     </Dialog>
   );
 }
+

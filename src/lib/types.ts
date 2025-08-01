@@ -1,11 +1,5 @@
 
 
-
-
-
-
-
-
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
 export type UserStatus = 'Active' | 'Ex-User';
 
@@ -54,9 +48,9 @@ export interface Contact {
 }
 
 export interface Territory {
-  region: string;
-  state: string;
-  city: string;
+  region?: string;
+  state?: string;
+  city?: string;
   division?: string;
 }
 export interface AnchorSPOC {
@@ -92,7 +86,7 @@ export interface BaseLead {
   id: string;
   leadId?: string;
   name: string;
-  contactNumber?: string;
+  contactNumbers?: { value: string }[];
   email?: string;
   gstin?: string;
   city?: string;

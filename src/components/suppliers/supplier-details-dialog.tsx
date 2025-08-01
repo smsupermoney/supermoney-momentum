@@ -25,10 +25,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Trash2, Loader2, Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { UpdateSpokeSchema } from '@/lib/validation';
@@ -68,7 +68,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     resolver: zodResolver(UpdateSpokeSchema),
     defaultValues: {
       name: '',
-      contactNumber: '',
+      contactNumbers: [{value: ''}],
       email: '',
       gstin: '',
       city: '',
@@ -88,13 +88,18 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "contactNumbers",
+  });
+
   const watchLeadType = form.watch("leadType");
 
   useEffect(() => {
     if (open && vendor) {
         form.reset({
             name: vendor.name || '',
-            contactNumber: vendor.contactNumber || '',
+            contactNumbers: (vendor.contactNumbers && vendor.contactNumbers.length > 0) ? vendor.contactNumbers : [{value: ''}],
             email: vendor.email || '',
             gstin: vendor.gstin || '',
             city: vendor.city || '',
@@ -221,14 +226,30 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                     <FormItem><FormLabel>Vendor Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
 
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="contactNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                  <div className="space-y-2">
+                    <FormLabel>Contact Numbers</FormLabel>
+                    {fields.map((field, index) => (
+                      <FormField
+                        key={field.id}
+                        control={form.control}
+                        name={`contactNumbers.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-2">
+                              <FormControl><Input {...field} placeholder="Enter 10-digit phone number" /></FormControl>
+                              {fields.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Phone Number</Button>
                   </div>
+
+                  <FormField control={form.control} name="email" render={({ field }) => (
+                      <FormItem><FormLabel>Contact Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )}/>
 
                   <FormField control={form.control} name="spoc" render={({ field }) => (
                       <FormItem><FormLabel>Vendor SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
@@ -250,7 +271,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                                   disabled={!canEditLeadDate}
                                   className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                 >
-                                  {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                                  {field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick a date</span>}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -282,7 +303,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                                     variant={'outline'}
                                     className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                   >
-                                    {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                    {field.value instanceof Date ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>

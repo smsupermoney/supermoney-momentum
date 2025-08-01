@@ -23,7 +23,7 @@ export function SalesPipelineCard() {
     const { users, dealers, vendors, currentUser } = useApp();
     
     const salesTeam = useMemo(() => {
-        return users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales');
+        return users.filter(u => (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') && u.status !== 'Ex-User');
     }, [users]);
     
     const [selectedUserId, setSelectedUserId] = useState<string>(() => {
@@ -153,3 +153,4 @@ export function SalesPipelineCard() {
         </Card>
     );
 }
+
