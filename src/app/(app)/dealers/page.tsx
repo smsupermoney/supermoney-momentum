@@ -35,6 +35,8 @@ import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 import { LeadsSummary } from '@/components/leads/leads-summary';
 import { Separator } from '@/components/ui/separator';
+import { MultiSelect } from '@/components/ui/multi-select';
+
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads, lenders } = useApp();
@@ -52,7 +54,7 @@ export default function DealersPage() {
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [leadTypeFilter, setLeadTypeFilter] = useState('all');
   const [anchorFilter, setAnchorFilter] = useState('all');
   const [assignedToFilter, setAssignedToFilter] = useState('all');
@@ -90,7 +92,7 @@ export default function DealersPage() {
 
   const filteredDealers = useMemo(() => visibleDealers.filter(d => {
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+    if (statusFilter.length > 0 && !statusFilter.includes(d.status)) return false;
     if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
     if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
@@ -138,9 +140,9 @@ export default function DealersPage() {
   
   const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
-        case 'Active': case 'Disbursed': case 'Approved PF Collected':
+        case 'Active': case 'Disbursed': case 'Approved': case 'Limit Live':
             return 'default';
-        case 'Rejected': case 'Not Interested': case 'Closed':
+        case 'Rejected': case 'Not Interested': case 'Run-off':
             return 'destructive';
         default:
             return 'secondary';
@@ -149,7 +151,7 @@ export default function DealersPage() {
 
   const handleStartOnboarding = (e: React.MouseEvent, dealer: Dealer) => {
     e.stopPropagation();
-    updateDealer({ ...dealer, status: 'Onboarding' });
+    updateDealer({ ...dealer, status: 'Login done' });
     toast({ title: 'Onboarding Started', description: `${dealer.name} has been moved to the onboarding flow.` });
   };
 
@@ -164,6 +166,8 @@ export default function DealersPage() {
   const activeUsers = useMemo(() => {
       return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role))
   }, [visibleUsers]);
+  
+  const statusOptions = spokeStatuses.map(s => ({ value: s, label: s }));
 
   return (
     <>
@@ -179,7 +183,7 @@ export default function DealersPage() {
       <NewLeadDialog type="Dealer" open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen} />
       <BulkUploadDialog type="Dealer" open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen} />
       {selectedDealer && <DealerDetailsDialog dealer={selectedDealer} open={!!selectedDealer} onOpenChange={(open) => !open && setSelectedDealer(null)} />}
-      {emailConfig && <ComposeEmailDialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen} recipientEmail={emailConfig.email} entity={emailConfig.entity} />}
+      {emailConfig && <ComposeEmailDialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen} recipientEmail={emailConfig.recipientEmail} entity={emailConfig.entity} />}
       
       <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
           <AlertDialogContent>
@@ -208,7 +212,13 @@ export default function DealersPage() {
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
-                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Status</SelectItem>{spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+                 <MultiSelect
+                    options={statusOptions}
+                    selected={statusFilter}
+                    onChange={setStatusFilter}
+                    className="w-full sm:w-auto sm:min-w-[150px]"
+                    placeholder="Status"
+                 />
                  <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lead Types" /></SelectTrigger><SelectContent><SelectItem value="all">Lead Types</SelectItem>{leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}</SelectContent></Select>
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>

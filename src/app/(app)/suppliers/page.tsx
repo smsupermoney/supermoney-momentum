@@ -34,6 +34,7 @@ import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 import { LeadsSummary } from '@/components/leads/leads-summary';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor, reassignSelectedLeads, lenders } = useApp();
@@ -51,7 +52,7 @@ export default function VendorsPage() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [leadTypeFilter, setLeadTypeFilter] = useState('all');
   const [anchorFilter, setAnchorFilter] = useState('all');
   const [assignedToFilter, setAssignedToFilter] = useState('all');
@@ -89,7 +90,7 @@ export default function VendorsPage() {
 
   const filteredVendors = useMemo(() => visibleVendors.filter(s => {
     if (searchQuery && !s.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (statusFilter !== 'all' && s.status !== statusFilter) return false;
+    if (statusFilter.length > 0 && !statusFilter.includes(s.status)) return false;
     if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
     if (assignedToFilter !== 'all' && s.assignedTo !== assignedToFilter) return false;
@@ -137,9 +138,9 @@ export default function VendorsPage() {
 
   const getStatusVariant = (status: SpokeStatus): "default" | "secondary" | "outline" | "destructive" => {
     switch (status) {
-        case 'Active': case 'Disbursed': case 'Approved PF Collected':
+        case 'Active': case 'Disbursed': case 'Approved': case 'Limit Live':
             return 'default';
-        case 'Rejected': case 'Not Interested': case 'Closed':
+        case 'Rejected': case 'Not Interested': case 'Run-off':
             return 'destructive';
         default:
             return 'secondary';
@@ -148,7 +149,7 @@ export default function VendorsPage() {
 
   const handleStartOnboarding = (e: React.MouseEvent, vendor: Vendor) => {
     e.stopPropagation();
-    updateVendor({ ...vendor, status: 'Onboarding' });
+    updateVendor({ ...vendor, status: 'Login done' });
     toast({ title: 'Onboarding Started', description: `${vendor.name} has been moved to the onboarding flow.` });
   };
 
@@ -163,6 +164,8 @@ export default function VendorsPage() {
   const activeUsers = useMemo(() => {
     return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role))
   }, [visibleUsers]);
+  
+  const statusOptions = spokeStatuses.map(s => ({ value: s, label: s }));
 
   return (
     <>
@@ -204,7 +207,13 @@ export default function VendorsPage() {
         <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search by vendor name..." className="w-full pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
-                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">Status</SelectItem>{spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+                 <MultiSelect
+                    options={statusOptions}
+                    selected={statusFilter}
+                    onChange={setStatusFilter}
+                    className="w-full sm:w-auto sm:min-w-[150px]"
+                    placeholder="Status"
+                 />
                  <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lead Types" /></SelectTrigger><SelectContent><SelectItem value="all">Lead Types</SelectItem>{leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}</SelectContent></Select>
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
