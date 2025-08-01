@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useApp } from "@/contexts/app-context";
@@ -8,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/contexts/language-context";
 import { useMemo } from "react";
+import { getAllSubordinates } from "@/contexts/app-context";
 
 export default function AnchorProfilePage() {
   const { anchors, dealers, vendors, activityLogs, tasks, users, isLoading, anchorSPOCs, currentUser } = useApp();
@@ -43,26 +45,25 @@ export default function AnchorProfilePage() {
       return spocsForAnchor;
     }
     
-    // ZSMs see SPOCs for their region
-    if (currentUser.role === 'Zonal Sales Manager' && currentUser.region) {
-      const userRegion = currentUser.region;
-      return spocsForAnchor.filter(spoc => 
-        spoc.territories.some(t => t.region === userRegion)
-      );
-    }
+    const subordinates = getAllSubordinates(currentUser.uid, users);
+    const visibleTeamIds = [currentUser.uid, ...subordinates.map(u => u.uid)];
     
-    // User has no specific region/territory access defined, so they see none.
-    if (!currentUser.region) {
-      return [];
-    }
+    // ZSMs and ASMs see SPOCs if their region matches OR if they or their subordinates are explicitly granted access.
+    return spocsForAnchor.filter(spoc => {
+        const isExplicitlyVisible = spoc.visibleTo && spoc.visibleTo.some(uid => visibleTeamIds.includes(uid));
+        if (isExplicitlyVisible) {
+          return true;
+        }
 
-    // Default for other sales roles (e.g., Area Sales Manager) is their region.
-    return spocsForAnchor.filter(spoc => 
-      spoc.territories.some(territory => 
-        territory.region === currentUser.region
-      )
-    );
-  }, [currentUser, anchorSPOCs, id]);
+        // Fallback to region-based visibility if no explicit users are set
+        if ((!spoc.visibleTo || spoc.visibleTo.length === 0) && currentUser.region) {
+          return spoc.territories.some(t => t.region === currentUser.region);
+        }
+
+        return false;
+    });
+
+  }, [currentUser, users, anchorSPOCs, id]);
 
 
   if (isLoading) {

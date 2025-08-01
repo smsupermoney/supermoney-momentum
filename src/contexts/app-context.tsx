@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
@@ -64,7 +65,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const getAllSubordinates = (managerId: string, users: User[]): User[] => {
+export const getAllSubordinates = (managerId: string, users: User[]): User[] => {
     const subordinates: User[] = [];
     const directReports = users.filter(u => u.managerId === managerId);
     subordinates.push(...directReports);
@@ -267,7 +268,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         );
 
         leadsToReassign.forEach(lead => {
-            const leadType = 'contactNumber' in lead ? 'Dealer' : 'Vendor';
+            const leadType = 'contactNumbers' in lead ? 'Dealer' : 'Vendor';
             const updateFunction = leadType === 'Dealer' ? updateDealer : updateVendor;
             updateFunction({id: lead.id, assignedTo: harshitaUser.uid});
             addActivityLog({

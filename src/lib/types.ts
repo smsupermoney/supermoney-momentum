@@ -62,6 +62,7 @@ export interface AnchorSPOC {
     designation: string;
   };
   territories: Territory[];
+  visibleTo: string[]; // Array of User UIDs
   isActive: boolean;
   createdAt: string;
   createdBy: string;

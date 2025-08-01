@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,6 +39,7 @@ import { regions } from '@/lib/validation';
 import { IndianStatesAndCities } from '@/lib/india-states-cities';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
+import { MultiSelect, MultiSelectOption } from '../ui/multi-select';
 
 const territorySchema = z.object({
   region: z.string().optional(),
@@ -52,6 +54,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   designation: z.string().min(2, 'Designation is required.'),
   territories: z.array(territorySchema),
+  visibleTo: z.array(z.string()).optional(),
 });
 
 type NewSPOCFormValues = z.infer<typeof formSchema>;
@@ -63,7 +66,7 @@ interface NewAnchorSPOCDialogProps {
 }
 
 export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPOCDialogProps) {
-  const { addAnchorSPOC, currentUser } = useApp();
+  const { addAnchorSPOC, currentUser, users } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,6 +78,7 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
       phone: '',
       designation: '',
       territories: [{ region: '', state: '', city: '', division: '' }],
+      visibleTo: [],
     },
   });
 
@@ -85,6 +89,12 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
   
   const watchedTerritories = form.watch('territories');
 
+  const userOptions: MultiSelectOption[] = useMemo(() => {
+    return users
+      .filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager')
+      .map(u => ({ value: u.uid, label: `${u.name} (${u.role})`}));
+  }, [users]);
+
   const handleClose = () => {
     form.reset({
         name: '',
@@ -92,6 +102,7 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
         phone: '',
         designation: '',
         territories: [{ region: '', state: '', city: '', division: '' }],
+        visibleTo: [],
     });
     onOpenChange(false);
   };
@@ -113,6 +124,7 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
           designation: values.designation,
         },
         territories: values.territories,
+        visibleTo: values.visibleTo || [],
         isActive: true,
         createdAt: now,
         createdBy: currentUser.uid,
@@ -167,6 +179,25 @@ export function NewAnchorSPOCDialog({ open, onOpenChange, anchor }: NewAnchorSPO
               </div>
               
               <Separator />
+              <FormField
+                  control={form.control}
+                  name="visibleTo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SPOC Visibility</FormLabel>
+                       <MultiSelect
+                          options={userOptions}
+                          selected={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Select users who can see this SPOC..."
+                       />
+                       <p className="text-xs text-muted-foreground">Select which managers can see this contact. If none are selected, visibility will be based on region.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+              />
+              <Separator />
+
 
               <div className="space-y-4">
                 {fields.map((field, index) => {

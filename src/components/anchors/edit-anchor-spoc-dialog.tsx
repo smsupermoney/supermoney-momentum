@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,6 +39,7 @@ import { regions } from '@/lib/validation';
 import { IndianStatesAndCities } from '@/lib/india-states-cities';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Separator } from '../ui/separator';
+import { MultiSelect, MultiSelectOption } from '../ui/multi-select';
 
 const territorySchema = z.object({
   region: z.string().optional(),
@@ -52,6 +54,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   designation: z.string().min(2, 'Designation is required.'),
   territories: z.array(territorySchema),
+  visibleTo: z.array(z.string()).optional(),
 });
 
 type EditSPOCFormValues = z.infer<typeof formSchema>;
@@ -64,7 +67,7 @@ interface EditAnchorSPOCDialogProps {
 }
 
 export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditAnchorSPOCDialogProps) {
-  const { updateAnchorSPOC } = useApp();
+  const { updateAnchorSPOC, users } = useApp();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,6 +79,7 @@ export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditA
       phone: '',
       designation: '',
       territories: [],
+      visibleTo: [],
     },
   });
   
@@ -87,6 +91,7 @@ export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditA
             phone: spoc.spocDetails.phone,
             designation: spoc.spocDetails.designation,
             territories: spoc.territories.length > 0 ? spoc.territories : [{ region: '', state: '', city: '', division: '' }],
+            visibleTo: spoc.visibleTo || [],
         });
     }
   }, [spoc, form]);
@@ -97,6 +102,13 @@ export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditA
   });
   
   const watchedTerritories = form.watch('territories');
+
+  const userOptions: MultiSelectOption[] = useMemo(() => {
+    return users
+      .filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager')
+      .map(u => ({ value: u.uid, label: `${u.name} (${u.role})`}));
+  }, [users]);
+
 
   const handleClose = () => {
     form.reset();
@@ -115,6 +127,7 @@ export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditA
           designation: values.designation,
         },
         territories: values.territories,
+        visibleTo: values.visibleTo || [],
         lastModified: new Date().toISOString(),
       };
 
@@ -166,6 +179,25 @@ export function EditAnchorSPOCDialog({ open, onOpenChange, spoc, anchor }: EditA
               </div>
               
               <Separator />
+               <FormField
+                  control={form.control}
+                  name="visibleTo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SPOC Visibility</FormLabel>
+                       <MultiSelect
+                          options={userOptions}
+                          selected={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Select users who can see this SPOC..."
+                       />
+                       <p className="text-xs text-muted-foreground">Select which managers can see this contact. If none are selected, visibility will be based on region.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+              />
+              <Separator />
+
 
               <div className="space-y-4">
                 {fields.map((field, index) => {
