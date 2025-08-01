@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState } from 'react';
 import { useApp } from '@/contexts/app-context';
@@ -81,6 +82,9 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
 
 
   const getEntityName = (task: Task) => {
+    if (task.planType === 'Visit Plan' && task.visitTo) {
+        return task.visitTo;
+    }
     const { anchorId, dealerId, vendorId } = task.associatedWith;
     if (anchorId) return anchors.find(a => a.id === anchorId)?.name || 'Unknown Anchor';
     if (dealerId) return dealers.find(d => d.id === dealerId)?.name || 'Unknown Dealer';

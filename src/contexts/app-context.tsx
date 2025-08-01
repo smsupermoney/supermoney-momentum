@@ -867,7 +867,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
      try {
-        NewTaskSchema.parse(taskData);
+        const validatedData = NewTaskSchema.parse(taskData);
+        if (!currentUser) return;
+        const sanitizedTask = sanitizeForFirestore(validatedData);
+        if (firebaseEnabled) {
+            const { associatedEntity, ...rest } = sanitizedTask;
+            await firestoreService.addTask(rest as Omit<Task, 'id' | 'associatedEntity'>);
+        }
+        const newTask = { ...sanitizedTask, id: generateUniqueId('task') } as Task;
+        setTasks(prev => [newTask, ...prev]);
+        addActivityLog({
+            taskId: newTask.id,
+            anchorId: newTask.associatedWith.anchorId,
+            dealerId: newTask.associatedWith.dealerId,
+            vendorId: newTask.associatedWith.vendorId,
+            timestamp: new Date().toISOString(),
+            type: 'Creation',
+            title: 'Task Created',
+            outcome: `Task '${newTask.title}' was created by ${currentUser.name}.`,
+            userName: 'System',
+            userId: currentUser.uid,
+            systemGenerated: true,
+        });
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for new task:", e.flatten().fieldErrors);
@@ -875,26 +896,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
     }
-    if (!currentUser) return;
-    const sanitizedTask = sanitizeForFirestore(taskData);
-    if (firebaseEnabled) {
-      await firestoreService.addTask(sanitizedTask);
-    }
-    const newTask = { ...sanitizedTask, id: generateUniqueId('task') };
-    setTasks(prev => [newTask, ...prev]);
-    addActivityLog({
-        taskId: newTask.id,
-        anchorId: newTask.associatedWith.anchorId,
-        dealerId: newTask.associatedWith.dealerId,
-        vendorId: newTask.associatedWith.vendorId,
-        timestamp: new Date().toISOString(),
-        type: 'Creation',
-        title: 'Task Created',
-        outcome: `Task '${newTask.title}' was created by ${currentUser.name}.`,
-        userName: 'System',
-        userId: currentUser.uid,
-        systemGenerated: true,
-    });
   };
 
   const updateTask = async (updatedTask: Task) => {

@@ -157,6 +157,7 @@ export interface Task {
     dealerId?: string;
     vendorId?: string;
   };
+  visitTo?: string; // For free-form visit plan entries
   planType: 'Task' | 'Visit Plan';
   type: TaskType;
   dueDate: string;

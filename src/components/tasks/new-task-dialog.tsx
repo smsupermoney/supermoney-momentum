@@ -65,6 +65,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         description: '',
         assignedTo: currentUser?.uid,
         dueDate: '',
+        visitTo: '',
     },
   });
 
@@ -79,6 +80,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         description: '',
         assignedTo: currentUser?.uid,
         dueDate: '',
+        visitTo: '',
       });
     }
   }, [open, prefilledAnchorId, currentUser, form]);
@@ -93,6 +95,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         description: '',
         dueDate: '',
         assignedTo: currentUser?.uid,
+        visitTo: '',
     });
     onOpenChange(false);
   };
@@ -125,6 +128,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           status: 'To-Do',
           assignedTo: assignedToId,
           createdAt: new Date().toISOString(),
+          visitTo: values.visitTo,
         };
         addTask(newTask);
         toast({ title: 'Item Created', description: `Your ${values.planType} "${values.title}" has been added.` });
@@ -135,6 +139,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         setIsSubmitting(false);
     }
   };
+
+  const planType = form.watch('planType');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -190,28 +196,25 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
             )}/>
              <FormField
                 control={form.control}
-                name="associatedEntity"
+                name={planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity'}
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
-                        <FormLabel>Associated With (Optional)</FormLabel>
+                        <FormLabel>
+                            {planType === 'Visit Plan' ? "Visit To (Lead/Prospect Name)" : "Associated With (Optional)"}
+                        </FormLabel>
                         <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
                             <PopoverTrigger asChild>
                                 <FormControl>
-                                    <Button
-                                      variant="outline"
+                                    <Input
                                       role="combobox"
-                                      className={cn(
-                                        "w-full justify-between",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value
-                                        ? allEntities.find(
-                                            (entity) => entity.value === field.value
-                                          )?.label
-                                        : "Select an entity"}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
+                                      placeholder={planType === 'Visit Plan' ? "Type or select a lead..." : "Select an entity..."}
+                                      value={planType === 'Visit Plan' ? field.value : allEntities.find(e => e.value === field.value)?.label || ''}
+                                      onChange={(e) => {
+                                        if (planType === 'Visit Plan') {
+                                            field.onChange(e.target.value);
+                                        }
+                                      }}
+                                    />
                                 </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -225,7 +228,9 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue("associatedEntity", `anchor:${item.id}`);
+                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
+                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `anchor:${item.id}`);
+                                                    if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
@@ -240,7 +245,9 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue("associatedEntity", `dealer:${item.id}`);
+                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
+                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `dealer:${item.id}`);
+                                                     if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
@@ -255,7 +262,9 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue("associatedEntity", `vendor:${item.id}`);
+                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
+                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `vendor:${item.id}`);
+                                                     if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
