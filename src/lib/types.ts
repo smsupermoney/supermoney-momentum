@@ -22,8 +22,8 @@ export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation'
 
 export const spokeStatuses = [
     'New', 'Partial Docs', 'Follow Up', 'Disbursed',
-    'Active', 'Unassigned Lead', 'Rejected', 'Not Interested', 
-    'Onboarding', 'Approved PF Collected', 'Awaiting Sanction', 'Closed', 
+    'Limit Live', 'Unassigned Lead', 'Rejected', 'Not Interested', 
+    'Login done', 'Approved', 'Awaiting Sanction', 'Run-off', 
     'On Hold', 'Queries Raised', 'Relook'
 ] as const;
 export type SpokeStatus = (typeof spokeStatuses)[number];
