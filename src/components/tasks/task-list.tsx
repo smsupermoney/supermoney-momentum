@@ -12,7 +12,7 @@ import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/language-context';
-import { Pencil, Trash2, ClipboardList, Briefcase } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
 import {
   AlertDialog,
@@ -54,13 +54,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
   const filteredTasks = getVisibleTasks()
     .filter(task => task.status !== 'Completed')
     .filter(task => {
-        // Default view: last 3 days or overdue
-        if (dueDateFilter === 'all' || !dueDateFilter) {
-            const threeDaysAgo = subDays(new Date(), 3);
-            const isRecent = isAfter(new Date(task.createdAt), threeDaysAgo);
-            const isTaskOverdue = isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
-            return isRecent || isTaskOverdue;
-        }
+        if (!dueDateFilter || dueDateFilter === 'all') return true;
         const dueDate = new Date(task.dueDate);
         if (dueDateFilter === 'today') return isToday(dueDate);
         if (dueDateFilter === 'this-week') return isThisWeek(dueDate, { weekStartsOn: 1 });
@@ -73,7 +67,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
     })
     .filter(task => {
         if (!anchorFilter || anchorFilter === 'all') return true;
-        return task.associatedWith.anchorId === anchorFilter;
+        return task.associatedWith?.anchorId === anchorFilter;
     })
     .filter(task => {
       if (!assignedToFilter || assignedToFilter === 'all') return true;
@@ -85,7 +79,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
     if (task.planType === 'Visit Plan' && task.visitTo) {
         return task.visitTo;
     }
-    const { anchorId, dealerId, vendorId } = task.associatedWith;
+    const { anchorId, dealerId, vendorId } = task.associatedWith || {};
     if (anchorId) return anchors.find(a => a.id === anchorId)?.name || 'Unknown Anchor';
     if (dealerId) return dealers.find(d => d.id === dealerId)?.name || 'Unknown Dealer';
     if (vendorId) return vendors.find(v => v.id === vendorId)?.name || 'Unknown Vendor';

@@ -24,7 +24,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Loader2, Check, ChevronsUpDown } from 'lucide-react';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { Task, UserRole } from '@/lib/types';
 import { NewTaskSchema } from '@/lib/validation';
@@ -56,17 +56,6 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
 
   const form = useForm<NewTaskFormValues>({
     resolver: zodResolver(NewTaskSchema),
-    defaultValues: {
-        title: '',
-        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
-        planType: 'Task',
-        type: '',
-        priority: 'Medium',
-        description: '',
-        assignedTo: currentUser?.uid,
-        dueDate: '',
-        visitTo: '',
-    },
   });
 
   useEffect(() => {
@@ -79,24 +68,13 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         priority: 'Medium',
         description: '',
         assignedTo: currentUser?.uid,
-        dueDate: '',
         visitTo: '',
       });
     }
   }, [open, prefilledAnchorId, currentUser, form]);
 
   const handleClose = () => {
-    form.reset({
-        title: '',
-        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
-        planType: 'Task',
-        type: '',
-        priority: 'Medium',
-        description: '',
-        dueDate: '',
-        assignedTo: currentUser?.uid,
-        visitTo: '',
-    });
+    form.reset();
     onOpenChange(false);
   };
 
@@ -106,6 +84,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         return;
     }
     setIsSubmitting(true);
+    
     try {
         const assignedToId = values.assignedTo || currentUser.uid;
         
@@ -122,7 +101,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           associatedWith: associatedWith,
           planType: values.planType as Task['planType'],
           type: values.type as Task['type'],
-          dueDate: parse(values.dueDate, 'dd/MM/yyyy', new Date()).toISOString(),
+          dueDate: values.dueDate.toISOString(),
           priority: values.priority as Task['priority'],
           description: values.description || '',
           status: 'To-Do',
@@ -130,10 +109,12 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           createdAt: new Date().toISOString(),
           visitTo: values.visitTo,
         };
+        
         addTask(newTask);
         toast({ title: 'Item Created', description: `Your ${values.planType} "${values.title}" has been added.` });
         handleClose();
     } catch (error) {
+        console.error("Error creating task:", error);
         toast({variant: 'destructive', title: 'Error', description: 'Failed to create item.'});
     } finally {
         setIsSubmitting(false);
@@ -212,13 +193,17 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                       onChange={(e) => {
                                         if (planType === 'Visit Plan') {
                                             field.onChange(e.target.value);
+                                            setComboboxOpen(true);
                                         }
                                       }}
                                     />
                                 </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
+                                <Command filter={(value, search) => {
+                                    if(value.toLowerCase().includes(search.toLowerCase())) return 1;
+                                    return 0;
+                                }}>
                                     <CommandInput placeholder="Search entity..." />
                                     <CommandEmpty>No entity found.</CommandEmpty>
                                     <CommandList>
@@ -298,26 +283,30 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                   control={form.control}
                   name="dueDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem className="flex flex-col pt-2">
                       <FormLabel>Due Date</FormLabel>
-                       <Input
-                          placeholder="dd/mm/yyyy"
-                          {...field}
-                        />
+                      <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={'outline'}
+                                  className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                                >
+                                  {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            </PopoverContent>
+                          </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
              </div>
-             <Calendar
-                mode="single"
-                onSelect={(date) => {
-                    if (date) {
-                        form.setValue('dueDate', format(date, 'dd/MM/yyyy'));
-                    }
-                }}
-                className="rounded-md border"
-             />
+             
              <FormField name="priority" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Priority</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger></FormControl>

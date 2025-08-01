@@ -80,11 +80,7 @@ export const NewTaskSchema = z.object({
     visitTo: z.string().optional(), // For free-form visit plan entries
     planType: z.enum(['Task', 'Visit Plan']),
     type: z.string().min(1, 'Task type is required'),
-    dueDate: z.string().refine((val) => {
-        if (!val) return false;
-        const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
-        return isValid(parsedDate);
-    }, { message: "Due date is required in dd/mm/yyyy format." }),
+    dueDate: z.date({ required_error: "Please select a date.", invalid_type_error: "That's not a valid date!"}),
     priority: z.string().min(1, 'Priority is required'),
     description: z.string().optional(),
     assignedTo: z.string().optional(),

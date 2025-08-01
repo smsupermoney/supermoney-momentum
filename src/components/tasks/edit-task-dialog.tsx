@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
@@ -50,7 +50,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         id: task.id,
         title: task.title,
         type: task.type,
-        dueDate: format(new Date(task.dueDate), 'dd/MM/yyyy'),
+        dueDate: new Date(task.dueDate),
         priority: task.priority,
         description: task.description,
         assignedTo: task.assignedTo,
@@ -69,7 +69,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       const updatedTask: Task = {
         ...task,
         ...values,
-        dueDate: parse(values.dueDate, 'dd/MM/yyyy', new Date()).toISOString(),
+        dueDate: values.dueDate.toISOString(),
         updatedAt: new Date().toISOString(),
       };
       
@@ -82,8 +82,6 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       setIsSubmitting(false);
     }
   };
-
-  const watchedDueDate = form.watch('dueDate');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -109,16 +107,23 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 </Select><FormMessage />
               </FormItem>
             )}/>
-            <FormField name="dueDate" control={form.control} render={({ field }) => (
-              <FormItem><FormLabel>Due Date</FormLabel><FormControl><Input placeholder="dd/mm/yyyy" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <Calendar
-              mode="single"
-              selected={watchedDueDate ? parse(watchedDueDate, 'dd/MM/yyyy', new Date()) : undefined}
-              onSelect={(date) => {
-                if (date) form.setValue('dueDate', format(date, 'dd/MM/yyyy'));
-              }}
-              className="rounded-md border"
+             <FormField
+                name="dueDate"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date</FormLabel>
+                    <FormControl>
+                        <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        className="rounded-md border"
+                        />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
             />
             <FormField name="priority" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Priority</FormLabel>

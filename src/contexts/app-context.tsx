@@ -870,16 +870,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const validatedData = NewTaskSchema.parse(taskData);
         if (!currentUser) return;
         const sanitizedTask = sanitizeForFirestore(validatedData);
+
         if (firebaseEnabled) {
             await firestoreService.addTask(sanitizedTask);
         }
+        
         const newTask = { ...sanitizedTask, id: generateUniqueId('task') } as Task;
         setTasks(prev => [newTask, ...prev]);
+
         addActivityLog({
             taskId: newTask.id,
-            anchorId: newTask.associatedWith.anchorId,
-            dealerId: newTask.associatedWith.dealerId,
-            vendorId: newTask.associatedWith.vendorId,
+            anchorId: newTask.associatedWith?.anchorId,
+            dealerId: newTask.associatedWith?.dealerId,
+            vendorId: newTask.associatedWith?.vendorId,
             timestamp: new Date().toISOString(),
             type: 'Creation',
             title: 'Task Created',
