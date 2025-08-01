@@ -867,12 +867,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
      try {
-        const validatedData = NewTaskSchema.parse(taskData);
+        NewTaskSchema.parse(taskData);
         if (!currentUser) return;
-        const sanitizedTask = sanitizeForFirestore(validatedData);
+        const sanitizedTask = sanitizeForFirestore(taskData);
         if (firebaseEnabled) {
-            const { associatedEntity, ...rest } = sanitizedTask;
-            await firestoreService.addTask(rest as Omit<Task, 'id' | 'associatedEntity'>);
+            await firestoreService.addTask(sanitizedTask);
         }
         const newTask = { ...sanitizedTask, id: generateUniqueId('task') } as Task;
         setTasks(prev => [newTask, ...prev]);
