@@ -76,14 +76,20 @@ export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
 
 export const NewTaskSchema = z.object({
     title: z.string().min(3, "Task title is required."),
-    associatedEntity: z.string().optional(),
-    visitTo: z.string().optional(), // For free-form visit plan entries
+    associatedWith: z.object({
+        anchorId: z.string().optional(),
+        dealerId: z.string().optional(),
+        vendorId: z.string().optional(),
+    }).optional(),
+    visitTo: z.string().optional(),
     planType: z.enum(['Task', 'Visit Plan']),
     type: z.string().min(1, 'Task type is required'),
     dueDate: z.date({ required_error: "Please select a date.", invalid_type_error: "That's not a valid date!"}),
     priority: z.string().min(1, 'Priority is required'),
     description: z.string().optional(),
-    assignedTo: z.string().optional(),
+    assignedTo: z.string().optional().nullable(),
+    createdAt: z.string(),
+    status: z.string(),
 });
 
 

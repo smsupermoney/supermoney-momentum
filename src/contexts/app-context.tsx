@@ -867,8 +867,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = async (taskData: Omit<Task, 'id'>) => {
     try {
-        const validatedData = NewTaskSchema.parse(taskData);
         if (!currentUser) return;
+        
+        const dataToValidate: Omit<Task, 'id'> & {dueDate: Date} = {
+            ...taskData,
+            dueDate: new Date(taskData.dueDate)
+        };
+        const validatedData = NewTaskSchema.parse(dataToValidate);
         const sanitizedTask = sanitizeForFirestore(validatedData);
 
         if (firebaseEnabled) {
@@ -897,6 +902,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             toast({ variant: 'destructive', title: 'Validation Error', description: 'Invalid data for new task.' });
             return;
         }
+         console.error("Unexpected error in addTask:", e);
     }
   };
 

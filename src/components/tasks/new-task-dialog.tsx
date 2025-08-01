@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -56,19 +57,32 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
 
   const form = useForm<NewTaskFormValues>({
     resolver: zodResolver(NewTaskSchema),
+    defaultValues: {
+      title: '',
+      planType: 'Task',
+      priority: 'Medium',
+      description: '',
+      assignedTo: currentUser?.uid,
+      visitTo: '',
+      associatedWith: {},
+      status: 'To-Do',
+      createdAt: new Date().toISOString(),
+    },
   });
 
   useEffect(() => {
     if (open) {
       form.reset({
         title: '',
-        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
         planType: 'Task',
-        type: '',
         priority: 'Medium',
         description: '',
         assignedTo: currentUser?.uid,
         visitTo: '',
+        associatedWith: prefilledAnchorId ? { anchorId: prefilledAnchorId } : {},
+        dueDate: undefined,
+        status: 'To-Do',
+        createdAt: new Date().toISOString(),
       });
     }
   }, [open, prefilledAnchorId, currentUser, form]);
@@ -88,26 +102,9 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     try {
         const assignedToId = values.assignedTo || currentUser.uid;
         
-        const associatedWith: { anchorId?: string; dealerId?: string; vendorId?: string; } = {};
-        if (values.associatedEntity) {
-            const [type, id] = values.associatedEntity.split(':');
-            if (type === 'anchor') associatedWith.anchorId = id;
-            if (type === 'dealer') associatedWith.dealerId = id;
-            if (type === 'vendor') associatedWith.vendorId = id;
-        }
-
         const newTask: Omit<Task, 'id'> = {
-          title: values.title,
-          associatedWith: associatedWith,
-          planType: values.planType as Task['planType'],
-          type: values.type as Task['type'],
-          dueDate: values.dueDate.toISOString(),
-          priority: values.priority as Task['priority'],
-          description: values.description || '',
-          status: 'To-Do',
+          ...values,
           assignedTo: assignedToId,
-          createdAt: new Date().toISOString(),
-          visitTo: values.visitTo,
         };
         
         addTask(newTask);
@@ -140,7 +137,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
                         <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a team member" />
@@ -177,7 +174,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
             )}/>
              <FormField
                 control={form.control}
-                name={planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity'}
+                name="visitTo"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                         <FormLabel>
@@ -189,7 +186,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                     <Input
                                       role="combobox"
                                       placeholder={planType === 'Visit Plan' ? "Type or select a lead..." : "Select an entity..."}
-                                      value={planType === 'Visit Plan' ? field.value : allEntities.find(e => e.value === field.value)?.label || ''}
+                                      value={planType === 'Visit Plan' ? field.value : allEntities.find(e => e.value === `anchor:${form.getValues('associatedWith.anchorId')}`)?.label || ''}
                                       onChange={(e) => {
                                         if (planType === 'Visit Plan') {
                                             field.onChange(e.target.value);
@@ -213,13 +210,13 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
-                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `anchor:${item.id}`);
+                                                    form.setValue('visitTo', item.name);
+                                                    form.setValue('associatedWith.anchorId', item.id);
                                                     if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
-                                                  <Check className={cn("mr-2 h-4 w-4", field.value === `anchor:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                  <Check className={cn("mr-2 h-4 w-4", form.getValues('associatedWith.anchorId') === item.id ? "opacity-100" : "opacity-0")}/>
                                                   {item.name}
                                                 </CommandItem>
                                             ))}
@@ -230,13 +227,13 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
-                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `dealer:${item.id}`);
-                                                     if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
+                                                    form.setValue('visitTo', item.name);
+                                                    form.setValue('associatedWith.dealerId', item.id);
+                                                    if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
-                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `dealer:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                   <Check className={cn("mr-2 h-4 w-4", form.getValues('associatedWith.dealerId') === item.id ? "opacity-100" : "opacity-0")}/>
                                                    {item.name}
                                                 </CommandItem>
                                             ))}
@@ -247,13 +244,13 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                                   key={item.id}
                                                   value={item.name}
                                                   onSelect={() => {
-                                                    form.setValue(planType === 'Visit Plan' ? 'visitTo' : 'associatedEntity', item.name);
-                                                    if(planType !== 'Visit Plan') form.setValue('associatedEntity', `vendor:${item.id}`);
-                                                     if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
+                                                    form.setValue('visitTo', item.name);
+                                                    form.setValue('associatedWith.vendorId', item.id);
+                                                    if(!form.getValues('title')) form.setValue('title', `Visit ${item.name}`);
                                                     setComboboxOpen(false);
                                                   }}
                                                 >
-                                                   <Check className={cn("mr-2 h-4 w-4", field.value === `vendor:${item.id}` ? "opacity-100" : "opacity-0")}/>
+                                                   <Check className={cn("mr-2 h-4 w-4", form.getValues('associatedWith.vendorId') === item.id ? "opacity-100" : "opacity-0")}/>
                                                    {item.name}
                                                 </CommandItem>
                                             ))}
