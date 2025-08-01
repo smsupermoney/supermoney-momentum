@@ -6,7 +6,7 @@
     "anchors": "Anchors",
     "dealers": "Dealers",
     "vendors": "Vendors",
-    "tasks": "Tasks",
+    "tasks": "Tasks / Visit Plan",
     "reports": "Reports",
     "admin": "Admin Panel",
     "onboarding": "Onboarding"
@@ -156,9 +156,9 @@
     "noVendors": "No vendors found."
   },
   "tasks": {
-    "title": "Tasks",
-    "description": "Your central workspace for all sales activities and follow-ups.",
-    "newTask": "New Task",
+    "title": "Tasks / Visit Plan",
+    "description": "Manage your tasks and create weekly visit plans.",
+    "newTask": "New Item",
     "filterDueDate": "Filter by Due Date",
     "filterPriority": "Filter by Priority",
     "filterAnchor": "Filter by Anchor",
@@ -179,7 +179,8 @@
     },
     "list": {
       "priority": "Priority",
-      "title": "Task Title",
+      "title": "Title",
+      "associatedWith": "Associated With",
       "anchor": "Anchor",
       "assignedTo": "Assigned To",
       "type": "Task Type",
@@ -187,7 +188,7 @@
       "status": "Status",
       "actions": "Actions",
       "complete": "Complete",
-      "noTasks": "No tasks found."
+      "noTasks": "No items found."
     }
   },
   "reports": {

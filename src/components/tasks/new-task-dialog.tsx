@@ -59,6 +59,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     defaultValues: {
         title: '',
         associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
+        planType: 'Task',
         type: '',
         priority: 'Medium',
         description: '',
@@ -77,6 +78,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     form.reset({
         title: '',
         associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
+        planType: 'Task',
         type: '',
         priority: 'Medium',
         description: '',
@@ -106,6 +108,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         const newTask: Omit<Task, 'id'> = {
           title: values.title,
           associatedWith: associatedWith,
+          planType: values.planType as Task['planType'],
           type: values.type as Task['type'],
           dueDate: parse(values.dueDate, 'dd/MM/yyyy', new Date()).toISOString(),
           priority: values.priority as Task['priority'],
@@ -115,10 +118,10 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
           createdAt: new Date().toISOString(),
         };
         addTask(newTask);
-        toast({ title: 'Task Created', description: `Task "${values.title}" has been added.` });
+        toast({ title: 'Item Created', description: `Your ${values.planType} "${values.title}" has been added.` });
         handleClose();
     } catch (error) {
-        toast({variant: 'destructive', title: 'Error', description: 'Failed to create task.'});
+        toast({variant: 'destructive', title: 'Error', description: 'Failed to create item.'});
     } finally {
         setIsSubmitting(false);
     }
@@ -128,8 +131,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>+ New Task</DialogTitle>
-          <DialogDescription>Schedule a new action or follow-up.</DialogDescription>
+          <DialogTitle>+ New Task / Visit Plan</DialogTitle>
+          <DialogDescription>Schedule a new action or add a plan for the week.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
@@ -158,9 +161,23 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                 )}
                 />
             )}
+             <FormField
+                control={form.control}
+                name="planType"
+                render={({ field }) => (
+                    <FormItem><FormLabel>Plan Item Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="Task">Task</SelectItem>
+                          <SelectItem value="Visit Plan">Visit Plan</SelectItem>
+                        </SelectContent>
+                    </Select><FormMessage />
+                    </FormItem>
+                )}
+            />
 
             <FormField name="title" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Task Title</FormLabel><FormControl><Input placeholder="e.g. Follow up on Proposal V2" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="e.g. Follow up on Proposal V2" {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
              <FormField
                 control={form.control}
@@ -297,7 +314,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
               <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Task
+                Create Item
               </Button>
             </DialogFooter>
           </form>

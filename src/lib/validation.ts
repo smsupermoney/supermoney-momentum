@@ -77,6 +77,7 @@ export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
 export const NewTaskSchema = z.object({
     title: z.string().min(3, "Task title is required."),
     associatedEntity: z.string().optional(),
+    planType: z.enum(['Task', 'Visit Plan']),
     type: z.string().min(1, 'Task type is required'),
     dueDate: z.string().refine((val) => {
         if (!val) return false;

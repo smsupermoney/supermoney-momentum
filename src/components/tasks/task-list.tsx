@@ -11,7 +11,7 @@ import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/language-context';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ClipboardList, Briefcase } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
 import {
   AlertDialog,
@@ -135,13 +135,13 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the task: "{taskToDelete?.title}".
+                    This action cannot be undone. This will permanently delete the item: "{taskToDelete?.title}".
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                    Delete Task
+                    Delete
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -153,8 +153,9 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
           <TableHeader>
             <TableRow>
               <TableHead>{t('tasks.list.priority')}</TableHead>
+              <TableHead>Plan/Task</TableHead>
               <TableHead>{t('tasks.list.title')}</TableHead>
-              <TableHead>{t('tasks.list.anchor')}</TableHead>
+              <TableHead>{t('tasks.list.associatedWith')}</TableHead>
               <TableHead>{t('tasks.list.assignedTo')}</TableHead>
               <TableHead className="hidden lg:table-cell">{t('tasks.list.type')}</TableHead>
               <TableHead>{t('tasks.list.dueDate')}</TableHead>
@@ -166,6 +167,11 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
             {filteredTasks.length > 0 ? filteredTasks.map(task => (
               <TableRow key={task.id}>
                 <TableCell><Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge></TableCell>
+                <TableCell>
+                  <Badge variant={task.planType === 'Visit Plan' ? 'default' : 'secondary'}>
+                    {task.planType || 'Task'}
+                  </Badge>
+                </TableCell>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>{getEntityName(task)}</TableCell>
                 <TableCell>{getAssignedToName(task.assignedTo)}</TableCell>
@@ -186,7 +192,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
               </TableRow>
             )) : (
               <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={9} className="h-24 text-center">
                     {t('tasks.list.noTasks')}
                   </TableCell>
                 </TableRow>
@@ -205,11 +211,12 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
                 <Badge variant={priorityVariant[task.priority]} className="flex-shrink-0">{task.priority}</Badge>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p><span className="font-medium">{t('tasks.list.anchor')}:</span> {getEntityName(task)}</p>
+                <p><span className="font-medium">{t('tasks.list.associatedWith')}:</span> {getEntityName(task)}</p>
                 <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>
                 <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {format(new Date(task.dueDate), 'PP')}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={task.planType === 'Visit Plan' ? 'default' : 'secondary'}>{task.planType || 'Task'}</Badge>
                 <Badge variant="outline">{task.type}</Badge>
                 <Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge>
               </div>

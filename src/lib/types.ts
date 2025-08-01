@@ -23,7 +23,7 @@ export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation'
 
 export const spokeStatuses = [
     'New', 'Follow Up', 'Awaiting Docs Approval', 'Partial Docs', 'Login done', 'Awaiting Sanction', 'Approved', 
-    'Limit Live', 'Disbursed', 'Unassigned Lead', 'Rejected', 'Not Interested', 
+    'Disbursed', 'Unassigned Lead', 'Rejected', 'Not Interested', 
     'Run-off', 'On Hold', 'Queries Raised', 'Relook'
 ] as const;
 export type SpokeStatus = (typeof spokeStatuses)[number];
@@ -157,6 +157,7 @@ export interface Task {
     dealerId?: string;
     vendorId?: string;
   };
+  planType: 'Task' | 'Visit Plan';
   type: TaskType;
   dueDate: string;
   priority: TaskPriority;
