@@ -45,7 +45,7 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
 
         if (isManager) {
             data.byUser = visibleUsers
-                .filter(u => u.uid !== currentUser?.uid && (u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Telecaller'))
+                .filter(u => u.status !== 'Ex-User' && u.uid !== currentUser?.uid && (u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Telecaller'))
                 .map(user => ({
                     name: user.name,
                     totalLeads: filteredLeads.filter(l => l.assignedTo === user.uid).length

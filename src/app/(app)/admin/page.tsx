@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
-import { PlusCircle, Trash2, ArrowRight, Pencil } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowRight, Pencil, UserX } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
@@ -28,6 +28,7 @@ import {
 import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 
 // Define a union type for the different kinds of leads
@@ -220,27 +221,27 @@ function LenderManagement() {
 }
 
 export default function AdminPage() {
-  const { dealers, vendors, users, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser, anchors, updateAnchor } = useApp();
+  const { dealers, vendors, users, updateUser, updateDealer, updateVendor, currentUser, visibleUsers, deleteUser, anchors, updateAnchor } = useApp();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [userAssignments, setUserAssignments] = useState<Record<string, string>>({});
   const [anchorAssignments, setAnchorAssignments] = useState<Record<string, string>>({});
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToConfirm, setUserToConfirm] = useState<User | null>(null);
+  const [confirmationType, setConfirmationType] = useState<'delete' | 'archive' | null>(null);
 
   const assignableUsers = useMemo(() => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Admin') {
-      // Admins can assign to any non-admin, non-specialist user.
-      return users.filter(u => u.role !== 'Admin' && u.role !== 'Business Development' && u.role !== 'BIU');
+    
+    // Admins and BD can assign to any active non-admin, non-specialist user.
+    const eligibleRoles: UserRole[] = ['Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Executive', 'ETB Manager', 'Telecaller', 'Internal Sales'];
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
+      return users.filter(u => eligibleRoles.includes(u.role) && u.status !== 'Ex-User');
     }
-    if(currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
-      return users.filter(u => ['Area Sales Manager', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(u.role));
-    }
-    // Managers can assign to their direct or indirect subordinates.
-    // 'visibleUsers' includes the manager themselves, so filter them out.
-    return visibleUsers.filter(u => u.uid !== currentUser.uid);
+    
+    // Managers can assign to their direct or indirect active subordinates.
+    return visibleUsers.filter(u => u.uid !== currentUser.uid && u.status !== 'Ex-User');
   }, [currentUser, users, visibleUsers]);
 
   const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.status === 'Unassigned Lead');
@@ -288,17 +289,42 @@ export default function AdminPage() {
     });
   };
 
-  const handleDeleteUser = () => {
-    if (userToDelete) {
-        deleteUser(userToDelete.uid);
-        setUserToDelete(null);
+  const handleConfirmation = () => {
+    if (userToConfirm && confirmationType === 'delete') {
+        deleteUser(userToConfirm.uid);
     }
+    if (userToConfirm && confirmationType === 'archive') {
+        updateUser({ ...userToConfirm, status: 'Ex-User' });
+        toast({ title: 'User Marked as Ex-User', description: `${userToConfirm.name} is now marked as an ex-user.` });
+    }
+    setUserToConfirm(null);
+    setConfirmationType(null);
   };
+  
+  const getConfirmationDialogContent = () => {
+      if (!userToConfirm) return { title: '', description: '', actionText: ''};
+      if (confirmationType === 'delete') {
+          return {
+              title: 'Are you absolutely sure?',
+              description: `This action cannot be undone. This will permanently delete the user account for ${userToConfirm.name} and remove them from the system.`,
+              actionText: 'Delete User'
+          };
+      }
+      if (confirmationType === 'archive') {
+          return {
+              title: 'Mark as Ex-User?',
+              description: `This will mark ${userToConfirm.name} as an ex-user. Their assigned leads will be moved to a separate section for reassignment. This action can be reversed.`,
+              actionText: 'Mark as Ex-User'
+          }
+      }
+      return { title: '', description: '', actionText: ''};
+  }
 
   const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
   const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
+  const canMarkAsExUser = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
 
 
   if (!canViewAdminPanel) {
@@ -313,6 +339,8 @@ export default function AdminPage() {
     if (!managerId) return 'N/A';
     return users.find((u) => u.uid === managerId)?.name || 'Unknown';
   };
+  
+  const { title: dialogTitle, description: dialogDescription, actionText: dialogActionText } = getConfirmationDialogContent();
 
   return (
     <>
@@ -325,18 +353,16 @@ export default function AdminPage() {
           onOpenChange={() => setUserToEdit(null)} 
         />
       )}
-      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+      <AlertDialog open={!!userToConfirm} onOpenChange={() => setUserToConfirm(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the user account for {userToDelete?.name} and remove them from the system.
-                </AlertDialogDescription>
+                <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
+                <AlertDialogDescription>{dialogDescription}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
-                    Delete User
+                <AlertDialogAction onClick={handleConfirmation} className={confirmationType === 'delete' ? "bg-destructive hover:bg-destructive/90" : ""}>
+                    {dialogActionText}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -403,6 +429,7 @@ export default function AdminPage() {
                           <TableRow>
                             <TableHead>{t('admin.table.name')}</TableHead>
                             <TableHead>{t('admin.table.email')}</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>{t('admin.table.role')}</TableHead>
                             <TableHead>{t('admin.table.manager')}</TableHead>
                             <TableHead>{t('admin.table.region')}</TableHead>
@@ -411,9 +438,14 @@ export default function AdminPage() {
                         </TableHeader>
                         <TableBody>
                           {users.map((user) => (
-                            <TableRow key={user.uid}>
+                            <TableRow key={user.uid} className={user.status === 'Ex-User' ? 'bg-muted/50' : ''}>
                               <TableCell className="font-medium">{user.name}</TableCell>
                               <TableCell>{user.email}</TableCell>
+                              <TableCell>
+                                <Badge variant={user.status === 'Ex-User' ? 'destructive' : 'secondary'}>
+                                  {user.status || 'Active'}
+                                </Badge>
+                              </TableCell>
                               <TableCell>{user.role}</TableCell>
                               <TableCell>{getManagerName(user.managerId)}</TableCell>
                               <TableCell>{user.region || 'N/A'}</TableCell>
@@ -421,8 +453,13 @@ export default function AdminPage() {
                                 <Button variant="ghost" size="icon" onClick={() => setUserToEdit(user)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
+                                {canMarkAsExUser && user.status !== 'Ex-User' && (
+                                    <Button variant="ghost" size="icon" onClick={() => {setUserToConfirm(user); setConfirmationType('archive');}}>
+                                        <UserX className="h-4 w-4 text-amber-600" />
+                                    </Button>
+                                )}
                                 {user.uid !== currentUser?.uid && (
-                                  <Button variant="ghost" size="icon" onClick={() => setUserToDelete(user)}>
+                                  <Button variant="ghost" size="icon" onClick={() => {setUserToConfirm(user); setConfirmationType('delete');}}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
                                 )}
@@ -435,10 +472,15 @@ export default function AdminPage() {
                     {/* Mobile User Cards */}
                     <div className="space-y-4 md:hidden">
                       {users.map((user) => (
-                        <Card key={user.uid} className="p-0">
+                        <Card key={user.uid} className={`p-0 ${user.status === 'Ex-User' ? 'bg-muted/50' : ''}`}>
                           <CardHeader className="p-4 pb-2">
-                            <CardTitle className="text-base">{user.name}</CardTitle>
-                            <CardDescription>{user.email}</CardDescription>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-base">{user.name}</CardTitle>
+                                    <CardDescription>{user.email}</CardDescription>
+                                </div>
+                                <Badge variant={user.status === 'Ex-User' ? 'destructive' : 'secondary'}>{user.status || 'Active'}</Badge>
+                            </div>
                           </CardHeader>
                           <CardContent className="space-y-1 p-4 pt-0">
                             <div className="flex items-center justify-between text-sm">
@@ -455,11 +497,16 @@ export default function AdminPage() {
                             </div>
                             <div className="pt-2 flex gap-2">
                                 <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToEdit(user)}>
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit User
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit
                                 </Button>
+                                {canMarkAsExUser && user.status !== 'Ex-User' && (
+                                    <Button variant="outline" size="sm" className="w-full" onClick={() => {setUserToConfirm(user); setConfirmationType('archive');}}>
+                                        <UserX className="mr-2 h-4 w-4 text-amber-600" /> Mark as Ex-User
+                                    </Button>
+                                )}
                                 {user.uid !== currentUser?.uid && (
-                                    <Button variant="outline" size="sm" className="w-full" onClick={() => setUserToDelete(user)}>
-                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete User
+                                    <Button variant="outline" size="sm" className="w-full" onClick={() => {setUserToConfirm(user); setConfirmationType('delete');}}>
+                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
                                     </Button>
                                 )}
                             </div>

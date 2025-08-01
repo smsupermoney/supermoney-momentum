@@ -7,24 +7,6 @@ import { useApp } from '@/contexts/app-context';
 import { PipelineCard } from '@/components/dashboard/pipeline-card';
 import { RecentActivityCard } from '@/components/dashboard/recent-activity-card';
 import { TasksCard } from '@/components/dashboard/tasks-card';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import {
-  BookCheck,
-  Building,
-  Users,
-  Handshake,
-  ListTodo,
-  Shield,
-  BarChart,
-  LayoutDashboard,
-  Mail,
-  Loader2,
-} from 'lucide-react';
-import type { UserRole, Task } from '@/lib/types';
 import { StaleLeadsCard } from '@/components/dashboard/stale-leads-card';
 import { TeamProgressCard } from '@/components/dashboard/team-progress-card';
 import { generateDailyDigest } from '@/ai/flows/generate-daily-digest-flow';
@@ -32,48 +14,9 @@ import { isPast, isToday } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
-
-
-function QuickNav() {
-  const { currentUser, t } = useApp();
-
-  if (!currentUser) return null;
-
-  const allNavItems = [
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/activities', labelKey: 'sidebar.activities', icon: BookCheck, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/anchors', labelKey: 'sidebar.anchors', icon: Building, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/dealers', labelKey: 'sidebar.dealers', icon: Handshake, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/suppliers', labelKey: 'sidebar.vendors', icon: Users, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager'] },
-    { href: '/tasks', labelKey: 'sidebar.tasks', icon: ListTodo, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Executive', 'ETB Manager', 'Telecaller'] },
-    { href: '/reports', labelKey: 'sidebar.reports', icon: BarChart, roles: ['Admin', 'Area Sales Manager', 'Internal Sales', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
-    { href: '/admin', labelKey: 'sidebar.admin', icon: Shield, roles: ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'] },
-  ];
-
-  const visibleNavLinks = allNavItems.filter(link => link.roles.includes(currentUser.role as UserRole));
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
-      {visibleNavLinks.map(link => {
-        const Icon = link.icon;
-        let label = t(link.labelKey);
-        return (
-          <Button
-            asChild
-            key={link.href}
-            variant="ghost"
-            className="h-auto p-3 flex-col gap-1 rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:bg-accent/50 active:translate-y-0 active:shadow-sm"
-          >
-            <Link href={link.href}>
-              <Icon className="h-5 w-5 text-primary" />
-              <span className="text-sm font-semibold text-center">{label}</span>
-            </Link>
-          </Button>
-        );
-      })}
-    </div>
-  );
-}
+import { Mail, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { UserRole } from '@/lib/types';
 
 
 export default function DashboardPage() {
@@ -188,8 +131,9 @@ export default function DashboardPage() {
                 </Button>
               )}
             </PageHeader>
-            <QuickNav />
-            {renderDashboard()}
+            <div className="space-y-6">
+                {renderDashboard()}
+            </div>
         </>
     );
 }
@@ -197,22 +141,22 @@ export default function DashboardPage() {
 // Sales Dashboard
 function SalesDashboard() {
     return (
-        <div className="grid gap-4">
-            <div className="mb-6"><SalesPipelineCard /></div>
+        <>
+            <SalesPipelineCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>
-        </div>
+        </>
     );
 }
 
 // Manager Dashboard (for ZSM, RSM, NSM)
 function ManagerDashboard() {
     return (
-        <div className="grid gap-4">
-            <div className="mb-6"><SalesPipelineCard /></div>
+        <>
+            <SalesPipelineCard />
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
@@ -220,7 +164,7 @@ function ManagerDashboard() {
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>
-        </div>
+        </>
     );
 }
 
@@ -228,8 +172,8 @@ function ManagerDashboard() {
 // Admin & BD Dashboard
 function AdminDashboard() {
     return (
-        <div className="grid gap-4">
-            <div className="mb-6"><SalesPipelineCard /></div>
+        <>
+            <SalesPipelineCard />
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
@@ -237,6 +181,6 @@ function AdminDashboard() {
                 <RecentActivityCard className="lg:col-span-2" />
                 <TasksCard />
             </div>
-        </div>
+        </>
     );
 }

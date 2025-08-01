@@ -18,10 +18,15 @@ export function TasksCard() {
 
   const getVisibleTasks = () => {
     if (!currentUser) return [];
+
+    const activeUserIds = users.filter(u => u.status !== 'Ex-User').map(u => u.uid);
+
     if (currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
-      return tasks.filter(task => task.assignedTo === currentUser.uid);
+      return tasks.filter(task => task.assignedTo === currentUser.uid && activeUserIds.includes(task.assignedTo));
     }
-    return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
+    
+    const visibleActiveUserIds = visibleUserIds.filter(id => activeUserIds.includes(id));
+    return tasks.filter(task => visibleActiveUserIds.includes(task.assignedTo));
   }
 
   const todaysTasks = getVisibleTasks().filter(task => {

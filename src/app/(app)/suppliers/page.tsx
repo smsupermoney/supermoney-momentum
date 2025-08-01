@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users, UserX } from 'lucide-react';
 import type { Vendor, SpokeStatus, UserRole } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,20 +67,23 @@ export default function VendorsPage() {
 
   const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
 
-  const visibleVendors = useMemo(() => {
-    if (!currentUser) return [];
+  const { visibleVendors, exUserVendors } = useMemo(() => {
+    if (!currentUser) return { visibleVendors: [], exUserVendors: [] };
 
-    // Managers and Admins see all leads and can filter them.
+    const exUserIds = users.filter(u => u.status === 'Ex-User').map(u => u.uid);
+    const exVendors = vendors.filter(v => v.assignedTo && exUserIds.includes(v.assignedTo));
+
     if (managerialRoles.includes(currentUser.role)) {
-      return vendors;
+      const activeVendors = vendors.filter(v => !v.assignedTo || !exUserIds.includes(v.assignedTo));
+      return { visibleVendors: activeVendors, exUserVendors: exVendors };
     }
 
-    // Other roles only see leads within their visibility scope.
-    return vendors.filter(v => {
-      // Standard user can see leads assigned to them or their subordinates.
-      return v.assignedTo && visibleUsers.some(visUser => visUser.uid === v.assignedTo);
-    });
-  }, [vendors, currentUser, visibleUsers]);
+    const currentVisibleVendors = vendors.filter(v => 
+      (v.assignedTo && visibleUsers.some(visUser => visUser.uid === v.assignedTo)) &&
+      (!v.assignedTo || !exUserIds.includes(v.assignedTo))
+    );
+    return { visibleVendors: currentVisibleVendors, exUserVendors: [] };
+  }, [vendors, currentUser, visibleUsers, users]);
 
 
   const filteredVendors = useMemo(() => visibleVendors.filter(s => {
@@ -152,6 +155,10 @@ export default function VendorsPage() {
     return `${differenceInDays(new Date(), jsDate)} days`;
   };
 
+  const activeUsers = useMemo(() => {
+    return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role))
+  }, [visibleUsers]);
+
   return (
     <>
       <PageHeader title={t('vendors.title')} description={t('vendors.description')}>
@@ -181,7 +188,7 @@ export default function VendorsPage() {
               <div className="py-4">
                   <Select value={reassignToUserId} onValueChange={setReassignToUserId}>
                     <SelectTrigger><SelectValue placeholder="Select user to assign to..." /></SelectTrigger>
-                    <SelectContent>{visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{activeUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
                   </Select>
               </div>
               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleReassignSelected} disabled={!reassignToUserId}>Reassign Leads</AlertDialogAction></AlertDialogFooter>
@@ -261,6 +268,40 @@ export default function VendorsPage() {
           ))}
           {filteredVendors.length === 0 && <div className="h-24 flex items-center justify-center text-center text-muted-foreground">{t('vendors.noVendors')}</div>}
       </div>
+
+       {exUserVendors.length > 0 && (
+        <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+                <UserX className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-xl font-semibold">Leads Assigned to Ex-Users</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">These leads need to be reassigned to an active team member.</p>
+            <div className="rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Vendor Name</TableHead>
+                            <TableHead>Previously Assigned To</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {exUserVendors.map(vendor => (
+                            <TableRow key={vendor.id}>
+                                <TableCell className="font-medium">{vendor.name}</TableCell>
+                                <TableCell>{getAssignedToName(vendor.assignedTo)}</TableCell>
+                                <TableCell><Badge variant={getStatusVariant(vendor.status)}>{vendor.status}</Badge></TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedVendor(vendor)}>Reassign</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+      )}
     </>
   );
 }

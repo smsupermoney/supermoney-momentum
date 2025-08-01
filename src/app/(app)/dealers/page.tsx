@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users, UserX } from 'lucide-react';
 import type { Dealer, SpokeStatus, UserRole } from '@/lib/types';
 import { DealerDetailsDialog } from '@/components/dealers/dealer-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,7 @@ import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 import { LeadsSummary } from '@/components/leads/leads-summary';
+import { Separator } from '@/components/ui/separator';
 
 export default function DealersPage() {
   const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads } = useApp();
@@ -67,20 +68,23 @@ export default function DealersPage() {
   
   const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
 
-  const visibleDealers = useMemo(() => {
-    if (!currentUser) return [];
+  const { visibleDealers, exUserDealers } = useMemo(() => {
+    if (!currentUser) return { visibleDealers: [], exUserDealers: [] };
     
-    // Managers and Admins see all leads and can filter them.
+    const exUserIds = users.filter(u => u.status === 'Ex-User').map(u => u.uid);
+    const exDealers = dealers.filter(d => d.assignedTo && exUserIds.includes(d.assignedTo));
+
     if (managerialRoles.includes(currentUser.role)) {
-      return dealers;
+      const activeDealers = dealers.filter(d => !d.assignedTo || !exUserIds.includes(d.assignedTo));
+      return { visibleDealers: activeDealers, exUserDealers: exDealers };
     }
 
-    // Other roles only see leads within their visibility scope.
-    return dealers.filter(d => {
-      // Standard user can see leads assigned to them or their subordinates.
-      return d.assignedTo && visibleUsers.some(visUser => visUser.uid === d.assignedTo);
-    });
-  }, [dealers, currentUser, visibleUsers]);
+    const currentVisibleDealers = dealers.filter(d => 
+      (d.assignedTo && visibleUsers.some(visUser => visUser.uid === d.assignedTo)) &&
+      (!d.assignedTo || !exUserIds.includes(d.assignedTo))
+    );
+    return { visibleDealers: currentVisibleDealers, exUserDealers: [] }; // Non-managers don't see ex-user leads
+  }, [dealers, currentUser, visibleUsers, users]);
 
 
   const filteredDealers = useMemo(() => visibleDealers.filter(d => {
@@ -152,6 +156,10 @@ export default function DealersPage() {
     return `${differenceInDays(new Date(), jsDate)} days`;
   };
 
+  const activeUsers = useMemo(() => {
+      return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role))
+  }, [visibleUsers]);
+
   return (
     <>
       <PageHeader title={t('dealers.title')} description={t('dealers.description')}>
@@ -181,7 +189,7 @@ export default function DealersPage() {
               <div className="py-4">
                   <Select value={reassignToUserId} onValueChange={setReassignToUserId}>
                     <SelectTrigger><SelectValue placeholder="Select user to assign to..." /></SelectTrigger>
-                    <SelectContent>{visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role)).map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{activeUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent>
                   </Select>
               </div>
               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleReassignSelected} disabled={!reassignToUserId}>Reassign Leads</AlertDialogAction></AlertDialogFooter>
@@ -269,6 +277,40 @@ export default function DealersPage() {
           ))}
           {filteredDealers.length === 0 && <div className="h-24 flex items-center justify-center text-center text-muted-foreground">{t('dealers.noDealers')}</div>}
       </div>
+
+      {exUserDealers.length > 0 && (
+        <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+                <UserX className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-xl font-semibold">Leads Assigned to Ex-Users</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">These leads need to be reassigned to an active team member.</p>
+            <div className="rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Dealer Name</TableHead>
+                            <TableHead>Previously Assigned To</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {exUserDealers.map(dealer => (
+                            <TableRow key={dealer.id}>
+                                <TableCell className="font-medium">{dealer.name}</TableCell>
+                                <TableCell>{getAssignedToName(dealer.assignedTo)}</TableCell>
+                                <TableCell><Badge variant={getStatusVariant(dealer.status)}>{dealer.status}</Badge></TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedDealer(dealer)}>Reassign</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+      )}
     </>
   );
 }

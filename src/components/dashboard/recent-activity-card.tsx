@@ -24,20 +24,22 @@ const iconMap: Record<TaskType, React.ElementType> = {
 
 
 export function RecentActivityCard({ className }: { className?: string }) {
-  const { activityLogs, currentUser, visibleUsers } = useApp();
+  const { activityLogs, currentUser, visibleUsers, users } = useApp();
   const { t } = useLanguage();
 
   const getVisibleLogs = () => {
     if (!currentUser) return [];
+
+    const activeUserIds = users.filter(u => u.status !== 'Ex-User').map(u => u.uid);
     
-    // BD, BIU and Admin see all activity
+    // BD, BIU and Admin see all activity from active users
     if (['Business Development', 'BIU', 'Admin'].includes(currentUser.role)) {
-      return activityLogs;
+      return activityLogs.filter(log => activeUserIds.includes(log.userId));
     }
     
-    // All other roles see activity from users in their hierarchy.
-    const visibleUserNames = visibleUsers.map(u => u.name);
-    return activityLogs.filter(log => visibleUserNames.includes(log.userName));
+    // All other roles see activity from active users in their hierarchy.
+    const visibleActiveUserIds = visibleUsers.filter(u => u.status !== 'Ex-User').map(u => u.uid);
+    return activityLogs.filter(log => visibleActiveUserIds.includes(log.userId));
   }
 
   const userLogs = getVisibleLogs().slice(0, 7);
