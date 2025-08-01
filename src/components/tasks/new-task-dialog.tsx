@@ -69,11 +69,19 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
   });
 
   useEffect(() => {
-    if(prefilledAnchorId) {
-        form.setValue('associatedEntity', `anchor:${prefilledAnchorId}`);
+    if (open) {
+      form.reset({
+        title: '',
+        associatedEntity: prefilledAnchorId ? `anchor:${prefilledAnchorId}` : '',
+        planType: 'Task',
+        type: '',
+        priority: 'Medium',
+        description: '',
+        assignedTo: currentUser?.uid,
+        dueDate: '',
+      });
     }
-     form.setValue('assignedTo', currentUser?.uid);
-  }, [prefilledAnchorId, currentUser, form, open]);
+  }, [open, prefilledAnchorId, currentUser, form]);
 
   const handleClose = () => {
     form.reset({
@@ -309,7 +317,8 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                 </FormItem>
             )}/>
              <FormField name="description" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Description / Notes</FormLabel><FormControl><Textarea placeholder="Add any details, agenda points, or context..." {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Description / Notes</FormLabel><FormControl><Textarea placeholder="Add any details, agenda points, or context..." {...field} /></FormControl><FormMessage />
+            </FormItem>
             )}/>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
