@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -35,11 +35,13 @@ import { regions } from '@/lib/validation';
 import { Input } from '@/components/ui/input';
 import { LeadsSummary } from '@/components/leads/leads-summary';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { useSearchParams } from 'next/navigation';
 
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor, reassignSelectedLeads, lenders } = useApp();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   // Dialog states
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
@@ -63,6 +65,17 @@ export default function VendorsPage() {
   // Selection & Bulk Action states
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [reassignToUserId, setReassignToUserId] = useState<string>('');
+
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    const assignedToParam = searchParams.get('assignedTo');
+    if (statusParam) {
+      setStatusFilter([statusParam]);
+    }
+    if (assignedToParam) {
+      setAssignedToFilter(assignedToParam);
+    }
+  }, [searchParams]);
 
   const canShowAssignedToFilter = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role), [currentUser]);
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
