@@ -64,6 +64,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         priority: 'Medium',
         description: '',
         assignedTo: currentUser?.uid,
+        dueDate: '',
     },
   });
 
@@ -82,7 +83,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
         type: '',
         priority: 'Medium',
         description: '',
-        dueDate: undefined,
+        dueDate: '',
         assignedTo: currentUser?.uid,
     });
     onOpenChange(false);
