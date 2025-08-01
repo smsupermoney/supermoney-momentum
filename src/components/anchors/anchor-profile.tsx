@@ -30,6 +30,7 @@ import { NewAnchorSPOCDialog } from './new-anchor-spoc-dialog';
 import { Input } from '../ui/input';
 import { EditContactDialog } from './edit-contact-dialog';
 import { EditAnchorSPOCDialog } from './edit-anchor-spoc-dialog';
+import { IndianStatesAndCities } from '@/lib/india-states-cities';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -303,58 +304,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
         </TabsContent>
 
         <TabsContent value="spocs" className="mt-4">
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Territory SPOCs</CardTitle>
-                        {canAddOrEditContact && <Button variant="outline" onClick={() => setIsNewSpocOpen(true)}><PlusCircle className="mr-2 h-4 w-4" />Add SPOC</Button>}
-                    </div>
-                    <CardDescription>Single Points of Contact for specific regions, states, or cities.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                       {spocs.length > 0 ? spocs.map(spoc => (
-                         <div key={spoc.id} className="flex flex-col sm:flex-row items-start justify-between gap-2 border-b pb-4 last:border-b-0">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                    <UserIcon className="h-5 w-5 text-muted-foreground mt-1" />
-                                    <div>
-                                        <p className="font-semibold">{spoc.spocDetails.name}</p>
-                                        <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
-                                        <p className="text-xs text-muted-foreground">{spoc.spocDetails.email || 'N/A'} &bull; {spoc.spocDetails.phone || 'N/A'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                <div className="flex flex-wrap gap-1">
-                                    {Array.isArray(spoc.territories) && spoc.territories.map((territory, index) => (
-                                        <Badge key={index} variant="secondary" className="font-normal">
-                                            <Globe className="h-3 w-3 mr-1.5"/>
-                                            {territory.city || territory.state || territory.region || 'N/A'}
-                                            {territory.division && <span className="ml-1.5 pl-1.5 border-l border-muted-foreground/50">{territory.division}</span>}
-                                        </Badge>
-                                    ))}
-                                </div>
-                                <div className="flex items-center gap-1 w-full justify-end">
-                                    <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => handleEmailClick(spoc.spocDetails)} disabled={!spoc.spocDetails.email}>
-                                        <Mail className="mr-2 h-4 w-4" /> Email
-                                    </Button>
-                                    {canAddOrEditContact && (
-                                        <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => setSpocToEdit(spoc)}>
-                                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                       )) : (
-                        <div className="text-center text-muted-foreground py-8">
-                            <p>No territory-specific SPOCs have been added for this anchor yet.</p>
-                        </div>
-                       )}
-                    </div>
-                </CardContent>
-            </Card>
+           <AnchorSPOCsTable spocs={spocs} canEdit={canAddOrEditContact} onEdit={setSpocToEdit} onEmail={handleEmailClick} onNew={() => setIsNewSpocOpen(true)} />
         </TabsContent>
 
         <TabsContent value="leads" className="mt-4">
@@ -585,5 +535,126 @@ function AnchorLeadsTable({ leads, onViewDetails }: { leads: CombinedLead[]; onV
                 )}
             </div>
         </div>
+    )
+}
+
+function AnchorSPOCsTable({ spocs, canEdit, onEdit, onEmail, onNew }: {
+    spocs: AnchorSPOC[],
+    canEdit: boolean,
+    onEdit: (spoc: AnchorSPOC) => void,
+    onEmail: (spoc: AnchorSPOC['spocDetails']) => void,
+    onNew: () => void,
+}) {
+
+    const [regionFilter, setRegionFilter] = useState('all');
+    const [stateFilter, setStateFilter] = useState('all');
+    const [cityFilter, setCityFilter] = useState('');
+    const [divisionFilter, setDivisionFilter] = useState('');
+
+    const filterOptions = useMemo(() => {
+        const regions = new Set<string>();
+        const states = new Set<string>();
+        const cities = new Set<string>();
+        const divisions = new Set<string>();
+        spocs.forEach(spoc => {
+            spoc.territories.forEach(t => {
+                if (t.region) regions.add(t.region);
+                if (t.state) states.add(t.state);
+                if (t.city) cities.add(t.city);
+                if (t.division) divisions.add(t.division);
+            });
+        });
+        return {
+            regions: ['all', ...Array.from(regions)],
+            states: ['all', ...Array.from(states)],
+            cities: [...Array.from(cities)],
+            divisions: [...Array.from(divisions)],
+        };
+    }, [spocs]);
+    
+    const filteredSpocs = useMemo(() => {
+      return spocs.filter(spoc => {
+        return spoc.territories.some(t => {
+            const regionMatch = regionFilter === 'all' || t.region === regionFilter;
+            const stateMatch = stateFilter === 'all' || t.state === stateFilter;
+            const cityMatch = !cityFilter || (t.city && t.city.toLowerCase().includes(cityFilter.toLowerCase()));
+            const divisionMatch = !divisionFilter || (t.division && t.division.toLowerCase().includes(divisionFilter.toLowerCase()));
+            return regionMatch && stateMatch && cityMatch && divisionMatch;
+        });
+      })
+    }, [spocs, regionFilter, stateFilter, cityFilter, divisionFilter]);
+
+    return (
+      <Card>
+          <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <CardTitle>Territory SPOCs</CardTitle>
+                    <CardDescription>Single Points of Contact for specific regions, states, or cities.</CardDescription>
+                  </div>
+                  {canEdit && <Button variant="outline" size="sm" onClick={onNew}><PlusCircle className="mr-2 h-4 w-4" />Add SPOC</Button>}
+              </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-2 mb-4 flex-wrap">
+                <Select value={regionFilter} onValueChange={setRegionFilter}>
+                    <SelectTrigger className="w-full md:w-auto"><SelectValue placeholder="Filter by Region" /></SelectTrigger>
+                    <SelectContent>
+                        {filterOptions.regions.map(r => <SelectItem key={r} value={r}>{r === 'all' ? 'All Regions' : r}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Select value={stateFilter} onValueChange={setStateFilter}>
+                    <SelectTrigger className="w-full md:w-auto"><SelectValue placeholder="Filter by State" /></SelectTrigger>
+                    <SelectContent>
+                         {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s === 'all' ? 'All States' : s}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Input placeholder="Filter by City..." value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="w-full md:w-auto" />
+                <Input placeholder="Filter by Division..." value={divisionFilter} onChange={e => setDivisionFilter(e.target.value)} className="w-full md:w-auto" />
+            </div>
+
+            <div className="space-y-4">
+               {filteredSpocs.length > 0 ? filteredSpocs.map(spoc => (
+                 <div key={spoc.id} className="flex flex-col sm:flex-row items-start justify-between gap-2 border-b pb-4 last:border-b-0">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                            <UserIcon className="h-5 w-5 text-muted-foreground mt-1" />
+                            <div>
+                                <p className="font-semibold">{spoc.spocDetails.name}</p>
+                                <p className="text-sm text-muted-foreground">{spoc.spocDetails.designation}</p>
+                                <p className="text-xs text-muted-foreground">{spoc.spocDetails.email || 'N/A'} &bull; {spoc.spocDetails.phone || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <div className="flex flex-wrap gap-1">
+                            {Array.isArray(spoc.territories) && spoc.territories.map((territory, index) => (
+                                <Badge key={index} variant="secondary" className="font-normal">
+                                    <Globe className="h-3 w-3 mr-1.5"/>
+                                    {territory.city || territory.state || territory.region || 'N/A'}
+                                    {territory.division && <span className="ml-1.5 pl-1.5 border-l border-muted-foreground/50">{territory.division}</span>}
+                                </Badge>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-1 w-full justify-end">
+                            <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => onEmail(spoc.spocDetails)} disabled={!spoc.spocDetails.email}>
+                                <Mail className="mr-2 h-4 w-4" /> Email
+                            </Button>
+                            {canEdit && (
+                                <Button variant="ghost" size="sm" className="h-8 w-auto px-2" onClick={() => onEdit(spoc)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+               )) : (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No territory-specific SPOCs match the current filters.</p>
+                </div>
+               )}
+            </div>
+          </CardContent>
+      </Card>
     )
 }
