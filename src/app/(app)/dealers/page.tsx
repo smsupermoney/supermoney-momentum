@@ -37,7 +37,7 @@ import { LeadsSummary } from '@/components/leads/leads-summary';
 import { Separator } from '@/components/ui/separator';
 
 export default function DealersPage() {
-  const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads } = useApp();
+  const { dealers, anchors, users, currentUser, updateDealer, visibleUsers, deleteDealer, reassignSelectedLeads, lenders } = useApp();
   const { t } = useLanguage();
   const { toast } = useToast();
 
@@ -58,6 +58,7 @@ export default function DealersPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('all');
   const [productFilter, setProductFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
+  const [lenderFilter, setLenderFilter] = useState('all');
 
   // Selection & Bulk Action states
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
@@ -95,8 +96,9 @@ export default function DealersPage() {
     if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
     if (productFilter !== 'all' && d.product !== productFilter) return false;
     if (zoneFilter !== 'all' && d.zone !== zoneFilter) return false;
+    if (lenderFilter !== 'all' && d.lenderId !== lenderFilter) return false;
     return true;
-  }), [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter]);
+  }), [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
 
   const numSelected = Object.values(selectedRows).filter(Boolean).length;
 
@@ -208,6 +210,7 @@ export default function DealersPage() {
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
+                 <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
                  {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">Users</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
             </div>
             <div className="w-full sm:w-auto flex justify-end gap-2">
