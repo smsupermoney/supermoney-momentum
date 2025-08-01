@@ -539,15 +539,19 @@ function InactiveUsersReport() {
     const { visibleUsers } = useApp();
     const now = new Date();
 
+    const getActiveUsers = (users: UserType[]) => {
+        return users.filter(u => u.status !== 'Ex-User');
+    }
+
     const inactive24h = useMemo(() => {
-        return visibleUsers.filter(u => 
+        return getActiveUsers(visibleUsers).filter(u => 
             (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
             (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 1)))
         );
     }, [visibleUsers, now]);
 
     const inactive72h = useMemo(() => {
-        return visibleUsers.filter(u => 
+        return getActiveUsers(visibleUsers).filter(u => 
             (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
             (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 3)))
         );
