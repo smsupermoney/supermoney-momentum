@@ -11,6 +11,7 @@ import type { SpokeStatus } from '@/lib/types';
 import { ChartContainer, ChartTooltipContent } from '../ui/chart';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, isWithinInterval } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 const getFiscalYearStart = (date: Date) => {
     const year = date.getFullYear();
@@ -22,6 +23,7 @@ const getFiscalYearStart = (date: Date) => {
 
 export function SalesPipelineCard() {
     const { users, dealers, vendors, currentUser } = useApp();
+    const router = useRouter();
     
     const salesTeam = useMemo(() => {
         return users.filter(u => (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') && u.status !== 'Ex-User');
@@ -39,6 +41,7 @@ export function SalesPipelineCard() {
     });
     
     const [period, setPeriod] = useState<'month' | 'quarter' | 'ytd' | 'inception'>('inception');
+    const [leadType, setLeadType] = useState<'dealer' | 'vendor'>('dealer');
     
     const canChangeUser = useMemo(() => {
         if (!currentUser) return false;
@@ -47,7 +50,8 @@ export function SalesPipelineCard() {
 
     const chartData = useMemo(() => {
         if (!selectedUserId) return [];
-        const allUserLeads = [...dealers, ...vendors].filter(l => l.assignedTo === selectedUserId);
+        
+        const allUserLeads = (leadType === 'dealer' ? dealers : vendors).filter(l => l.assignedTo === selectedUserId);
 
         const now = new Date();
         let leadsInPeriod = allUserLeads;
@@ -82,21 +86,38 @@ export function SalesPipelineCard() {
 
         const totalFromStatus = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
 
-        // This ensures the "Leads Received" bar reflects the sum of all filtered leads' statuses
         if (totalFromStatus > 0) {
              return [
                 { name: 'Leads Received', value: leadsReceived, fill: 'hsl(var(--chart-1))' },
                 ...Object.entries(statusCounts).map(([name, value], index) => ({
                     name,
                     value,
-                    fill: `hsl(var(--chart-${(index % 5) + 2}))` // Cycle through chart colors
+                    fill: `hsl(var(--chart-${(index % 5) + 2}))`
                 }))
             ];
         }
         
         return [];
 
-    }, [selectedUserId, dealers, vendors, period]);
+    }, [selectedUserId, dealers, vendors, period, leadType]);
+    
+    const handleBarClick = (data: any) => {
+        if (!data || !data.activePayload || data.activePayload.length === 0) return;
+        
+        const clickedBar = data.activePayload[0].payload;
+        const status = clickedBar.name;
+        
+        if(status === 'Leads Received') return; // Don't navigate for the total bar
+
+        const queryParams = new URLSearchParams({
+            status: status,
+            assignedTo: selectedUserId,
+        });
+
+        const targetPath = leadType === 'dealer' ? '/dealers' : '/suppliers';
+        router.push(`${targetPath}?${queryParams.toString()}`);
+    };
+
 
     return (
         <Card>
@@ -107,6 +128,12 @@ export function SalesPipelineCard() {
                         <CardDescription>Individual sales member pipeline performance.</CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Tabs value={leadType} onValueChange={(v) => setLeadType(v as any)} className="w-full sm:w-auto">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="dealer">Dealer</TabsTrigger>
+                                <TabsTrigger value="vendor">Vendor</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
                         {canChangeUser && (
                             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                                 <SelectTrigger className="w-full sm:w-auto min-w-[180px]">
@@ -133,11 +160,11 @@ export function SalesPipelineCard() {
             <CardContent>
                 {selectedUserId && chartData.length > 0 ? (
                      <ChartContainer config={{ value: { label: "Leads" } }} className="h-[350px] w-full">
-                        <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 40 }}>
+                        <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 40 }} onClick={handleBarClick}>
                              <XAxis type="number" hide />
                              <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={10} width={120} />
                              <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent hideIndicator />} />
-                             <Bar dataKey="value" radius={[5, 5, 5, 5]} barSize={20}>
+                             <Bar dataKey="value" radius={[5, 5, 5, 5]} barSize={20} className="cursor-pointer">
                                 <LabelList dataKey="value" position="right" offset={8} className="fill-foreground" fontSize={12} />
                                 {chartData.map((entry) => (
                                     <Cell key={`cell-${entry.name}`} fill={entry.fill} />
