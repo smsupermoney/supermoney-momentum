@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, endOfQuarter, isWithinInterval, isPast, format, subDays } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, subDays, subHours } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2, LogOut, Briefcase } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -41,121 +41,68 @@ const truncateForExcel = (data: any[]): any[] => {
 // Main Page Component
 export default function ReportsPage() {
   const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } = useApp();
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [isDownloadingRecent, setIsDownloadingRecent] = useState(false);
 
-  const handleDownload = () => {
-        setIsDownloading(true);
+  const generateAndDownloadWorkbook = (data: Record<string, any[]>, filename: string) => {
+    const wb = XLSX.utils.book_new();
+    for (const sheetName in data) {
+      const processedData = truncateForExcel(data[sheetName]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedData), sheetName);
+    }
+    XLSX.writeFile(wb, filename);
+  };
+  
+  const handleDownloadRecent = () => {
+    setIsDownloadingRecent(true);
+    const sinceDate = subHours(new Date(), 72);
 
-        // 1. Prepare data
-        const processedUsers = truncateForExcel(users.map(u => ({
-            Name: u.name,
-            Email: u.email,
-            Role: u.role,
-            Region: u.region || 'N/A',
-            Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A'
-        })));
+    const getSpokeData = (spoke: Dealer | Vendor) => ({
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
+    });
 
-        const processedAnchors = truncateForExcel(anchors.map(a => {
-            const primaryContact = a.contacts.find(c => c.isPrimary) || a.contacts[0];
-            return {
-                Name: a.name,
-                Industry: a.industry,
-                Status: a.status,
-                'Annual Turnover': a.annualTurnover,
-                'Credit Rating': a.creditRating || 'N/A',
-                Address: a.address || 'N/A',
-                'Lead Score': a.leadScore,
-                'Lead Score Reason': a.leadScoreReason,
-                'Primary Contact Name': primaryContact?.name || 'N/A',
-                'Primary Contact Email': primaryContact?.email || 'N/A',
-                'Primary Contact Phone': primaryContact?.phone || 'N/A',
-                'Created By': users.find(u => u.uid === a.createdBy)?.name || 'N/A',
-                'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'),
-            }
-        }));
-        
-        const getSpokeData = (spoke: Dealer | Vendor) => ({
-            Name: spoke.name,
-            'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '),
-            Email: spoke.email || 'N/A',
-            'Onboarding Status': spoke.status,
-            'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
-            'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
-            'Product Interest': spoke.product || 'N/A',
-            'Lead Type': spoke.leadType || 'N/A',
-            'Lead Score': spoke.leadScore,
-            'Lead Score Reason': spoke.leadScoreReason,
-            'Potential Deal Value (INR)': spoke.dealValue,
-            'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
-        });
-        
-        const processedDealers = truncateForExcel(dealers.map(getSpokeData));
-        const processedVendors = truncateForExcel(vendors.map(getSpokeData));
-
-        const processedTasks = truncateForExcel(tasks.map(t => {
-            let associatedWith = 'N/A';
-            if (t.associatedWith.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === t.associatedWith.anchorId)?.name}`;
-            else if (t.associatedWith.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === t.associatedWith.dealerId)?.name}`;
-            else if (t.associatedWith.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === t.associatedWith.vendorId)?.name}`;
-            
-            return {
-                Title: t.title,
-                'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A',
-                'Associated With': associatedWith,
-                Type: t.type,
-                Status: t.status,
-                Priority: t.priority,
-                'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'),
-                Description: t.description,
-                'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'),
-            }
-        }));
-        
-        const processedActivityLogs = truncateForExcel(activityLogs.map(log => {
-             let associatedWith = 'N/A';
-            if (log.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === log.anchorId)?.name}`;
-            else if (log.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === log.dealerId)?.name}`;
-            else if (log.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === log.vendorId)?.name}`;
-
-            return {
-                'User': log.userName,
-                'Timestamp': format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'),
-                'Type': log.type,
-                'Title': log.title,
-                'Outcome': log.outcome,
-                'Associated With': associatedWith,
-                'Related Task ID': log.taskId || 'N/A'
-            }
-        }));
-
-        const processedDailyActivities = truncateForExcel(dailyActivities.map(activity => ({
-            'User': activity.userName,
-            'Timestamp': format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'),
-            'Type': activity.activityType,
-            'Title': activity.title,
-            'Notes': activity.notes,
-            'Location': activity.location ? `${activity.location.latitude}, ${activity.location.longitude}` : 'N/A',
-            'Images': (activity.images || []).join(', '),
-            'Associated Anchor': activity.anchorName || 'N/A',
-            'Associated Dealer': activity.dealerName || 'N/A',
-            'Associated Vendor': activity.vendorName || 'N/A',
-        })));
-
-        // 2. Create workbook and worksheets
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedUsers), "Users");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedAnchors), "Anchors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDealers), "Dealers");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedVendors), "Vendors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedTasks), "Tasks");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedActivityLogs), "Interaction Logs");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDailyActivities), "Daily Activities");
-
-        // 3. Trigger download
-        XLSX.writeFile(wb, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-
-        setIsDownloading(false);
+    const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string }) => {
+        const dateToCheck = item.updatedAt || item.createdAt || item.timestamp;
+        if (!dateToCheck) return false;
+        return isAfter(new Date(dateToCheck), sinceDate);
     };
+
+    const recentData = {
+      "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": anchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? format(new Date(a.updatedAt), 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Dealers": dealers.filter(isRecent).map(getSpokeData),
+      "Vendors": vendors.filter(isRecent).map(getSpokeData),
+      "Tasks": tasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'), 'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? format(new Date(t.updatedAt), 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Interaction Logs": activityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": dailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Lenders": [], // Lenders don't have timestamps, so we exclude them from "recent"
+    };
+
+    generateAndDownloadWorkbook(recentData, `Supermoney_CRM_Recent_Changes_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    setIsDownloadingRecent(false);
+  };
+
+  const handleDownloadAll = () => {
+    setIsDownloadingAll(true);
+    
+    const getSpokeData = (spoke: Dealer | Vendor) => ({
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
+    });
+
+    const allData = {
+      "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": anchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm') })),
+      "Dealers": dealers.map(getSpokeData),
+      "Vendors": vendors.map(getSpokeData),
+      "Tasks": tasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'), 'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm') })),
+      "Interaction Logs": activityLogs.map(log => ({ User: log.userName, Timestamp: format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": dailyActivities.map(activity => ({ User: activity.userName, Timestamp: format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Lenders": lenders.map(l => ({ Name: l.name }))
+    };
+
+    generateAndDownloadWorkbook(allData, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    setIsDownloadingAll(false);
+  };
 
   const getPageTitle = (role: UserRole) => {
     switch (role) {
@@ -196,10 +143,16 @@ export default function ReportsPage() {
   }
 
   const adminActions = (
-    <Button onClick={handleDownload} disabled={isDownloading} size="sm" variant="outline">
-      {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      Download All Data
-    </Button>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <Button onClick={handleDownloadRecent} disabled={isDownloadingRecent} size="sm" variant="outline">
+        {isDownloadingRecent ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+        Download Recent (72h)
+      </Button>
+      <Button onClick={handleDownloadAll} disabled={isDownloadingAll} size="sm" variant="outline">
+        {isDownloadingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+        Download All Data
+      </Button>
+    </div>
   );
 
   return (
@@ -749,4 +702,5 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
 
