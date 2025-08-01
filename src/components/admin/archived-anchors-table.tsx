@@ -42,16 +42,16 @@ export function ArchivedAnchorsTable() {
                 <TableHead>Company Name</TableHead>
                 <TableHead>Industry</TableHead>
                 <TableHead>Archived At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {archivedAnchors.map((anchor) => (
                 <TableRow key={anchor.id}>
-                  <TableCell className="font-medium">{anchor.name}</TableCell>
-                  <TableCell>{anchor.industry}</TableCell>
-                  <TableCell>{anchor.updatedAt ? format(new Date(anchor.updatedAt), 'PP') : 'N/A'}</TableCell>
-                  <TableCell className="text-right space-x-2">
+                  <TableCell className="font-medium py-2 px-4">{anchor.name}</TableCell>
+                  <TableCell className="py-2 px-4">{anchor.industry}</TableCell>
+                  <TableCell className="py-2 px-4">{anchor.updatedAt ? format(new Date(anchor.updatedAt), 'PP') : 'N/A'}</TableCell>
+                  <TableCell className="text-right space-x-2 py-2 px-4">
                     <Button size="sm" variant="outline" onClick={() => handleReactivate(anchor)}>Reactivate</Button>
                   </TableCell>
                 </TableRow>

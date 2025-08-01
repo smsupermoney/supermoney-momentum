@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
-import { PlusCircle, Trash2, ArrowRight, Pencil, UserX } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowRight, Pencil, UserX, Search } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
@@ -198,14 +198,14 @@ function LenderManagement() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Lender Name</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
+                                <TableHead className="text-right w-[100px]">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {lenders.map((lender) => (
                                 <TableRow key={lender.id}>
-                                    <TableCell>{lender.name}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="py-2 px-4">{lender.name}</TableCell>
+                                    <TableCell className="text-right py-2 px-4">
                                         <Button variant="ghost" size="icon" onClick={() => deleteLender(lender.id)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
@@ -230,6 +230,7 @@ export default function AdminPage() {
   const [anchorAssignments, setAnchorAssignments] = useState<Record<string, string>>({});
   const [userToConfirm, setUserToConfirm] = useState<User | null>(null);
   const [confirmationType, setConfirmationType] = useState<'delete' | 'archive' | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   const assignableUsers = useMemo(() => {
     if (!currentUser) return [];
@@ -247,6 +248,12 @@ export default function AdminPage() {
   const unassignedDealers = dealers.filter((d) => d.assignedTo === null || d.status === 'Unassigned Lead');
   const unassignedVendors = vendors.filter((s) => s.assignedTo === null || s.status === 'Unassigned Lead');
   const allActiveAnchors = useMemo(() => anchors.filter(a => a.status === 'Active'), [anchors]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => 
+        user.name.toLowerCase().includes(userSearchQuery.toLowerCase())
+    );
+  }, [users, userSearchQuery]);
 
 
   const handleUserAssignmentChange = (leadId: string, userId: string) => {
@@ -422,6 +429,15 @@ export default function AdminPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    <div className="mb-4 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by user name..."
+                            className="w-full max-w-sm pl-9"
+                            value={userSearchQuery}
+                            onChange={(e) => setUserSearchQuery(e.target.value)}
+                        />
+                    </div>
                     {/* Desktop User Table */}
                     <div className="hidden rounded-lg border md:block">
                       <Table>
@@ -433,23 +449,23 @@ export default function AdminPage() {
                             <TableHead>{t('admin.table.role')}</TableHead>
                             <TableHead>{t('admin.table.manager')}</TableHead>
                             <TableHead>{t('admin.table.region')}</TableHead>
-                            <TableHead className="text-right">{t('admin.table.action')}</TableHead>
+                            <TableHead className="text-right w-[120px]">{t('admin.table.action')}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {users.map((user) => (
+                          {filteredUsers.map((user) => (
                             <TableRow key={user.uid} className={user.status === 'Ex-User' ? 'bg-muted/50' : ''}>
-                              <TableCell className="font-medium">{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>
+                              <TableCell className="font-medium py-2 px-4">{user.name}</TableCell>
+                              <TableCell className="py-2 px-4">{user.email}</TableCell>
+                              <TableCell className="py-2 px-4">
                                 <Badge variant={user.status === 'Ex-User' ? 'destructive' : 'secondary'}>
                                   {user.status || 'Active'}
                                 </Badge>
                               </TableCell>
-                              <TableCell>{user.role}</TableCell>
-                              <TableCell>{getManagerName(user.managerId)}</TableCell>
-                              <TableCell>{user.region || 'N/A'}</TableCell>
-                              <TableCell className="text-right space-x-2">
+                              <TableCell className="py-2 px-4">{user.role}</TableCell>
+                              <TableCell className="py-2 px-4">{getManagerName(user.managerId)}</TableCell>
+                              <TableCell className="py-2 px-4">{user.region || 'N/A'}</TableCell>
+                              <TableCell className="text-right space-x-1 py-2 px-4">
                                 <Button variant="ghost" size="icon" onClick={() => setUserToEdit(user)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
@@ -471,7 +487,7 @@ export default function AdminPage() {
                     </div>
                     {/* Mobile User Cards */}
                     <div className="space-y-4 md:hidden">
-                      {users.map((user) => (
+                      {filteredUsers.map((user) => (
                         <Card key={user.uid} className={`p-0 ${user.status === 'Ex-User' ? 'bg-muted/50' : ''}`}>
                           <CardHeader className="p-4 pb-2">
                             <div className="flex justify-between items-start">
