@@ -150,8 +150,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userProfile = await firestoreService.checkAndCreateUser(user);
           if (userProfile) {
-            setCurrentUser(userProfile);
-            sessionStorage.setItem('currentUser', JSON.stringify(userProfile));
+            const updatedProfile = { ...userProfile, lastLogin: new Date().toISOString() };
+            setCurrentUser(updatedProfile);
+            await firestoreService.updateUser(updatedProfile);
+            sessionStorage.setItem('currentUser', JSON.stringify(updatedProfile));
 
             // Fetch all other data AFTER the user profile is confirmed.
             const allUsers = await firestoreService.getUsers();
@@ -404,8 +406,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (password !== 'test123') return false;
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (user) {
-      setCurrentUser(user);
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
+      const updatedUser = { ...user, lastLogin: new Date().toISOString() };
+      setCurrentUser(updatedUser);
+      setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+      sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
       return true;
     }
     return false;

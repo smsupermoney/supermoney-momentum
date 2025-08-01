@@ -16,6 +16,7 @@ export interface User {
     states: string[];
     cities: string[];
   };
+  lastLogin?: string;
 }
 
 export type LeadStatus = 'Lead' | 'Initial Contact' | 'Proposal' | 'Negotiation' | 'Onboarding' | 'Active' | 'Unassigned Lead' | 'Assigned' | 'Contacted' | 'Rejected' | 'Archived' | 'Pending Approval';

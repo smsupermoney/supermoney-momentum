@@ -4,12 +4,12 @@
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, startOfQuarter, endOfMonth as dateFnsEndOfMonth } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, subDays } from 'date-fns';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2, LogOut, Briefcase } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
@@ -330,7 +330,7 @@ function LeadsDashboard() {
                 break;
             case 'this_month':
             default:
-                interval = { start: startOfMonth(now), end: dateFnsEndOfMonth(now) };
+                interval = { start: startOfMonth(now), end: endOfMonth(now) };
                 break;
         }
 
@@ -380,6 +380,7 @@ function LeadsDashboard() {
     return (
         <div className="grid gap-4">
         <AdminDataChat />
+        <InactiveUsersReport />
         <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
         <Card>
             <CardHeader>
@@ -533,6 +534,84 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
         </Card>
     )
 }
+
+function InactiveUsersReport() {
+    const { visibleUsers } = useApp();
+    const now = new Date();
+
+    const inactive24h = useMemo(() => {
+        return visibleUsers.filter(u => 
+            (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
+            (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 1)))
+        );
+    }, [visibleUsers, now]);
+
+    const inactive72h = useMemo(() => {
+        return visibleUsers.filter(u => 
+            (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
+            (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 3)))
+        );
+    }, [visibleUsers, now]);
+    
+    if (inactive24h.length === 0 && inactive72h.length === 0) return null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <LogOut className="h-5 w-5 text-destructive" />
+                    <CardTitle>Inactive User Report</CardTitle>
+                </div>
+                <CardDescription>Team members who have not logged in recently.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Not Logged in for > 24 Hours</h4>
+                    {inactive24h.length > 0 ? (
+                        <Table>
+                            <TableBody>
+                                {inactive24h.map(user => (
+                                    <TableRow key={user.uid}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
+                                        </TableCell>
+                                        <TableCell className="text-right text-xs text-muted-foreground">
+                                            {user.lastLogin ? format(new Date(user.lastLogin), 'PPp') : 'Never'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">All team members have logged in recently.</p>
+                    )}
+                </div>
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Not Logged in for > 72 Hours</h4>
+                    {inactive72h.length > 0 ? (
+                         <Table>
+                            <TableBody>
+                                {inactive72h.map(user => (
+                                     <TableRow key={user.uid}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
+                                        </TableCell>
+                                         <TableCell className="text-right text-xs text-muted-foreground">
+                                            {user.lastLogin ? format(new Date(user.lastLogin), 'PPp') : 'Never'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">No users inactive for over 72 hours.</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 function KeyHighlights({ period, anchors, activityLogs, users }: { period: string, anchors: Anchor[], activityLogs: ActivityLog[], users: UserType[]}) {
     const { t } = useApp();
