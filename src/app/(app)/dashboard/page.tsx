@@ -17,6 +17,7 @@ import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
 import { Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types';
+import { DocsApprovalQueue } from '@/components/dashboard/docs-approval-queue';
 
 
 export default function DashboardPage() {
@@ -38,7 +39,7 @@ export default function DashboardPage() {
         const newLeads = [...dealers, ...vendors].filter(lead => 
             lead.assignedTo === currentUser.uid &&
             new Date(lead.createdAt) > yesterday
-        ).map(l => ({ id: l.id, name: l.name, type: 'contactNumber' in l ? 'Dealer' : 'Vendor', status: l.status}));
+        ).map(l => ({ id: l.id, name: l.name, type: 'contactNumbers' in l ? 'Dealer' : 'Vendor', status: l.status}));
 
 
         const digest = await generateDailyDigest({
@@ -173,6 +174,7 @@ function ManagerDashboard() {
 function AdminDashboard() {
     return (
         <>
+            <DocsApprovalQueue />
             <SalesPipelineCard />
             <TeamProgressCard />
             <StaleLeadsCard />
