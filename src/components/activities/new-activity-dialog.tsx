@@ -128,6 +128,13 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     setIsFetchingLocation(true);
     setLocationAddress(null);
     form.clearErrors("locationAddress");
+    
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
@@ -146,9 +153,10 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
         }
       },
       () => {
-        toast({ variant: 'destructive', title: 'Unable to retrieve location', description: 'Please ensure location services are enabled.' });
+        toast({ variant: 'destructive', title: 'Unable to retrieve location', description: 'Please ensure location services are enabled and try again.' });
         setIsFetchingLocation(false);
-      }
+      },
+      options
     );
   };
 
