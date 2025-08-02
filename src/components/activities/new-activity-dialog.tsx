@@ -51,7 +51,16 @@ const formSchema = z.object({
   images: z.array(z.string()).optional(),
   activityTimestamp: z.string().optional(),
   logForUserId: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.activityType === 'Site Visit' && !data.locationAddress) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['locationAddress'],
+            message: 'Location capture is required for Site Visits. Please use the "Capture Location" button.',
+        });
+    }
 });
+
 
 type NewActivityFormValues = z.infer<typeof formSchema>;
 
@@ -60,7 +69,7 @@ interface NewActivityDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'];
 
 export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps) {
   const { currentUser, addDailyActivity, anchors, dealers, vendors, visibleUsers, users } = useApp();
@@ -93,7 +102,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
   });
 
   const allEntities = [
-      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: `(Anchor) ${a.name}`, group: 'Anchors' })),
+      ...anchors.filter(a => a.status !== 'Archived').map(a => ({ value: `anchor:${a.id}`, label: `(Anchor) ${a.name}`, group: 'Anchors' })),
       ...dealers.map(d => ({ value: `dealer:${d.id}`, label: `(Dealer) ${d.name}`, group: 'Dealers' })),
       ...vendors.map(v => ({ value: `vendor:${v.id}`, label: `(Vendor) ${v.name}`, group: 'Vendors' })),
   ];
@@ -118,6 +127,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
     }
     setIsFetchingLocation(true);
     setLocationAddress(null);
+    form.clearErrors("locationAddress");
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
@@ -362,7 +372,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                                     <CommandEmpty>No entity found.</CommandEmpty>
                                     <CommandList>
                                         <CommandGroup heading="Anchors">
-                                            {anchors.map((anchor) => (
+                                            {anchors.filter(a => a.status !== 'Archived').map((anchor) => (
                                                 <CommandItem
                                                   key={anchor.id}
                                                   value={`(Anchor) ${anchor.name}`}
@@ -456,6 +466,7 @@ export function NewActivityDialog({ open, onOpenChange }: NewActivityDialogProps
                          ))}
                      </div>
                  )}
+                 <FormField control={form.control} name="locationAddress" render={({ field }) => <FormItem><FormMessage /></FormItem>} />
             </div>
 
             <DialogFooter>
