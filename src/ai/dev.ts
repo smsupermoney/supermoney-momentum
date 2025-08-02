@@ -14,3 +14,4 @@ import '@/ai/flows/generate-highlights-flow.ts';
 import '@/ai/flows/send-notification-email-flow.ts';
 import '@/ai/flows/generate-daily-digest-flow.ts';
 import '@/ai/flows/reverse-geocode-flow.ts';
+import '@/ai/flows/generate-sales-coaching-flow.ts';
