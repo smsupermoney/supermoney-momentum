@@ -10,7 +10,7 @@ import { NewLeadDialog } from '@/components/leads/new-lead-dialog';
 import { BulkUploadDialog } from '@/components/leads/bulk-upload-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users, UserX } from 'lucide-react';
+import { PlusCircle, Upload, Sparkles, Trash2, Search, Flame, Users, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Vendor, SpokeStatus, UserRole } from '@/lib/types';
 import { VendorDetailsDialog } from '@/components/suppliers/supplier-details-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,8 @@ import { LeadsSummary } from '@/components/leads/leads-summary';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useSearchParams } from 'next/navigation';
 
+const PAGE_SIZE = 25;
+
 export default function VendorsPage() {
   const { vendors, anchors, users, currentUser, updateVendor, visibleUsers, deleteVendor, reassignSelectedLeads, lenders } = useApp();
   const { t } = useLanguage();
@@ -61,6 +63,9 @@ export default function VendorsPage() {
   const [productFilter, setProductFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
   const [lenderFilter, setLenderFilter] = useState('all');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Selection & Bulk Action states
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
@@ -112,6 +117,18 @@ export default function VendorsPage() {
     if (lenderFilter !== 'all' && s.lenderId !== lenderFilter) return false;
     return true;
   }), [visibleVendors, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
+
+  const paginatedVendors = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredVendors.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredVendors, currentPage]);
+
+  const totalPages = Math.ceil(filteredVendors.length / PAGE_SIZE);
 
   const numSelected = Object.values(selectedRows).filter(Boolean).length;
 
@@ -228,7 +245,7 @@ export default function VendorsPage() {
                     placeholder="Status"
                  />
                  <Select value={leadTypeFilter} onValueChange={setLeadTypeFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lead Types" /></SelectTrigger><SelectContent><SelectItem value="all">Lead Types</SelectItem>{leadTypes.map(lt => <SelectItem key={lt} value={lt}>{lt}</SelectItem>)}</SelectContent></Select>
-                 <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
+                 <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.filter(a => a.status !== 'Archived').map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
                  <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
@@ -253,7 +270,7 @@ export default function VendorsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVendors.map(vendor => (
+            {paginatedVendors.map(vendor => (
               <TableRow key={vendor.id} data-state={selectedRows[vendor.id] && "selected"}>
                  {canBulkAction && <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedRows[vendor.id] || false} onCheckedChange={(checked) => handleRowSelect(vendor.id, checked as boolean)} aria-label="Select row" /></TableCell>}
                 <TableCell className="font-medium hover:text-primary cursor-pointer" onClick={() => setSelectedVendor(vendor)}>
@@ -277,7 +294,7 @@ export default function VendorsPage() {
       </div>
 
       <div className="grid gap-4 md:hidden">
-          {filteredVendors.map(vendor => (
+          {paginatedVendors.map(vendor => (
               <Card key={vendor.id} className="relative">
                   {canBulkAction && <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}><Checkbox className="h-5 w-5" checked={selectedRows[vendor.id] || false} onCheckedChange={(checked) => handleRowSelect(vendor.id, checked as boolean)} aria-label="Select row" /></div>}
                   <div onClick={() => setSelectedVendor(vendor)} className="cursor-pointer">
@@ -296,6 +313,32 @@ export default function VendorsPage() {
           ))}
           {filteredVendors.length === 0 && <div className="h-24 flex items-center justify-center text-center text-muted-foreground">{t('vendors.noVendors')}</div>}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+       )}
 
        {exUserVendors.length > 0 && (
         <div className="mt-8">

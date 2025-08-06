@@ -209,7 +209,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {anchors.filter(a => a.status === 'Active').map((anchor) => (
+                          {anchors.filter(a => a.status !== 'Archived').map((anchor) => (
                             <SelectItem key={anchor.id} value={anchor.id}>
                               {anchor.name}
                             </SelectItem>

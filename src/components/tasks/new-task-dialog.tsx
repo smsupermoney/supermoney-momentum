@@ -50,7 +50,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
   const isManager = currentUser && managerRoles.includes(currentUser.role);
   
   const allEntities = [
-      ...anchors.map(a => ({ value: `anchor:${a.id}`, label: a.name, group: 'Anchors' })),
+      ...anchors.filter(a => a.status !== 'Archived').map(a => ({ value: `anchor:${a.id}`, label: a.name, group: 'Anchors' })),
       ...dealers.map(d => ({ value: `dealer:${d.id}`, label: d.name, group: 'Dealers' })),
       ...vendors.map(v => ({ value: `vendor:${v.id}`, label: v.name, group: 'Vendors' })),
   ];
@@ -205,7 +205,7 @@ export function NewTaskDialog({ open, onOpenChange, prefilledAnchorId }: NewTask
                                     <CommandEmpty>No entity found.</CommandEmpty>
                                     <CommandList>
                                         <CommandGroup heading="Anchors">
-                                            {anchors.map((item) => (
+                                            {anchors.filter(a => a.status !== 'Archived').map((item) => (
                                                 <CommandItem
                                                   key={item.id}
                                                   value={item.name}

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -25,6 +26,7 @@ export default function TasksPage() {
     if (currentUser.role === 'Business Development') {
       return anchor.status === 'Onboarding';
     }
+    // Filter out archived anchors for all other roles
     return anchor.status !== 'Archived';
   });
 

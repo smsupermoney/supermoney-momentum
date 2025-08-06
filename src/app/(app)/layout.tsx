@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -34,20 +34,49 @@ import { useApp } from '@/contexts/app-context';
 import { useLanguage } from '@/contexts/language-context';
 import { Logo } from '@/components/logo';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { cn } from '@/lib/utils';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, isLoading } = useApp();
+  const { currentUser, isLoading: isAppLoading } = useApp();
   const { t } = useLanguage();
+  
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !currentUser) {
+    if (!isAppLoading && !currentUser) {
       router.replace('/login');
     }
-  }, [currentUser, isLoading, router]);
+  }, [currentUser, isAppLoading, router]);
 
-  if (isLoading || !currentUser) {
+  useEffect(() => {
+    // Start loading indicator on route change
+    setIsPageLoading(true);
+    
+    // Set a timeout to only show the loader for navigations that take a while
+    loadingTimeoutRef.current = setTimeout(() => {
+       // The actual state update is handled below
+    }, 500); // Only show loader if navigation takes > 500ms
+
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    // End loading indicator once the children re-render (new page is ready)
+    if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+    }
+    setIsPageLoading(false);
+  }, [children]);
+
+
+  if (isAppLoading || !currentUser) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -116,7 +145,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <UserSwitcher />
         </SidebarFooter>
       </Sidebar>
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+         <div
+            className={cn(
+              "absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-300",
+              isPageLoading ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-4 md:hidden">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
