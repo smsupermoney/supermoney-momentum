@@ -43,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
   
   const [isPageLoading, setIsPageLoading] = useState(false);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previousPathname = useRef(pathname);
 
   useEffect(() => {
     if (!isAppLoading && !currentUser) {
@@ -52,29 +52,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [currentUser, isAppLoading, router]);
 
   useEffect(() => {
-    // Start loading indicator on route change
-    setIsPageLoading(true);
-    
-    // Set a timeout to only show the loader for navigations that take a while
-    loadingTimeoutRef.current = setTimeout(() => {
-       // The actual state update is handled below
-    }, 500); // Only show loader if navigation takes > 500ms
+    if (pathname !== previousPathname.current) {
+        setIsPageLoading(true);
+        // Set a timeout to hide the loader. This ensures it disappears even if
+        // the new page loads instantly from cache.
+        const timer = setTimeout(() => {
+            setIsPageLoading(false);
+        }, 1000); // Adjust timeout as needed
 
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [pathname]);
+        previousPathname.current = pathname;
 
-  useEffect(() => {
-    // End loading indicator once the children re-render (new page is ready)
-    if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
+        return () => clearTimeout(timer);
     }
-    setIsPageLoading(false);
-  }, [children]);
-
+}, [pathname]);
 
   if (isAppLoading || !currentUser) {
     return (
