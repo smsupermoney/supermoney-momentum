@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,10 +28,10 @@ interface SummaryData {
 }
 
 export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
-    const { currentUser, visibleUsers } = useApp();
+    const { currentUser, users } = useApp(); // Use all users, not just visibleUsers
     const [statusFilter, setStatusFilter] = useState<SpokeStatus | 'all'>('all');
 
-    const isManager = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
+    const isManager = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'].includes(currentUser.role), [currentUser]);
 
     const summaryData = useMemo(() => {
         const filteredLeads = statusFilter === 'all'
@@ -44,8 +43,12 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
         };
 
         if (isManager) {
-            data.byUser = visibleUsers
-                .filter(u => u.status !== 'Ex-User' && u.uid !== currentUser?.uid && (u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Telecaller'))
+            // Base the breakdown on all active sales users in the system.
+            data.byUser = users
+                .filter(u => 
+                    u.status !== 'Ex-User' && 
+                    ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role)
+                )
                 .map(user => ({
                     name: user.name,
                     totalLeads: filteredLeads.filter(l => l.assignedTo === user.uid).length
@@ -56,7 +59,7 @@ export function LeadsSummary({ leads, type }: LeadsSummaryProps) {
 
         return data;
 
-    }, [leads, statusFilter, isManager, visibleUsers, currentUser]);
+    }, [leads, statusFilter, isManager, users]);
 
     return (
         <Card>
