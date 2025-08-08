@@ -18,27 +18,39 @@ type InactiveUser = {
     type: 'Inactive User';
 }
 
+// Helper to determine the last working day, avoiding client/server mismatches.
+const getLastWorkingDay = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // Sunday is 0, Monday is 1, etc.
+    
+    let lastWorkingDay = new Date(now);
+    if (dayOfWeek === 0) { // Sunday
+        lastWorkingDay.setDate(now.getDate() - 2); // Check since Friday
+    } else if (dayOfWeek === 1) { // Monday
+        lastWorkingDay.setDate(now.getDate() - 3); // Check since Friday
+    } else { // Tuesday to Saturday
+        lastWorkingDay.setDate(now.getDate() - 1); // Check since yesterday
+    }
+    lastWorkingDay.setHours(0, 0, 0, 0);
+    return lastWorkingDay;
+};
+
+
 export function StaleLeadsCard() {
     const { dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
 
     const { staleLeads, inactiveUsers } = useMemo(() => {
+        // Hydration safety: Defer date-sensitive calculations until mounted on the client.
+        if (typeof window === 'undefined') {
+            return { staleLeads: [], inactiveUsers: [] };
+        }
+        
         const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'];
         if (!currentUser || !managerRoles.includes(currentUser?.role || '')) {
             return { staleLeads: [], inactiveUsers: [] };
         }
-
-        const now = new Date();
-        const dayOfWeek = now.getDay(); // Sunday is 0, Monday is 1, etc.
         
-        let lastWorkingDay = new Date(now);
-        if (dayOfWeek === 0) { // Sunday
-            lastWorkingDay.setDate(now.getDate() - 2); // Check since Friday
-        } else if (dayOfWeek === 1) { // Monday
-            lastWorkingDay.setDate(now.getDate() - 3); // Check since Friday
-        } else { // Tuesday to Saturday
-            lastWorkingDay.setDate(now.getDate() - 1); // Check since yesterday
-        }
-        lastWorkingDay.setHours(0, 0, 0, 0);
+        const lastWorkingDay = getLastWorkingDay();
 
         const areaSalesManagers = users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role) && visibleUserIds.includes(u.uid));
 
