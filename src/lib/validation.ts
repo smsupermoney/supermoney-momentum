@@ -84,7 +84,7 @@ export const NewTaskSchema = z.object({
     visitTo: z.string().optional(),
     planType: z.enum(['Task', 'Visit Plan']),
     type: z.string().min(1, 'Task type is required'),
-    dueDate: z.date({ required_error: "Please select a date.", invalid_type_error: "That's not a valid date!"}),
+    dueDate: z.date({ invalid_type_error: "That's not a valid date!"}).optional(),
     priority: z.string().min(1, 'Priority is required'),
     description: z.string().optional(),
     assignedTo: z.string().optional().nullable(),
@@ -97,7 +97,7 @@ export const NewDailyActivitySchema = z.object({
     userId: z.string().min(1, "A user must be associated with the activity."),
     activityType: z.enum(['Client Meeting', 'Site Visit', 'Sales Presentation', 'Follow-up', 'Administrative', 'Training', 'Networking']),
     title: z.string().min(3, "A title is required for the activity."),
-    activityTimestamp: z.string().datetime("A valid timestamp is required."),
+    activityTimestamp: z.string().datetime("A valid timestamp is required.").optional(),
     location: z.object({ latitude: z.number(), longitude: z.number() }).nullable().optional(),
     locationAddress: z.string().nullable().optional(),
 });
