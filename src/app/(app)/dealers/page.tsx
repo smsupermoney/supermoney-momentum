@@ -99,8 +99,10 @@ export default function DealersPage() {
       return { visibleDealers: activeDealers, exUserDealers: exDealers };
     }
 
+    // For non-managerial roles (e.g., Area Sales Manager), show only their assigned leads.
+    const myVisibleUserIds = visibleUsers.map(u => u.uid);
     const currentVisibleDealers = dealers.filter(d => 
-      (d.assignedTo && visibleUsers.some(visUser => visUser.uid === d.assignedTo)) &&
+      (d.assignedTo && myVisibleUserIds.includes(d.assignedTo)) &&
       (!d.assignedTo || !exUserIds.includes(d.assignedTo))
     );
     return { visibleDealers: currentVisibleDealers, exUserDealers: [] }; // Non-managers don't see ex-user leads
@@ -108,11 +110,19 @@ export default function DealersPage() {
 
 
   const filteredDealers = useMemo(() => visibleDealers.filter(d => {
-    if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const searchMatch = !searchQuery || d.name.toLowerCase().includes(lowerCaseQuery) || (d.gstin && d.gstin.toLowerCase().includes(lowerCaseQuery));
+    if (!searchMatch) return false;
     if (statusFilter.length > 0 && !statusFilter.includes(d.status)) return false;
     if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
-    if (assignedToFilter !== 'all' && d.assignedTo !== assignedToFilter) return false;
+    if (assignedToFilter !== 'all') {
+      if (assignedToFilter === 'unassigned') {
+        if (d.assignedTo) return false;
+      } else {
+        if (d.assignedTo !== assignedToFilter) return false;
+      }
+    }
     if (productFilter !== 'all' && d.product !== productFilter) return false;
     if (zoneFilter !== 'all' && d.zone !== zoneFilter) return false;
     if (lenderFilter !== 'all' && d.lenderId !== lenderFilter) return false;
@@ -237,7 +247,7 @@ export default function DealersPage() {
       <div className="space-y-4 pb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by dealer name..." className="w-full pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Input placeholder="Search by dealer name or GSTIN..." className="w-full pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
@@ -253,7 +263,7 @@ export default function DealersPage() {
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
                  <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
-                 {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">Users</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
+                 {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">All Users</SelectItem><SelectItem value="unassigned">Unassigned</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
             </div>
             <div className="w-full sm:w-auto flex justify-end gap-2">
               {canBulkAction && numSelected > 0 && (

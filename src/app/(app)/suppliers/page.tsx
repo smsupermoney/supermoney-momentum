@@ -98,8 +98,10 @@ export default function VendorsPage() {
       return { visibleVendors: activeVendors, exUserVendors: exVendors };
     }
 
+    // For non-managerial roles (e.g., Area Sales Manager), show only their assigned leads.
+    const myVisibleUserIds = visibleUsers.map(u => u.uid);
     const currentVisibleVendors = vendors.filter(v => 
-      (v.assignedTo && visibleUsers.some(visUser => visUser.uid === v.assignedTo)) &&
+      (v.assignedTo && myVisibleUserIds.includes(v.assignedTo)) &&
       (!v.assignedTo || !exUserIds.includes(v.assignedTo))
     );
     return { visibleVendors: currentVisibleVendors, exUserVendors: [] };
@@ -107,11 +109,19 @@ export default function VendorsPage() {
 
 
   const filteredVendors = useMemo(() => visibleVendors.filter(s => {
-    if (searchQuery && !s.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const searchMatch = !searchQuery || s.name.toLowerCase().includes(lowerCaseQuery) || (s.gstin && s.gstin.toLowerCase().includes(lowerCaseQuery));
+    if (!searchMatch) return false;
     if (statusFilter.length > 0 && !statusFilter.includes(s.status)) return false;
     if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
     if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
-    if (assignedToFilter !== 'all' && s.assignedTo !== assignedToFilter) return false;
+     if (assignedToFilter !== 'all') {
+      if (assignedToFilter === 'unassigned') {
+        if (s.assignedTo) return false;
+      } else {
+        if (s.assignedTo !== assignedToFilter) return false;
+      }
+    }
     if (productFilter !== 'all' && s.product !== productFilter) return false;
     if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
     if (lenderFilter !== 'all' && s.lenderId !== lenderFilter) return false;
@@ -234,7 +244,7 @@ export default function VendorsPage() {
       </AlertDialog>
 
       <div className="space-y-4 pb-4">
-        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search by vendor name..." className="w-full pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search by vendor name or GSTIN..." className="w-full pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full justify-start">
                  <MultiSelect
@@ -249,7 +259,7 @@ export default function VendorsPage() {
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
                  <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
-                 {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">Users</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
+                 {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">All Users</SelectItem><SelectItem value="unassigned">Unassigned</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
             </div>
             <div className="w-full sm:w-auto flex justify-end gap-2">
               {canBulkAction && numSelected > 0 && (<><Button variant="outline" size="sm" onClick={() => setIsReassignConfirmOpen(true)}><Users className="mr-2 h-4 w-4"/>Reassign ({numSelected})</Button><Button variant="destructive" size="sm" onClick={() => setIsDeleteConfirmOpen(true)}><Trash2 className="mr-2 h-4 w-4"/>Delete ({numSelected})</Button></>)}
