@@ -281,7 +281,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                   disabled={!canEditLeadDate}
                                   className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                 >
-                                  {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                                  {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -313,7 +313,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                     variant={'outline'}
                                     className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                   >
-                                    {field.value ? format(new Date(field.value), 'PPP') : <span>Pick initial date</span>}
+                                    {field.value ? format(field.value, 'PPP') : <span>Pick initial date</span>}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>
