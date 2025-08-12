@@ -98,10 +98,10 @@ export default function VendorsPage() {
       return { visibleVendors: activeVendors, exUserVendors: exVendors };
     }
 
-    // For non-managerial roles (e.g., Area Sales Manager), show only their assigned leads.
+    // For non-managerial roles, show their assigned leads AND unassigned leads
     const myVisibleUserIds = visibleUsers.map(u => u.uid);
     const currentVisibleVendors = vendors.filter(v => 
-      (v.assignedTo && myVisibleUserIds.includes(v.assignedTo)) &&
+      (!v.assignedTo || (v.assignedTo && myVisibleUserIds.includes(v.assignedTo))) &&
       (!v.assignedTo || !exUserIds.includes(v.assignedTo))
     );
     return { visibleVendors: currentVisibleVendors, exUserVendors: [] };

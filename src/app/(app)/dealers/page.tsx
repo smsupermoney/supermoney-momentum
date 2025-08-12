@@ -99,13 +99,13 @@ export default function DealersPage() {
       return { visibleDealers: activeDealers, exUserDealers: exDealers };
     }
 
-    // For non-managerial roles (e.g., Area Sales Manager), show only their assigned leads and unassigned leads.
+    // For non-managerial roles, show their assigned leads AND unassigned leads.
     const myVisibleUserIds = visibleUsers.map(u => u.uid);
     const currentVisibleDealers = dealers.filter(d => 
       (!d.assignedTo || (d.assignedTo && myVisibleUserIds.includes(d.assignedTo))) &&
       (!d.assignedTo || !exUserIds.includes(d.assignedTo))
     );
-    return { visibleDealers: currentVisibleDealers, exUserDealers: [] }; // Non-managers don't see ex-user leads
+    return { visibleDealers: currentVisibleDealers, exUserDealers: [] }; 
   }, [dealers, currentUser, visibleUsers, users]);
 
 
