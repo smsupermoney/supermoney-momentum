@@ -31,21 +31,24 @@ interface TaskListProps {
   assignedToFilter?: string;
 }
 
-const safeFormatDate = (dateInput: string | Date | number | undefined): string => {
+const safeFormatDate = (dateInput: any): string => {
     if (!dateInput) return 'N/A';
 
     let date: Date;
 
-    if (dateInput instanceof Date) {
-        date = dateInput;
-    } else if (typeof dateInput === 'number') {
+    // Handle Firestore Timestamp objects which have a toDate() method
+    if (typeof dateInput === 'object' && dateInput !== null && typeof dateInput.toDate === 'function') {
+        date = dateInput.toDate();
+    } 
+    // Handle ISO strings or existing Date objects
+    else if (typeof dateInput === 'string' || dateInput instanceof Date) {
         date = new Date(dateInput);
-    } else if (typeof dateInput === 'string') {
-        // Handle "Month Day, Year at HH:mm:ss AM/PM UTC..." format
-        // This is a more robust way to handle the custom string format.
-        const cleanedDateString = dateInput.replace(' at ', ' ').replace(/ /g, ' ');
-        date = new Date(cleanedDateString);
-    } else {
+    } 
+    // Handle numeric timestamps (milliseconds)
+    else if (typeof dateInput === 'number') {
+        date = new Date(dateInput);
+    } 
+    else {
         return 'Invalid Date';
     }
 
