@@ -5,7 +5,7 @@ import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format, isToday, isThisWeek, isPast, subDays, isAfter, isValid } from 'date-fns';
+import { format, isToday, isThisWeek, isPast, isValid } from 'date-fns';
 import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
@@ -34,15 +34,26 @@ interface TaskListProps {
 const safeFormatDate = (dateInput: string | Date | number | undefined): string => {
     if (!dateInput) return 'N/A';
 
-    try {
-        const date = new Date(dateInput);
-        if (isValid(date)) {
-            return format(date, 'PP');
-        }
-        return 'Invalid Date';
-    } catch (error) {
+    let date: Date;
+
+    if (dateInput instanceof Date) {
+        date = dateInput;
+    } else if (typeof dateInput === 'number') {
+        date = new Date(dateInput);
+    } else if (typeof dateInput === 'string') {
+        // Handle "Month Day, Year at HH:mm:ss AM/PM UTC..." format
+        // This is a more robust way to handle the custom string format.
+        const cleanedDateString = dateInput.replace(' at ', ' ').replace(/ /g, ' ');
+        date = new Date(cleanedDateString);
+    } else {
         return 'Invalid Date';
     }
+
+    if (isValid(date)) {
+        return format(date, 'PP');
+    }
+
+    return 'Invalid Date';
 };
 
 
