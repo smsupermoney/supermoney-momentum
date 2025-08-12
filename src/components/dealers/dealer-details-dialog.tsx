@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Loader2, Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { format } from 'date-fns';
 import { Separator } from '../ui/separator';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,6 +47,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
+import { safeFormatDate } from '@/lib/utils';
 
 type FormValues = z.infer<typeof UpdateSpokeSchema>;
 
@@ -281,7 +281,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                   disabled={!canEditLeadDate}
                                   className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                 >
-                                  {field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                  {safeFormatDate(field.value) === 'N/A' || safeFormatDate(field.value) === 'Invalid Date' ? <span>Pick a date</span> : safeFormatDate(field.value) }
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
@@ -313,7 +313,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                     variant={'outline'}
                                     className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                                   >
-                                    {field.value instanceof Date ? format(field.value, 'PPP') : <span>Pick initial date</span>}
+                                    {safeFormatDate(field.value) === 'N/A' || safeFormatDate(field.value) === 'Invalid Date' ? <span>Pick initial date</span> : safeFormatDate(field.value)}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>
@@ -397,7 +397,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>
-                                              <span className="text-muted-foreground">{format(new Date(remark.timestamp), 'PP p')}</span>
+                                              <span className="text-muted-foreground">{safeFormatDate(remark.timestamp, 'PP p')}</span>
                                           </div>
                                           <p className="text-muted-foreground">{remark.text}</p>
                                       </div>

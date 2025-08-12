@@ -5,7 +5,7 @@ import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format, isToday, isThisWeek, isPast, isValid } from 'date-fns';
+import { isToday, isThisWeek, isPast, isValid } from 'date-fns';
 import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { safeFormatDate } from '@/lib/utils';
 
 interface TaskListProps {
   dueDateFilter?: string;
@@ -30,35 +31,6 @@ interface TaskListProps {
   anchorFilter?: string;
   assignedToFilter?: string;
 }
-
-const safeFormatDate = (dateInput: any): string => {
-    if (!dateInput) return 'N/A';
-
-    let date: Date;
-
-    // Handle Firestore Timestamp objects which have a toDate() method
-    if (typeof dateInput === 'object' && dateInput !== null && typeof dateInput.toDate === 'function') {
-        date = dateInput.toDate();
-    } 
-    // Handle ISO strings or existing Date objects
-    else if (typeof dateInput === 'string' || dateInput instanceof Date) {
-        date = new Date(dateInput);
-    } 
-    // Handle numeric timestamps (milliseconds)
-    else if (typeof dateInput === 'number') {
-        date = new Date(dateInput);
-    } 
-    else {
-        return 'Invalid Date';
-    }
-
-    if (isValid(date)) {
-        return format(date, 'PP');
-    }
-
-    return 'Invalid Date';
-};
-
 
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assignedToFilter }: TaskListProps) {
   const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, deleteTask, visibleUserIds } = useApp();

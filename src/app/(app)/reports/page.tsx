@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format, subDays, subHours, endOfMonth } from 'date-fns';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, subDays, subHours, endOfMonth } from 'date-fns';
 import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2, LogOut, Briefcase } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 import { products, lenders } from '@/lib/types';
 import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
+import { safeFormatDate } from '@/lib/utils';
 
 // Helper function to truncate long strings for Excel export
 const truncateForExcel = (data: any[]): any[] => {
@@ -58,7 +59,7 @@ export default function ReportsPage() {
     const sinceDate = subHours(new Date(), 72);
 
     const getSpokeData = (spoke: Dealer | Vendor) => ({
-      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
     });
 
     const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string }) => {
@@ -69,16 +70,16 @@ export default function ReportsPage() {
 
     const recentData = {
       "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
-      "Anchors": anchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? format(new Date(a.updatedAt), 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Anchors": anchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? safeFormatDate(a.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
       "Dealers": dealers.filter(isRecent).map(getSpokeData),
       "Vendors": vendors.filter(isRecent).map(getSpokeData),
-      "Tasks": tasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'), 'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? format(new Date(t.updatedAt), 'yyyy-MM-dd HH:mm') : 'N/A' })),
-      "Interaction Logs": activityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
-      "Daily Activities": dailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Tasks": tasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? safeFormatDate(t.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Interaction Logs": activityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": dailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
       "Lenders": [], // Lenders don't have timestamps, so we exclude them from "recent"
     };
 
-    generateAndDownloadWorkbook(recentData, `Supermoney_CRM_Recent_Changes_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    generateAndDownloadWorkbook(recentData, `Supermoney_CRM_Recent_Changes_${safeFormatDate(new Date(), 'yyyy-MM-dd')}.xlsx`);
     setIsDownloadingRecent(false);
   };
 
@@ -86,21 +87,21 @@ export default function ReportsPage() {
     setIsDownloadingAll(true);
     
     const getSpokeData = (spoke: Dealer | Vendor) => ({
-      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
     });
 
     const allData = {
       "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
-      "Anchors": anchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm') })),
+      "Anchors": anchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm') })),
       "Dealers": dealers.map(getSpokeData),
       "Vendors": vendors.map(getSpokeData),
-      "Tasks": tasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'), 'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm') })),
-      "Interaction Logs": activityLogs.map(log => ({ User: log.userName, Timestamp: format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
-      "Daily Activities": dailyActivities.map(activity => ({ User: activity.userName, Timestamp: format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Tasks": tasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm') })),
+      "Interaction Logs": activityLogs.map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": dailyActivities.map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
       "Lenders": lenders.map(l => ({ Name: l.name }))
     };
 
-    generateAndDownloadWorkbook(allData, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    generateAndDownloadWorkbook(allData, `Supermoney_CRM_Export_${safeFormatDate(new Date(), 'yyyy-MM-dd')}.xlsx`);
     setIsDownloadingAll(false);
   };
 
@@ -474,7 +475,7 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
                                         {userTasks.map(task => (
                                             <li key={task.id} className="text-sm flex items-center gap-2">
                                                 <FileText className="h-3 w-3 shrink-0" />
-                                                <span>{task.title} (Due: {format(new Date(task.dueDate), 'MMM d')})</span>
+                                                <span>{task.title} (Due: {safeFormatDate(task.dueDate, 'MMM d')})</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -533,7 +534,7 @@ function InactiveUsersReport() {
                                             <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
                                         </TableCell>
                                         <TableCell className="text-right text-xs text-muted-foreground">
-                                            {user.lastLogin ? format(new Date(user.lastLogin), 'PPp') : 'Never'}
+                                            {user.lastLogin ? safeFormatDate(user.lastLogin, 'PPp') : 'Never'}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -554,7 +555,7 @@ function InactiveUsersReport() {
                                             <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
                                         </TableCell>
                                          <TableCell className="text-right text-xs text-muted-foreground">
-                                            {user.lastLogin ? format(new Date(user.lastLogin), 'PPp') : 'Never'}
+                                            {user.lastLogin ? safeFormatDate(user.lastLogin, 'PPp') : 'Never'}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -702,6 +703,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-
-

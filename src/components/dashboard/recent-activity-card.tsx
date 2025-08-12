@@ -53,7 +53,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
         <ScrollArea className="h-72">
           <div className="space-y-6 pr-4">
             {userLogs.map((log) => {
-              const Icon = iconMap[log.type] || PenSquare;
+              const Icon = iconMap[log.type as TaskType] || PenSquare;
               return (
                 <div key={log.id} className="flex items-start gap-4">
                   <Avatar className="h-9 w-9">

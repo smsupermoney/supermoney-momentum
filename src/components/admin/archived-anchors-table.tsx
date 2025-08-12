@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Anchor } from '@/lib/types';
-import { format } from 'date-fns';
+import { safeFormatDate } from '@/lib/utils';
 
 export function ArchivedAnchorsTable() {
   const { anchors, updateAnchor, currentUser } = useApp();
@@ -50,7 +50,7 @@ export function ArchivedAnchorsTable() {
                 <TableRow key={anchor.id}>
                   <TableCell className="font-medium py-2 px-4">{anchor.name}</TableCell>
                   <TableCell className="py-2 px-4">{anchor.industry}</TableCell>
-                  <TableCell className="py-2 px-4">{anchor.updatedAt ? format(new Date(anchor.updatedAt), 'PP') : 'N/A'}</TableCell>
+                  <TableCell className="py-2 px-4">{safeFormatDate(anchor.updatedAt)}</TableCell>
                   <TableCell className="text-right space-x-2 py-2 px-4">
                     <Button size="sm" variant="outline" onClick={() => handleReactivate(anchor)}>Reactivate</Button>
                   </TableCell>
@@ -69,7 +69,7 @@ export function ArchivedAnchorsTable() {
               <CardContent className="space-y-3 p-4 pt-0">
                  <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Archived At:</span>
-                    <span className="font-medium">{anchor.updatedAt ? format(new Date(anchor.updatedAt), 'PP') : 'N/A'}</span>
+                    <span className="font-medium">{safeFormatDate(anchor.updatedAt)}</span>
                  </div>
                  <Button size="sm" variant="outline" onClick={() => handleReactivate(anchor)} className="w-full">Reactivate</Button>
               </CardContent>

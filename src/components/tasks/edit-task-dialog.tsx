@@ -20,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
-import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
@@ -50,7 +49,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         id: task.id,
         title: task.title,
         type: task.type,
-        dueDate: new Date(task.dueDate),
+        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
         priority: task.priority,
         description: task.description,
         assignedTo: task.assignedTo,
@@ -69,7 +68,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       const updatedTask: Task = {
         ...task,
         ...values,
-        dueDate: values.dueDate.toISOString(),
+        dueDate: values.dueDate ? values.dueDate.toISOString() : '',
         updatedAt: new Date().toISOString(),
       };
       

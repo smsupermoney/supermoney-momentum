@@ -3,7 +3,7 @@
 
 import { useApp } from '@/contexts/app-context';
 import { Badge } from '@/components/ui/badge';
-import { format, isAfter, subDays } from 'date-fns';
+import { isAfter, subDays } from 'date-fns';
 import type { DailyActivity, UserRole } from '@/lib/types';
 import {
   Accordion,
@@ -38,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { safeFormatDate } from '@/lib/utils';
 
 const activityIcons: Record<DailyActivity['activityType'], React.ElementType> = {
   'Client Meeting': Briefcase,
@@ -122,7 +123,7 @@ export function ActivityList() {
                     <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
                     <div className="flex-1">
                       <p className="font-semibold">{activity.title}</p>
-                      <p className="text-xs text-muted-foreground">{format(new Date(activity.activityTimestamp), 'PP, p')}</p>
+                      <p className="text-xs text-muted-foreground">{safeFormatDate(activity.activityTimestamp, 'PP, p')}</p>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">

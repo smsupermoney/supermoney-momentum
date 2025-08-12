@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { format } from 'date-fns';
 import { NewLeadDialog } from '../leads/new-lead-dialog';
 import { NewTaskDialog } from '../tasks/new-task-dialog';
 import { useApp } from '@/contexts/app-context';
@@ -31,6 +30,7 @@ import { Input } from '../ui/input';
 import { EditContactDialog } from './edit-contact-dialog';
 import { EditAnchorSPOCDialog } from './edit-anchor-spoc-dialog';
 import { IndianStatesAndCities } from '@/lib/india-states-cities';
+import { safeFormatDate } from '@/lib/utils';
 
 const activityIconMap: Record<string, React.ElementType> = {
     'Call': Phone,
@@ -359,7 +359,7 @@ export function AnchorProfile({ anchor, leads, activityLogs: initialLogs, spocs 
                                       {!log.systemGenerated && <span className="text-sm text-muted-foreground"> by {log.userName}</span>}
                                     </p>
                                     <p className="text-sm">{log.outcome}</p>
-                                    <p className="text-xs text-muted-foreground">{format(new Date(log.timestamp), 'PPpp')}</p>
+                                    <p className="text-xs text-muted-foreground">{safeFormatDate(log.timestamp, 'PPpp')}</p>
                                     </div>
                                 </div>
                                 )
