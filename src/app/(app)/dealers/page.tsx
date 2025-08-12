@@ -86,7 +86,7 @@ export default function DealersPage() {
   const canShowAssignedToFilter = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role), [currentUser]);
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
   
-  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
 
   const { visibleDealers, exUserDealers } = useMemo(() => {
     if (!currentUser) return { visibleDealers: [], exUserDealers: [] };
@@ -99,7 +99,6 @@ export default function DealersPage() {
       return { visibleDealers: activeDealers, exUserDealers: exDealers };
     }
 
-    // For non-managerial roles, show their assigned leads AND unassigned leads.
     const myVisibleUserIds = visibleUsers.map(u => u.uid);
     const currentVisibleDealers = dealers.filter(d => 
       (!d.assignedTo || (d.assignedTo && myVisibleUserIds.includes(d.assignedTo))) &&
@@ -109,25 +108,29 @@ export default function DealersPage() {
   }, [dealers, currentUser, visibleUsers, users]);
 
 
-  const filteredDealers = useMemo(() => visibleDealers.filter(d => {
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    const searchMatch = !searchQuery || d.name.toLowerCase().includes(lowerCaseQuery) || (d.gstin && d.gstin.toLowerCase().includes(lowerCaseQuery));
-    if (!searchMatch) return false;
-    if (statusFilter.length > 0 && !statusFilter.includes(d.status)) return false;
-    if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
-    if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
-    if (assignedToFilter !== 'all') {
-      if (assignedToFilter === 'unassigned') {
-        if (d.assignedTo) return false;
-      } else {
-        if (d.assignedTo !== assignedToFilter) return false;
+  const filteredDealers = useMemo(() => {
+    const unassignedUserId = users.find(u => u.name === 'Unassigned')?.uid;
+
+    return visibleDealers.filter(d => {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      const searchMatch = !searchQuery || d.name.toLowerCase().includes(lowerCaseQuery) || (d.gstin && d.gstin.toLowerCase().includes(lowerCaseQuery));
+      if (!searchMatch) return false;
+      if (statusFilter.length > 0 && !statusFilter.includes(d.status)) return false;
+      if (leadTypeFilter !== 'all' && d.leadType !== leadTypeFilter) return false;
+      if (anchorFilter !== 'all' && d.anchorId !== anchorFilter) return false;
+      if (assignedToFilter !== 'all') {
+        if (assignedToFilter === 'unassigned') {
+          if (d.assignedTo && d.assignedTo !== unassignedUserId) return false;
+        } else {
+          if (d.assignedTo !== assignedToFilter) return false;
+        }
       }
-    }
-    if (productFilter !== 'all' && d.product !== productFilter) return false;
-    if (zoneFilter !== 'all' && d.zone !== zoneFilter) return false;
-    if (lenderFilter !== 'all' && d.lenderId !== lenderFilter) return false;
-    return true;
-  }), [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
+      if (productFilter !== 'all' && d.product !== productFilter) return false;
+      if (zoneFilter !== 'all' && d.zone !== zoneFilter) return false;
+      if (lenderFilter !== 'all' && d.lenderId !== lenderFilter) return false;
+      return true;
+    })
+  }, [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter, users]);
 
   // Reset page to 1 when filters change
   useEffect(() => {

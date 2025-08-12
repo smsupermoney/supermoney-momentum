@@ -85,7 +85,7 @@ export default function VendorsPage() {
   const canShowAssignedToFilter = useMemo(() => currentUser && ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU'].includes(currentUser.role), [currentUser]);
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
 
-  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'];
+  const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
 
   const { visibleVendors, exUserVendors } = useMemo(() => {
     if (!currentUser) return { visibleVendors: [], exUserVendors: [] };
@@ -108,25 +108,29 @@ export default function VendorsPage() {
   }, [vendors, currentUser, visibleUsers, users]);
 
 
-  const filteredVendors = useMemo(() => visibleVendors.filter(s => {
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    const searchMatch = !searchQuery || s.name.toLowerCase().includes(lowerCaseQuery) || (s.gstin && s.gstin.toLowerCase().includes(lowerCaseQuery));
-    if (!searchMatch) return false;
-    if (statusFilter.length > 0 && !statusFilter.includes(s.status)) return false;
-    if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
-    if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
-     if (assignedToFilter !== 'all') {
-      if (assignedToFilter === 'unassigned') {
-        if (s.assignedTo) return false;
-      } else {
-        if (s.assignedTo !== assignedToFilter) return false;
+  const filteredVendors = useMemo(() => {
+    const unassignedUserId = users.find(u => u.name === 'Unassigned')?.uid;
+
+    return visibleVendors.filter(s => {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      const searchMatch = !searchQuery || s.name.toLowerCase().includes(lowerCaseQuery) || (s.gstin && s.gstin.toLowerCase().includes(lowerCaseQuery));
+      if (!searchMatch) return false;
+      if (statusFilter.length > 0 && !statusFilter.includes(s.status)) return false;
+      if (leadTypeFilter !== 'all' && s.leadType !== leadTypeFilter) return false;
+      if (anchorFilter !== 'all' && s.anchorId !== anchorFilter) return false;
+       if (assignedToFilter !== 'all') {
+        if (assignedToFilter === 'unassigned') {
+          if (s.assignedTo && s.assignedTo !== unassignedUserId) return false;
+        } else {
+          if (s.assignedTo !== assignedToFilter) return false;
+        }
       }
-    }
-    if (productFilter !== 'all' && s.product !== productFilter) return false;
-    if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
-    if (lenderFilter !== 'all' && s.lenderId !== lenderFilter) return false;
-    return true;
-  }), [visibleVendors, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
+      if (productFilter !== 'all' && s.product !== productFilter) return false;
+      if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
+      if (lenderFilter !== 'all' && s.lenderId !== lenderFilter) return false;
+      return true;
+    })
+  }, [visibleVendors, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter, users]);
 
   // Reset page to 1 when filters change
   useEffect(() => {
