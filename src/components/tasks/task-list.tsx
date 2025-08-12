@@ -6,7 +6,7 @@ import { useApp } from '@/contexts/app-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format, isToday, isThisWeek, isPast, subDays, isAfter } from 'date-fns';
+import { format, isToday, isThisWeek, isPast, subDays, isAfter, isValid } from 'date-fns';
 import type { Task, TaskPriority, UserRole } from '@/lib/types';
 import { LogOutcomeDialog } from './log-outcome-dialog';
 import { NewTaskDialog } from './new-task-dialog';
@@ -32,6 +32,20 @@ interface TaskListProps {
   assignedToFilter?: string;
 }
 
+const safeFormatDate = (dateString: string | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        if (isValid(date)) {
+            return format(date, 'PP');
+        }
+        return 'Invalid Date';
+    } catch (error) {
+        return 'Invalid Date';
+    }
+};
+
+
 export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assignedToFilter }: TaskListProps) {
   const { tasks, anchors, dealers, vendors, currentUser, users, updateTask, deleteTask, visibleUserIds } = useApp();
   const { t } = useLanguage();
@@ -56,6 +70,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
     .filter(task => {
         if (!dueDateFilter || dueDateFilter === 'all') return true;
         const dueDate = new Date(task.dueDate);
+        if (!isValid(dueDate)) return false;
         if (dueDateFilter === 'today') return isToday(dueDate);
         if (dueDateFilter === 'this-week') return isThisWeek(dueDate, { weekStartsOn: 1 });
         if (dueDateFilter === 'overdue') return isPast(dueDate) && !isToday(dueDate);
@@ -174,7 +189,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
                 <TableCell>{getEntityName(task)}</TableCell>
                 <TableCell>{getAssignedToName(task.assignedTo)}</TableCell>
                 <TableCell className="hidden lg:table-cell">{task.type}</TableCell>
-                <TableCell>{format(new Date(task.dueDate), 'PP')}</TableCell>
+                <TableCell>{safeFormatDate(task.dueDate)}</TableCell>
                 <TableCell><Badge variant={task.status === 'Completed' ? 'default' : 'outline'}>{task.status}</Badge></TableCell>
                 <TableCell className="text-right flex items-center justify-end gap-2">
                   {task.status !== 'Completed' && (
@@ -211,7 +226,7 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
               <div className="text-sm text-muted-foreground space-y-1">
                 <p><span className="font-medium">{t('tasks.list.associatedWith')}:</span> {getEntityName(task)}</p>
                 <p><span className="font-medium">{t('tasks.list.assignedTo')}:</span> {getAssignedToName(task.assignedTo)}</p>
-                <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {format(new Date(task.dueDate), 'PP')}</p>
+                <p><span className="font-medium">{t('tasks.list.dueDate')}:</span> {safeFormatDate(task.dueDate)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={task.planType === 'Visit Plan' ? 'default' : 'secondary'}>{task.planType || 'Task'}</Badge>
