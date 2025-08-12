@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState } from 'react';
 import { useApp } from '@/contexts/app-context';
@@ -32,10 +31,11 @@ interface TaskListProps {
   assignedToFilter?: string;
 }
 
-const safeFormatDate = (dateString: string | undefined): string => {
-    if (!dateString) return 'N/A';
+const safeFormatDate = (dateInput: string | Date | number | undefined): string => {
+    if (!dateInput) return 'N/A';
+
     try {
-        const date = new Date(dateString);
+        const date = new Date(dateInput);
         if (isValid(date)) {
             return format(date, 'PP');
         }
