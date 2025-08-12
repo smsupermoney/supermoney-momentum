@@ -111,7 +111,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             lenderId: vendor.lenderId || '',
             remarks: vendor.remarks || [],
             leadType: vendor.leadType || 'Fresh',
-            dealValue: vendor.dealValue === null ? undefined : vendor.dealValue,
+            dealValue: vendor.dealValue === null || vendor.dealValue === undefined ? undefined : vendor.dealValue,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
             spoc: vendor.spoc || '',
             initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,

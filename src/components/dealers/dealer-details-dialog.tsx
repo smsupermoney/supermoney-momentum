@@ -111,7 +111,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           lenderId: dealer.lenderId || '',
           remarks: dealer.remarks || [],
           leadType: dealer.leadType || 'Fresh',
-          dealValue: dealer.dealValue === null ? undefined : dealer.dealValue,
+          dealValue: dealer.dealValue === null || dealer.dealValue === undefined ? undefined : dealer.dealValue,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
           spoc: dealer.spoc || '',
           initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
