@@ -50,7 +50,7 @@ const managerRolesHierarchy: Record<string, UserRole[]> = {
     'Zonal Sales Manager': ['Regional Sales Manager', 'National Sales Manager', 'Admin'],
     'Regional Sales Manager': ['National Sales Manager', 'Admin'],
     'National Sales Manager': ['Admin'],
-    'ETB Executive': ['ETB Manager', 'Admin'],
+    'ETB Team': ['ETB Manager', 'Admin'],
     'ETB Manager': ['Admin'],
     'Telecaller': ['ETB Manager', 'Admin'],
 };

@@ -78,7 +78,7 @@ export function TasksCard() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground">{getAnchorName(task.associatedWith.anchorId)}</p>
                     <Badge variant={priorityVariant[task.priority]} className="capitalize">{task.priority}</Badge>
-                     { ![ 'Area Sales Manager', 'Internal Sales', 'Business Development', 'BIU', 'ETB Executive', 'Telecaller' ].includes(currentUser.role) && (
+                     { ![ 'Area Sales Manager', 'Internal Sales', 'Business Development', 'BIU', 'ETB Team', 'Telecaller' ].includes(currentUser.role) && (
                         <Badge variant="outline">{getAssignedToName(task.assignedTo)}</Badge>
                      )}
                   </div>

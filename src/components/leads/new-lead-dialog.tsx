@@ -81,7 +81,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   const watchLeadType = form.watch("leadType");
   const isManagerCreating = currentUser && managerRoles.includes(currentUser.role);
   
-  const assignableUsers = visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role));
+  const assignableUsers = visibleUsers.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Team', 'Telecaller'].includes(u.role));
 
 
   useEffect(() => {

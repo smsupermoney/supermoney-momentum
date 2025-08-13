@@ -1,6 +1,6 @@
 
 
-export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Executive' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
+export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Team' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
 export type UserStatus = 'Active' | 'Ex-User';
 
 export interface User {

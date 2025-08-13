@@ -206,7 +206,7 @@ export default function DealersPage() {
   };
 
   const activeUsers = useMemo(() => {
-      return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role))
+      return visibleUsers.filter(u => u.status !== 'Ex-User' && ['Area Sales Manager', 'Internal Sales', 'ETB Team', 'Telecaller'].includes(u.role))
   }, [visibleUsers]);
   
   const statusOptions = spokeStatuses.map(s => ({ value: s, label: s }));

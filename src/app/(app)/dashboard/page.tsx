@@ -81,7 +81,7 @@ export default function DashboardPage() {
         switch (currentUser.role) {
             case 'Area Sales Manager':
             case 'Internal Sales':
-            case 'ETB Executive':
+            case 'ETB Team':
             case 'Telecaller':
                 return <SalesDashboard />;
             case 'Zonal Sales Manager':
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                 title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
             >
-              {['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(currentUser.role) && (
+              {['Area Sales Manager', 'Internal Sales', 'ETB Team', 'Telecaller'].includes(currentUser.role) && (
                 <Button variant="outline" onClick={handleSendDigest} disabled={isDigestLoading}>
                   {isDigestLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

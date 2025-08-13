@@ -27,7 +27,7 @@ export function TeamProgressCard() {
 
     const filteredUsers = useMemo(() => {
         if (!currentUser) return [];
-        let users = visibleUsers.filter(u => u.uid !== currentUser.uid && u.role !== 'Admin' && u.role !== 'Business Development' && u.role !== 'BIU');
+        let users = visibleUsers.filter(u => u.uid !== currentUser.uid && u.role !== 'Admin' && u.role !== 'Business Development' && u.role !== 'BIU' && u.status !== 'Ex-User');
         if (regionFilter !== 'all') {
             users = users.filter(u => u.region === regionFilter);
         }
