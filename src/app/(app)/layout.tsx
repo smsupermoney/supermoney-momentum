@@ -42,29 +42,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading: isAppLoading } = useApp();
   const { t } = useLanguage();
   
-  const [isPageLoading, setIsPageLoading] = useState(false);
-  const previousPathname = useRef(pathname);
-
   useEffect(() => {
     if (!isAppLoading && !currentUser) {
       router.replace('/login');
     }
   }, [currentUser, isAppLoading, router]);
 
-  useEffect(() => {
-    if (pathname !== previousPathname.current) {
-        setIsPageLoading(true);
-        // Set a timeout to hide the loader. This ensures it disappears even if
-        // the new page loads instantly from cache.
-        const timer = setTimeout(() => {
-            setIsPageLoading(false);
-        }, 1000); // Adjust timeout as needed
-
-        previousPathname.current = pathname;
-
-        return () => clearTimeout(timer);
-    }
-}, [pathname]);
 
   if (isAppLoading || !currentUser) {
     return (
@@ -136,14 +119,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-         <div
-            className={cn(
-              "absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-300",
-              isPageLoading ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
-          >
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b bg-background px-4 md:hidden">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
