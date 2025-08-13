@@ -30,7 +30,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UpdateSpokeSchema } from '@/lib/validation';
+import { UpdateSpokeSchema, regions } from '@/lib/validation';
+import { IndianStatesAndCities } from '@/lib/india-states-cities';
 import {
   Form,
   FormControl,
@@ -94,6 +95,20 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   });
 
   const watchLeadType = form.watch("leadType");
+  const watchZone = form.watch("zone");
+  const watchState = form.watch("state");
+
+  const availableStates = useMemo(() => {
+    if (!watchZone) return [];
+    return IndianStatesAndCities.find(region => region.region === watchZone)?.states || [];
+  }, [watchZone]);
+
+  const availableCities = useMemo(() => {
+    if (!watchState) return [];
+    const selectedState = availableStates.find(state => state.name === watchState);
+    return selectedState?.cities || [];
+  }, [watchState, availableStates]);
+
   const canEditAsApprover = currentUser && ['Business Development', 'BIU'].includes(currentUser.role);
 
   useEffect(() => {
@@ -330,15 +345,92 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                   )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <FormField control={form.control} name="city" render={({ field }) => (
-                        <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="state" render={({ field }) => (
-                        <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="zone" render={({ field }) => (
-                        <FormItem><FormLabel>Zone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    <FormField
+                      control={form.control}
+                      name="zone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zone</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              form.setValue('state', '');
+                              form.setValue('city', '');
+                            }}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a zone" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {regions.map((region) => (
+                                <SelectItem key={region} value={region}>
+                                  {region}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              form.setValue('city', '');
+                            }}
+                            defaultValue={field.value}
+                            disabled={!watchZone}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a state" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableStates.map((state) => (
+                                <SelectItem key={state.name} value={state.name}>
+                                  {state.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                           <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchState}>
+                             <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a city" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableCities.map((city) => (
+                                <SelectItem key={city} value={city}>
+                                  {city}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
