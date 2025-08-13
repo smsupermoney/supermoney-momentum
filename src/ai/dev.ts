@@ -15,3 +15,4 @@ import '@/ai/flows/send-notification-email-flow.ts';
 import '@/ai/flows/generate-daily-digest-flow.ts';
 import '@/ai/flows/reverse-geocode-flow.ts';
 import '@/ai/flows/generate-sales-coaching-flow.ts';
+import '@/ai/flows/send-daily-digests-to-all-users.ts';

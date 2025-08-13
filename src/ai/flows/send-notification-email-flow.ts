@@ -87,9 +87,10 @@ const sendNotificationEmailFlow = ai.defineFlow(
     if (process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_APP_PASSWORD) {
         // Create a transporter object using the default SMTP transport
         const transporter = nodemailer.createTransport({
+          service: 'gmail',
           host: 'smtp.gmail.com',
           port: 465,
-          secure: true, // use SSL
+          secure: true,
           auth: {
             user: process.env.EMAIL_SERVER_USER,
             pass: process.env.EMAIL_SERVER_APP_PASSWORD,
