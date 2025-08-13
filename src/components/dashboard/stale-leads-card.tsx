@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { AlertTriangle, User, Clock, Activity } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import type { Anchor, Dealer, Vendor, UserRole } from '@/lib/types';
+import { AlertTriangle, User, Clock, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatDistanceToNow, subHours } from 'date-fns';
+import type { Dealer, Vendor, UserRole } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
+import { Button } from '../ui/button';
 
 type StaleLead = (Dealer | Vendor) & { type: 'Dealer' | 'Vendor' };
 type InactiveUser = {
@@ -18,53 +19,44 @@ type InactiveUser = {
     type: 'Inactive User';
 }
 
-// Helper to determine the last working day, avoiding client/server mismatches.
-const getLastWorkingDay = () => {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // Sunday is 0, Monday is 1, etc.
-    
-    let lastWorkingDay = new Date(now);
-    if (dayOfWeek === 0) { // Sunday
-        lastWorkingDay.setDate(now.getDate() - 2); // Check since Friday
-    } else if (dayOfWeek === 1) { // Monday
-        lastWorkingDay.setDate(now.getDate() - 3); // Check since Friday
-    } else { // Tuesday to Saturday
-        lastWorkingDay.setDate(now.getDate() - 1); // Check since yesterday
-    }
-    lastWorkingDay.setHours(0, 0, 0, 0);
-    return lastWorkingDay;
-};
+type AlertItem = StaleLead | InactiveUser;
 
+const ALERTS_PER_PAGE = 20;
 
 export function StaleLeadsCard() {
     const { dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const { staleLeads, inactiveUsers } = useMemo(() => {
+    const allAlerts = useMemo(() => {
         // Hydration safety: Defer date-sensitive calculations until mounted on the client.
         if (typeof window === 'undefined') {
-            return { staleLeads: [], inactiveUsers: [] };
+            return [];
         }
         
         const managerRoles: UserRole[] = ['Admin', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Business Development', 'BIU', 'ETB Manager'];
         if (!currentUser || !managerRoles.includes(currentUser?.role || '')) {
-            return { staleLeads: [], inactiveUsers: [] };
+            return [];
         }
         
-        const lastWorkingDay = getLastWorkingDay();
+        const twentyFourHoursAgo = subHours(new Date(), 24);
 
-        const areaSalesManagers = users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role) && visibleUserIds.includes(u.uid));
+        const areaSalesManagers = users.filter(u => 
+            ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role) &&
+            u.status !== 'Ex-User' &&
+            visibleUserIds.includes(u.uid)
+        );
 
         const allStaleLeads: StaleLead[] = [];
         const allInactiveUsers: InactiveUser[] = [];
 
         areaSalesManagers.forEach(asm => {
             const userActivities = dailyActivities.filter(
-                act => act.userId === asm.uid && new Date(act.activityTimestamp) >= lastWorkingDay
+                act => act.userId === asm.uid && new Date(act.activityTimestamp) >= twentyFourHoursAgo
             );
             const hasRecentActivity = userActivities.length > 0;
 
             if (!hasRecentActivity) {
-                // If the user has no activity since the last working day, flag the user.
+                // If the user has no activity in the last 24 hours, flag the user.
                 allInactiveUsers.push({ id: asm.uid, name: asm.name, type: 'Inactive User' });
             } else {
                 // If the user HAS been active, check for stale leads.
@@ -76,7 +68,7 @@ export function StaleLeadsCard() {
                 allLeadsForUser.forEach(lead => {
                     const lastUpdate = new Date(lead.updatedAt || lead.createdAt);
                     
-                    if (lastUpdate < lastWorkingDay) {
+                    if (lastUpdate < twentyFourHoursAgo) {
                         const isLeadInRecentActivity = userActivities.some(act => 
                             (act.dealerId && act.dealerId === lead.id && lead.type === 'Dealer') ||
                             (act.vendorId && act.vendorId === lead.id && lead.type === 'Vendor')
@@ -90,18 +82,25 @@ export function StaleLeadsCard() {
             }
         });
 
-        return { 
-            staleLeads: allStaleLeads.sort((a, b) => {
+        const sortedLeads = allStaleLeads.sort((a, b) => {
                 const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(a.createdAt);
                 const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(b.createdAt);
                 return dateA.getTime() - dateB.getTime();
-            }),
-            inactiveUsers: allInactiveUsers
-        };
+            });
+
+        return [...allInactiveUsers, ...sortedLeads];
 
     }, [dealers, vendors, users, dailyActivities, visibleUserIds, currentUser]);
 
-    if (staleLeads.length === 0 && inactiveUsers.length === 0) {
+    const paginatedAlerts = useMemo(() => {
+        const startIndex = (currentPage - 1) * ALERTS_PER_PAGE;
+        return allAlerts.slice(startIndex, startIndex + ALERTS_PER_PAGE);
+    }, [allAlerts, currentPage]);
+
+    const totalPages = Math.ceil(allAlerts.length / ALERTS_PER_PAGE);
+
+
+    if (allAlerts.length === 0) {
         return null;
     }
 
@@ -127,50 +126,83 @@ export function StaleLeadsCard() {
                     <CardTitle className="text-amber-700 dark:text-amber-400">Team Activity Alert</CardTitle>
                 </div>
                 <CardDescription className="text-amber-600 dark:text-amber-500">
-                    Inactive users or stale leads that may require attention.
+                    Inactive users (last 24h) or stale leads that may require attention.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="rounded-lg border border-amber-200 dark:border-amber-800">
                     <Table>
                         <TableBody>
-                            {inactiveUsers.map(user => (
-                                 <TableRow key={user.id}>
-                                    <TableCell>
-                                        <div className="font-medium text-destructive">{user.name}</div>
-                                        <div className="text-xs text-muted-foreground">Area Sales Manager</div>
-                                    </TableCell>
-                                    <TableCell colSpan={2} className="text-right">
-                                        <div className="flex items-center justify-end gap-2 text-sm text-destructive">
-                                            <Activity className="h-3 w-3" />
-                                            <span>No activity logged since last working day</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {staleLeads.map(lead => (
-                                <TableRow key={`${lead.type}-${lead.id}`}>
-                                    <TableCell>
-                                        <Link href={getLeadLink(lead)} className="font-medium text-primary hover:underline">{lead.name}</Link>
-                                        <div className="text-xs text-muted-foreground">{lead.type} &bull; Status: {lead.status}</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <User className="h-3 w-3" />
-                                            <span>{getUserName(lead.assignedTo)}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-2 text-sm">
-                                            <Clock className="h-3 w-3" />
-                                            <span>{formatDistanceToNow(new Date(lead.updatedAt || lead.createdAt), { addSuffix: true })}</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {paginatedAlerts.map(alert => {
+                                if (alert.type === 'Inactive User') {
+                                    return (
+                                        <TableRow key={alert.id}>
+                                            <TableCell>
+                                                <div className="font-medium text-destructive">{alert.name}</div>
+                                                <div className="text-xs text-muted-foreground">Area Sales Manager</div>
+                                            </TableCell>
+                                            <TableCell colSpan={2} className="text-right">
+                                                <div className="flex items-center justify-end gap-2 text-sm text-destructive">
+                                                    <Activity className="h-3 w-3" />
+                                                    <span>No activity logged in last 24h</span>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                } else {
+                                    const lead = alert as StaleLead;
+                                    return (
+                                        <TableRow key={`${lead.type}-${lead.id}`}>
+                                            <TableCell>
+                                                <Link href={getLeadLink(lead)} className="font-medium text-primary hover:underline">{lead.name}</Link>
+                                                <div className="text-xs text-muted-foreground">{lead.type} &bull; Status: {lead.status}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <User className="h-3 w-3" />
+                                                    <span>{getUserName(lead.assignedTo)}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-2 text-sm">
+                                                    <Clock className="h-3 w-3" />
+                                                    <span>{formatDistanceToNow(new Date(lead.updatedAt || lead.createdAt), { addSuffix: true })}</span>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }
+                            })}
                         </TableBody>
                     </Table>
                 </div>
+                 {totalPages > 1 && (
+                    <div className="flex items-center justify-end space-x-2 pt-4">
+                        <span className="text-sm text-muted-foreground">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="sr-only">Previous Page</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                            <span className="sr-only">Next Page</span>
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
