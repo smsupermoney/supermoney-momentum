@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { spokeStatuses, leadTypes, products } from '@/lib/types';
 import { regions } from '@/lib/validation';
+import { IndianStatesAndCities } from '@/lib/india-states-cities';
 import { Input } from '@/components/ui/input';
 import { LeadsSummary } from '@/components/leads/leads-summary';
 import { Separator } from '@/components/ui/separator';
@@ -63,6 +64,7 @@ export default function DealersPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('all');
   const [productFilter, setProductFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
+  const [stateFilter, setStateFilter] = useState('all');
   const [lenderFilter, setLenderFilter] = useState('all');
 
   // Pagination state
@@ -87,6 +89,16 @@ export default function DealersPage() {
   const canBulkAction = useMemo(() => currentUser && ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role), [currentUser]);
   
   const managerialRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
+
+  const allStates = useMemo(() => {
+    const states = new Set<string>();
+    IndianStatesAndCities.forEach(region => {
+      region.states.forEach(state => {
+        states.add(state.name);
+      });
+    });
+    return ['all', ...Array.from(states).sort()];
+  }, []);
 
   const { visibleDealers, exUserDealers } = useMemo(() => {
     if (!currentUser) return { visibleDealers: [], exUserDealers: [] };
@@ -127,15 +139,16 @@ export default function DealersPage() {
       }
       if (productFilter !== 'all' && d.product !== productFilter) return false;
       if (zoneFilter !== 'all' && d.zone !== zoneFilter) return false;
+      if (stateFilter !== 'all' && d.state !== stateFilter) return false;
       if (lenderFilter !== 'all' && d.lenderId !== lenderFilter) return false;
       return true;
     })
-  }, [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter, users]);
+  }, [visibleDealers, searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, stateFilter, lenderFilter, users]);
 
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, lenderFilter]);
+  }, [searchQuery, statusFilter, leadTypeFilter, anchorFilter, assignedToFilter, productFilter, zoneFilter, stateFilter, lenderFilter]);
 
   const paginatedDealers = useMemo(() => {
     const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -265,6 +278,7 @@ export default function DealersPage() {
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.filter(a => a.status !== 'Archived').map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
+                 <Select value={stateFilter} onValueChange={setStateFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="States" /></SelectTrigger><SelectContent><SelectItem value="all">All States</SelectItem>{allStates.filter(s => s !== 'all').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
                  <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
                  {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">All Users</SelectItem><SelectItem value="unassigned">Unassigned</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
             </div>
