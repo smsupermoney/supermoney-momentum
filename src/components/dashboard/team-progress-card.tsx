@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -21,7 +20,7 @@ export function TeamProgressCard() {
     const [statusFilter, setStatusFilter] = useState('all');
 
     const regions = useMemo(() => {
-        const allRegions = new Set(visibleUsers.map(u => u.region).filter(Boolean));
+        const allRegions = new Set(visibleUsers.filter(u => u.status !== 'Ex-User').map(u => u.region).filter(Boolean));
         return ['all', ...Array.from(allRegions)];
     }, [visibleUsers]);
 
@@ -67,7 +66,7 @@ export function TeamProgressCard() {
         
         let leadsInRegion = allLeads;
         if (regionFilter !== 'all') {
-            const userIdsInRegion = visibleUsers.filter(u => u.region === regionFilter).map(u => u.uid);
+            const userIdsInRegion = visibleUsers.filter(u => u.region === regionFilter && u.status !== 'Ex-User').map(u => u.uid);
             leadsInRegion = allLeads.filter(lead => lead.assignedTo && userIdsInRegion.includes(lead.assignedTo));
         }
 

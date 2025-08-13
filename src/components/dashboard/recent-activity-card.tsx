@@ -24,25 +24,12 @@ const iconMap: Record<TaskType, React.ElementType> = {
 
 
 export function RecentActivityCard({ className }: { className?: string }) {
-  const { activityLogs, currentUser, visibleUsers, users } = useApp();
+  const { activityLogs, visibleUserIds } = useApp();
   const { t } = useLanguage();
 
-  const getVisibleLogs = () => {
-    if (!currentUser) return [];
-
-    const activeUserIds = users.filter(u => u.status !== 'Ex-User').map(u => u.uid);
-    
-    // BD, BIU and Admin see all activity from active users
-    if (['Business Development', 'BIU', 'Admin'].includes(currentUser.role)) {
-      return activityLogs.filter(log => activeUserIds.includes(log.userId));
-    }
-    
-    // All other roles see activity from active users in their hierarchy.
-    const visibleActiveUserIds = visibleUsers.filter(u => u.status !== 'Ex-User').map(u => u.uid);
-    return activityLogs.filter(log => visibleActiveUserIds.includes(log.userId));
-  }
-
-  const userLogs = getVisibleLogs().slice(0, 7);
+  const visibleLogs = activityLogs
+    .filter(log => visibleUserIds.includes(log.userId))
+    .slice(0, 10);
 
   return (
     <Card className={cn(className)}>
@@ -52,7 +39,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
       <CardContent>
         <ScrollArea className="h-72">
           <div className="space-y-6 pr-4">
-            {userLogs.map((log) => {
+            {visibleLogs.map((log) => {
               const Icon = iconMap[log.type as TaskType] || PenSquare;
               return (
                 <div key={log.id} className="flex items-start gap-4">
@@ -71,7 +58,7 @@ export function RecentActivityCard({ className }: { className?: string }) {
                 </div>
               )
             })}
-             {userLogs.length === 0 && (
+             {visibleLogs.length === 0 && (
               <div className="text-center text-muted-foreground py-10">
                 {t('dashboard.noRecentActivity')}
               </div>

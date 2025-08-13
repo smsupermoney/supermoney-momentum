@@ -4,144 +4,126 @@
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow, TableHead, TableHeader } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, FunnelChart, Funnel, LabelList, Tooltip, XAxis, YAxis, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, format } from 'date-fns';
-import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2 } from 'lucide-react';
+import { isAfter, isBefore, isToday, startOfWeek, endOfWeek, startOfMonth, endOfQuarter, isWithinInterval, isPast, subDays, subHours, endOfMonth } from 'date-fns';
+import { Activity, Target, CheckCircle, Percent, ArrowRight, Mail, Phone, Calendar, Users, AlertTriangle, Lightbulb, User, FileText, Download, Loader2, LogOut, Briefcase } from 'lucide-react';
 import type { Anchor, Task, ActivityLog, User as UserType, UserRole, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { AdminDataChat } from '@/components/admin/admin-data-chat';
 import { useState, useMemo, useEffect } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateHighlights } from '@/ai/flows/generate-highlights-flow';
 import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
-import { products } from '@/lib/types';
+import { products, lenders } from '@/lib/types';
+import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
+import { safeFormatDate } from '@/lib/utils';
+
+// Helper function to truncate long strings for Excel export
+const truncateForExcel = (data: any[]): any[] => {
+  const MAX_CELL_LENGTH = 32000; // A safe limit below Excel's 32,767
+  return data.map(row => {
+    const newRow = { ...row };
+    for (const key in newRow) {
+      if (typeof newRow[key] === 'string' && newRow[key].length > MAX_CELL_LENGTH) {
+        newRow[key] = newRow[key].substring(0, MAX_CELL_LENGTH) + '... [TRUNCATED]';
+      }
+    }
+    return newRow;
+  });
+};
 
 
 // Main Page Component
 export default function ReportsPage() {
-  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t } = useApp();
-  const [isDownloading, setIsDownloading] = useState(false);
+  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t, lenders, visibleUserIds } = useApp();
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [isDownloadingRecent, setIsDownloadingRecent] = useState(false);
 
-  const handleDownload = () => {
-        setIsDownloading(true);
+  const generateAndDownloadWorkbook = (data: Record<string, any[]>, filename: string) => {
+    const wb = XLSX.utils.book_new();
+    for (const sheetName in data) {
+      if (data[sheetName].length > 0) {
+        const processedData = truncateForExcel(data[sheetName]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedData), sheetName);
+      }
+    }
+    XLSX.writeFile(wb, filename);
+  };
+  
+  const handleDownloadRecent = () => {
+    setIsDownloadingRecent(true);
+    const sinceDate = subHours(new Date(), 72);
+    
+    const visibleUsersData = users.filter(u => visibleUserIds.includes(u.uid));
+    const visibleAnchors = anchors.filter(a => a.createdBy && visibleUserIds.includes(a.createdBy));
+    const visibleDealers = dealers.filter(d => d.assignedTo && visibleUserIds.includes(d.assignedTo));
+    const visibleVendors = vendors.filter(v => v.assignedTo && visibleUserIds.includes(v.assignedTo));
+    const visibleTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
+    const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
+    const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
+    const visibleLenders = lenders; // Lenders are global
 
-        // 1. Prepare data
-        const processedUsers = users.map(u => ({
-            Name: u.name,
-            Email: u.email,
-            Role: u.role,
-            Region: u.region || 'N/A',
-            Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A'
-        }));
+    const getSpokeData = (spoke: Dealer | Vendor) => ({
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
+    });
 
-        const processedAnchors = anchors.map(a => {
-            const primaryContact = a.contacts.find(c => c.isPrimary) || a.contacts[0];
-            return {
-                Name: a.name,
-                Industry: a.industry,
-                Status: a.status,
-                'Annual Turnover': a.annualTurnover,
-                'Credit Rating': a.creditRating || 'N/A',
-                Address: a.address || 'N/A',
-                'Lead Source': a.leadSource || 'N/A',
-                'Lead Score': a.leadScore,
-                'Lead Score Reason': a.leadScoreReason,
-                'Primary Contact Name': primaryContact?.name || 'N/A',
-                'Primary Contact Email': primaryContact?.email || 'N/A',
-                'Primary Contact Phone': primaryContact?.phone || 'N/A',
-                'Created By': users.find(u => u.uid === a.createdBy)?.name || 'N/A',
-                'Created At': format(new Date(a.createdAt), 'yyyy-MM-dd HH:mm'),
-            }
-        });
-        
-        const getSpokeData = (spoke: Dealer | Vendor) => ({
-            Name: spoke.name,
-            'Contact Number': spoke.contactNumber,
-            Email: spoke.email || 'N/A',
-            'Onboarding Status': spoke.status,
-            'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned',
-            'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A',
-            'Product Interest': spoke.product || 'N/A',
-            'Lead Type': spoke.leadType || 'N/A',
-            'Lead Score': spoke.leadScore,
-            'Lead Score Reason': spoke.leadScoreReason,
-            'Potential Deal Value (INR)': spoke.dealValue,
-            'Created At': format(new Date(spoke.createdAt), 'yyyy-MM-dd HH:mm'),
-        });
-        
-        const processedDealers = dealers.map(getSpokeData);
-        const processedVendors = vendors.map(getSpokeData);
-
-        const processedTasks = tasks.map(t => {
-            let associatedWith = 'N/A';
-            if (t.associatedWith.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === t.associatedWith.anchorId)?.name}`;
-            else if (t.associatedWith.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === t.associatedWith.dealerId)?.name}`;
-            else if (t.associatedWith.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === t.associatedWith.vendorId)?.name}`;
-            
-            return {
-                Title: t.title,
-                'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A',
-                'Associated With': associatedWith,
-                Type: t.type,
-                Status: t.status,
-                Priority: t.priority,
-                'Due Date': format(new Date(t.dueDate), 'yyyy-MM-dd'),
-                Description: t.description,
-                'Created At': format(new Date(t.createdAt), 'yyyy-MM-dd HH:mm'),
-            }
-        });
-        
-        const processedActivityLogs = activityLogs.map(log => {
-             let associatedWith = 'N/A';
-            if (log.anchorId) associatedWith = `Anchor: ${anchors.find(a => a.id === log.anchorId)?.name}`;
-            else if (log.dealerId) associatedWith = `Dealer: ${dealers.find(d => d.id === log.dealerId)?.name}`;
-            else if (log.vendorId) associatedWith = `Vendor: ${vendors.find(v => v.id === log.vendorId)?.name}`;
-
-            return {
-                'User': log.userName,
-                'Timestamp': format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm'),
-                'Type': log.type,
-                'Title': log.title,
-                'Outcome': log.outcome,
-                'Associated With': associatedWith,
-                'Related Task ID': log.taskId || 'N/A'
-            }
-        });
-
-        const processedDailyActivities = dailyActivities.map(activity => ({
-            'User': activity.userName,
-            'Timestamp': format(new Date(activity.activityTimestamp), 'yyyy-MM-dd HH:mm'),
-            'Type': activity.activityType,
-            'Title': activity.title,
-            'Notes': activity.notes,
-            'Location': activity.location ? `${activity.location.latitude}, ${activity.location.longitude}` : 'N/A',
-            'Images': (activity.images || []).join(', '),
-            'Associated Anchor': activity.anchorName || 'N/A',
-            'Associated Dealer': activity.dealerName || 'N/A',
-            'Associated Vendor': activity.vendorName || 'N/A',
-        }));
-
-        // 2. Create workbook and worksheets
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedUsers), "Users");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedAnchors), "Anchors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDealers), "Dealers");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedVendors), "Vendors");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedTasks), "Tasks");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedActivityLogs), "Interaction Logs");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedDailyActivities), "Daily Activities");
-
-        // 3. Trigger download
-        XLSX.writeFile(wb, `Supermoney_CRM_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-
-        setIsDownloading(false);
+    const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string, activityTimestamp?: string }) => {
+        const dateToCheck = item.updatedAt || item.createdAt || item.timestamp || item.activityTimestamp;
+        if (!dateToCheck) return false;
+        return isAfter(new Date(dateToCheck), sinceDate);
     };
+
+    const recentData = {
+      "Users": visibleUsersData.filter(isRecent).map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": visibleAnchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? safeFormatDate(a.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Dealers": visibleDealers.filter(isRecent).map(getSpokeData),
+      "Vendors": visibleVendors.filter(isRecent).map(getSpokeData),
+      "Tasks": visibleTasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? safeFormatDate(t.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Interaction Logs": visibleActivityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": visibleDailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Lenders": [], // Lenders don't have timestamps, so we exclude them from "recent"
+    };
+
+    generateAndDownloadWorkbook(recentData, `Supermoney_CRM_Recent_Changes_${safeFormatDate(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    setIsDownloadingRecent(false);
+  };
+
+  const handleDownloadAll = () => {
+    setIsDownloadingAll(true);
+    
+    const visibleUsersData = users.filter(u => visibleUserIds.includes(u.uid));
+    const visibleAnchors = anchors.filter(a => a.createdBy && visibleUserIds.includes(a.createdBy));
+    const visibleDealers = dealers.filter(d => d.assignedTo && visibleUserIds.includes(d.assignedTo));
+    const visibleVendors = vendors.filter(v => v.assignedTo && visibleUserIds.includes(v.assignedTo));
+    const visibleTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
+    const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
+    const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
+    const visibleLenders = lenders; // Lenders are global
+
+    const getSpokeData = (spoke: Dealer | Vendor) => ({
+      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
+    });
+
+    const allData = {
+      "Users": visibleUsersData.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": visibleAnchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm') })),
+      "Dealers": visibleDealers.map(getSpokeData),
+      "Vendors": visibleVendors.map(getSpokeData),
+      "Tasks": visibleTasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm') })),
+      "Interaction Logs": visibleActivityLogs.map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": visibleDailyActivities.map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Lenders": visibleLenders.map(l => ({ Name: l.name }))
+    };
+
+    generateAndDownloadWorkbook(allData, `Supermoney_CRM_Export_${safeFormatDate(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    setIsDownloadingAll(false);
+  };
 
   const getPageTitle = (role: UserRole) => {
     switch (role) {
@@ -173,17 +155,27 @@ export default function ReportsPage() {
         case 'National Sales Manager':
         case 'Regional Sales Manager':
         case 'Zonal Sales Manager':
+        case 'ETB Manager':
              return <LeadsDashboard />;
-        case 'Area Sales Manager': return <SalespersonDashboard />;
+        case 'Area Sales Manager': 
+        case 'Internal Sales':
+        case 'ETB Team':
+             return <SalespersonDashboard />;
         default: return <div className="text-center p-8">{t('reports.noReports')}</div>
     }
   }
 
   const adminActions = (
-    <Button onClick={handleDownload} disabled={isDownloading} size="sm" variant="outline">
-      {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      Download All Data
-    </Button>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <Button onClick={handleDownloadRecent} disabled={isDownloadingRecent} size="sm" variant="outline">
+        {isDownloadingRecent ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+        Download Recent (72h)
+      </Button>
+      <Button onClick={handleDownloadAll} disabled={isDownloadingAll} size="sm" variant="outline">
+        {isDownloadingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+        Download All Data
+      </Button>
+    </div>
   );
 
   return (
@@ -192,7 +184,7 @@ export default function ReportsPage() {
         title={getPageTitle(currentUser.role)}
         description={getPageDescription(currentUser.role)}
       >
-        {currentUser?.role === 'Admin' && adminActions}
+        {(currentUser?.role === 'Admin' || currentUser?.role === 'Business Development' || currentUser?.role === 'BIU') && adminActions}
       </PageHeader>
       {renderReports()}
     </>
@@ -268,7 +260,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </CardHeader>
+                </Header>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -285,10 +277,11 @@ function SalespersonDashboard() {
 // Leads Dashboard for Admins and Managers
 function LeadsDashboard() {
     const { anchors, users, dealers, vendors, activityLogs, tasks, t, visibleUserIds } = useApp();
-    const [period, setPeriod] = useState('this_month');
+    const [period, setPeriod] = useState<'this_month' | 'this_quarter' | 'ytd'>('this_month');
     const [productFilter, setProductFilter] = useState('all');
 
-    const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Zonal Sales Manager');
+    const salesUsers = users.filter(u => u.status !== 'Ex-User' && (u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Zonal Sales Manager'));
+    
     const allSpokes = useMemo(() => {
         return [...dealers, ...vendors].filter(spoke => visibleUserIds.includes(spoke.assignedTo || ''));
     }, [dealers, vendors, visibleUserIds]);
@@ -305,7 +298,7 @@ function LeadsDashboard() {
         let label = t('reports.month');
         switch (period) {
             case 'this_quarter':
-                interval = { start: endOfQuarter(now), end: endOfQuarter(now) };
+                interval = { start: startOfQuarter(now), end: endOfQuarter(now) };
                 label = t('reports.quarter');
                 break;
             case 'ytd':
@@ -356,31 +349,32 @@ function LeadsDashboard() {
     const newToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
     const onboardingToActive = allOnboardingCount > 0 ? (allActiveCount / allOnboardingCount) * 100 : 0;
 
-    const activeAnchors = anchors.filter(a => a.status === 'Active');
+    const activeAnchors = anchors.filter(a => a.status === 'Active' && a.createdBy && visibleUserIds.includes(a.createdBy));
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.status === 'Active');
     const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 
-  return (
-    <div className="grid gap-4">
-      <AdminDataChat />
-      <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
-      <Card>
-          <CardHeader>
-             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    return (
+        <div className="grid gap-4">
+        <AdminDataChat />
+        <InactiveUsersReport />
+        <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
-                  <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
+                    <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
+                    <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <Select value={productFilter} onValueChange={setProductFilter}>
-                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
-                      <SelectContent>
+                        <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                        <SelectContent>
                         <SelectItem value="all">All Products</SelectItem>
                         {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                      </SelectContent>
+                        </SelectContent>
                     </Select>
-                    <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
+                    <Tabs value={period} onValueChange={(v) => setPeriod(v as 'this_month' | 'this_quarter' | 'ytd')} className="w-full sm:w-auto">
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
                             <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
@@ -388,54 +382,54 @@ function LeadsDashboard() {
                         </TabsList>
                     </Tabs>
                 </div>
-             </div>
-          </CardHeader>
-          <CardContent>
-              <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
-                  <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                      <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                      <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
-                      <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
+                    <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                        <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
+                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                         {pipelineValueData.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                            <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
                         ))}
-                      </Bar>
-                  </BarChart>
-              </ChartContainer>
-          </CardContent>
-      </Card>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-              <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
-              <CardDescription>Top performers for {periodLabel}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-                <TableBody>
-                    {activityCounts.map((user, index) => (
-                        <TableRow key={user.name}>
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
-                                    <div><p className="font-medium">{user.name}</p></div>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <span className="text-lg font-bold">{user.activities}</span>
-                                <span className="text-sm text-muted-foreground"> activities</span>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                     {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
-                </TableBody>
-            </Table>
-          </CardContent>
+                        </Bar>
+                    </BarChart>
+                </ChartContainer>
+            </CardContent>
         </Card>
-        <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
-        <div className="lg:col-span-1 space-y-4">
-             <Card className="lg:col-span-1">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
+                <CardDescription>Top performers for {periodLabel}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableBody>
+                        {activityCounts.map((user, index) => (
+                            <TableRow key={user.name}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                        <div><p className="font-medium">{user.name}</p></div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <span className="text-lg font-bold">{user.activities}</span>
+                                    <span className="text-sm text-muted-foreground"> activities</span>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
+                    </TableBody>
+                </Table>
+            </CardContent>
+            </Card>
+            <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
+            <div className="lg:col-span-1 space-y-4">
+                <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
                     <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
@@ -446,10 +440,10 @@ function LeadsDashboard() {
                 </CardContent>
             </Card>
             <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+        </div>
+    );
 }
 
 
@@ -504,7 +498,7 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
                                         {userTasks.map(task => (
                                             <li key={task.id} className="text-sm flex items-center gap-2">
                                                 <FileText className="h-3 w-3 shrink-0" />
-                                                <span>{task.title} (Due: {format(new Date(task.dueDate), 'MMM d')})</span>
+                                                <span>{task.title} (Due: {safeFormatDate(task.dueDate, 'MMM d')})</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -517,6 +511,88 @@ function OverdueTasksByExecutive({ tasks, users }: { tasks: Task[], users: UserT
         </Card>
     )
 }
+
+function InactiveUsersReport() {
+    const { visibleUsers } = useApp();
+    const now = new Date();
+
+    const getActiveUsers = (users: UserType[]) => {
+        return users.filter(u => u.status !== 'Ex-User');
+    }
+
+    const inactive24h = useMemo(() => {
+        return getActiveUsers(visibleUsers).filter(u => 
+            (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
+            (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 1)))
+        );
+    }, [visibleUsers, now]);
+
+    const inactive72h = useMemo(() => {
+        return getActiveUsers(visibleUsers).filter(u => 
+            (u.role === 'Area Sales Manager' || u.role === 'Internal Sales') &&
+            (!u.lastLogin || isBefore(new Date(u.lastLogin), subDays(now, 3)))
+        );
+    }, [visibleUsers, now]);
+    
+    if (inactive24h.length === 0 && inactive72h.length === 0) return null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <LogOut className="h-5 w-5 text-destructive" />
+                    <CardTitle>Inactive User Report</CardTitle>
+                </div>
+                <CardDescription>Team members who have not logged in recently.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Not Logged in for > 24 Hours</h4>
+                    {inactive24h.length > 0 ? (
+                        <Table>
+                            <TableBody>
+                                {inactive24h.map(user => (
+                                    <TableRow key={user.uid}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
+                                        </TableCell>
+                                        <TableCell className="text-right text-xs text-muted-foreground">
+                                            {user.lastLogin ? safeFormatDate(user.lastLogin, 'PPp') : 'Never'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">All team members have logged in recently.</p>
+                    )}
+                </div>
+                <div className="space-y-2">
+                    <h4 className="font-semibold">Not Logged in for > 72 Hours</h4>
+                    {inactive72h.length > 0 ? (
+                         <Table>
+                            <TableBody>
+                                {inactive72h.map(user => (
+                                     <TableRow key={user.uid}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> {user.name}</div>
+                                        </TableCell>
+                                         <TableCell className="text-right text-xs text-muted-foreground">
+                                            {user.lastLogin ? safeFormatDate(user.lastLogin, 'PPp') : 'Never'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">No users inactive for over 72 hours.</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 function KeyHighlights({ period, anchors, activityLogs, users }: { period: string, anchors: Anchor[], activityLogs: ActivityLog[], users: UserType[]}) {
     const { t } = useApp();
@@ -637,7 +713,7 @@ function ActivityStat({ icon: Icon, label, value }: { icon: React.ElementType, l
   )
 }
 
-function ConversionRateItem({from, to, value}: {from, to: string, value: number}) {
+function ConversionRateItem({from, to, value}: {from: string, to: string, value: number}) {
     return (
         <div>
             <div className="flex justify-between items-center text-sm font-medium">

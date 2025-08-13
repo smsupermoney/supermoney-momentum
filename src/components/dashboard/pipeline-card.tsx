@@ -8,26 +8,20 @@ import { useLanguage } from '@/contexts/language-context';
 import type { UserRole } from '@/lib/types';
 
 export function PipelineCard() {
-  const { anchors, currentUser, visibleUserIds, users } = useApp();
+  const { anchors, currentUser, visibleUserIds } = useApp();
   const { t } = useLanguage();
 
   const getVisibleAnchors = () => {
     if (!currentUser) return [];
-
+    
+    // Admins, BD, BIU, and managers see anchors created by users they can view.
     const managerRoles: UserRole[] = ['Admin', 'Business Development', 'BIU', 'Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'ETB Manager'];
-    const activeUserIds = users.filter(u => u.status !== 'Ex-User').map(u => u.uid);
-
     if (managerRoles.includes(currentUser.role)) {
-      const visibleActiveUserIds = visibleUserIds.filter(id => activeUserIds.includes(id));
-      return anchors.filter(a => a.status !== 'Archived' && a.createdBy && visibleActiveUserIds.includes(a.createdBy));
+      return anchors.filter(a => a.status !== 'Archived' && a.createdBy && visibleUserIds.includes(a.createdBy));
     }
     
-    // Sales role sees only anchors they created, if they are active
-    if (currentUser.status !== 'Ex-User') {
-        return anchors.filter(a => a.status !== 'Archived' && a.createdBy === currentUser.uid);
-    }
-
-    return [];
+    // Other sales roles see only anchors they created.
+    return anchors.filter(a => a.status !== 'Archived' && a.createdBy === currentUser.uid);
   }
 
   const visibleAnchors = getVisibleAnchors();

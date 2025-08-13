@@ -43,10 +43,16 @@ export function TaskList({ dueDateFilter, priorityFilter, anchorFilter, assigned
   
   const getVisibleTasks = () => {
     if (!currentUser) return [];
-    if (currentUser.role === 'Business Development') {
-      return tasks.filter(task => task.assignedTo === currentUser.uid);
+    // Admins and some other roles see all tasks within their visibility scope.
+    if (['Admin', 'Business Development', 'BIU', 'ETB Manager'].includes(currentUser.role)) {
+       return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
     }
-    return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
+    // Sales managers see tasks assigned to them and their team.
+    if (['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager'].includes(currentUser.role)) {
+        return tasks.filter(task => visibleUserIds.includes(task.assignedTo));
+    }
+    // Individuals see only their tasks.
+    return tasks.filter(task => task.assignedTo === currentUser.uid);
   }
   
   const canModify = currentUser && ['Admin', 'BIU'].includes(currentUser.role);

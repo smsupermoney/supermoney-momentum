@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { NewAnchorSchema, NewSpokeSchema, NewTaskSchema, NewDailyActivitySchema, NewUserSchema, EditUserSchema, UpdateSpokeSchema } from '@/lib/validation';
 import { sendNotificationEmail, SendNotificationEmailInput } from '@/ai/flows/send-notification-email-flow';
-import { generateUniqueId } from '@/lib/utils';
+import { generateUniqueId, safeFormatDate } from '@/lib/utils';
 
 
 interface AppContextType {
@@ -237,7 +237,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const visibleUsers = useMemo(() => {
     if (!currentUser || !users.length) return [];
-    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager') {
+    if (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
       return users;
     }
     
@@ -299,7 +299,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 userNotifications.push({
                     userId: currentUser.uid,
                     title: 'Task Overdue',
-                    description: `Your task "${task.title}" was due on ${format(new Date(task.dueDate), 'MMM d')}.`,
+                    description: `Your task "${task.title}" was due on ${safeFormatDate(task.dueDate, 'MMM d')}.`,
                     href: `/tasks`,
                     timestamp: task.dueDate,
                     icon: 'AlertTriangle'
@@ -311,7 +311,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     type: 'TaskOverdue',
                     context: {
                         taskTitle: task.title,
-                        taskDueDate: format(new Date(task.dueDate), 'PPP'),
+                        taskDueDate: safeFormatDate(task.dueDate, 'PPP'),
                     }
                 });
             });
@@ -869,9 +869,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
         if (!currentUser) return;
         
-        const dataToValidate: Omit<Task, 'id'> & {dueDate: Date} = {
+        const dataToValidate: Omit<Task, 'id'> & {dueDate: Date | undefined} = {
             ...taskData,
-            dueDate: new Date(taskData.dueDate)
+            dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined
         };
         const validatedData = NewTaskSchema.parse(dataToValidate);
         const sanitizedTask = sanitizeForFirestore(validatedData);
@@ -908,7 +908,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updateTask = async (updatedTask: Task) => {
     try {
-        NewTaskSchema.extend({ id: z.string() }).parse(updatedTask);
+        NewTaskSchema.extend({ id: z.string() }).parse({
+            ...updatedTask,
+            dueDate: updatedTask.dueDate ? new Date(updatedTask.dueDate) : undefined
+        });
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error("Validation failed for task update:", e.flatten().fieldErrors);

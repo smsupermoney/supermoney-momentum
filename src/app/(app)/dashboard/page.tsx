@@ -153,7 +153,7 @@ function SalesDashboard() {
     );
 }
 
-// Manager Dashboard (for ZSM, RSM, NSM)
+// Manager Dashboard (for ZSM, RSM, NSM, ETB Manager)
 function ManagerDashboard() {
     return (
         <>

@@ -16,23 +16,12 @@ export function TasksCard() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const getVisibleTasks = () => {
-    if (!currentUser) return [];
-
-    const activeUserIds = users.filter(u => u.status !== 'Ex-User').map(u => u.uid);
-
-    if (currentUser.role === 'Business Development' || currentUser.role === 'BIU') {
-      return tasks.filter(task => task.assignedTo === currentUser.uid && activeUserIds.includes(task.assignedTo));
-    }
-    
-    const visibleActiveUserIds = visibleUserIds.filter(id => activeUserIds.includes(id));
-    return tasks.filter(task => visibleActiveUserIds.includes(task.assignedTo));
-  }
-
-  const todaysTasks = getVisibleTasks().filter(task => {
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-    return dueDate.getTime() === today.getTime() && task.status !== 'Completed';
+  const todaysTasks = tasks.filter(task => {
+      const dueDate = new Date(task.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      return visibleUserIds.includes(task.assignedTo) && 
+             dueDate.getTime() === today.getTime() && 
+             task.status !== 'Completed';
   });
 
   const getAnchorName = (anchorId: string) => {
@@ -51,8 +40,8 @@ export function TasksCard() {
 
   const getTitle = () => {
     if (!currentUser) return t('dashboard.myTasksToday');
-    const managerialRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin', 'ETB Manager'];
-    if (managerialRoles.includes(currentUser.role)) {
+    const managerRoles: UserRole[] = ['Zonal Sales Manager', 'Regional Sales Manager', 'National Sales Manager', 'Admin', 'ETB Manager'];
+    if (managerRoles.includes(currentUser.role)) {
       return t('dashboard.teamTasksToday');
     }
     return t('dashboard.myTasksToday');
