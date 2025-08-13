@@ -130,12 +130,77 @@ export const mockAnchors: Anchor[] = [
   },
 ];
 
-export const mockDealers: Dealer[] = [];
+export const mockDealers: Dealer[] = [
+  { 
+    id: 'dealer-1', 
+    leadId: 'MUMO01', 
+    name: 'Mumbai Motors', 
+    contactNumbers: [{ value: '9820098200' }],
+    status: 'Active', 
+    anchorId: 'anchor-1', 
+    assignedTo: 'user-1', 
+    createdAt: daysAgo(5), 
+    leadDate: daysAgo(5), 
+    product: 'Primary', 
+    leadSource: 'Connector', 
+    leadScore: 85, 
+    leadScoreReason: "Associated with a strong anchor. Good potential.", 
+    leadType: 'Fresh', 
+    remarks: [] 
+  },
+  { 
+    id: 'dealer-2', 
+    leadId: 'PUAU02', 
+    name: 'Pune Auto', 
+    contactNumbers: [{ value: '9820198201' }],
+    status: 'Awaiting Docs Approval', 
+    anchorId: 'anchor-2', 
+    assignedTo: 'user-3', 
+    createdAt: daysAgo(3), 
+    leadDate: daysAgo(3), 
+    product: 'Primary', 
+    leadSource: 'Connector', 
+    leadType: 'Fresh', 
+    remarks: [] 
+  },
+  { 
+    id: 'dealer-3', 
+    leadId: 'UNDE03', 
+    name: 'Unassigned Dealer', 
+    contactNumbers: [{ value: '9820298202' }],
+    status: 'Unassigned Lead', 
+    anchorId: null, 
+    assignedTo: null, 
+    createdAt: daysAgo(1), 
+    leadDate: daysAgo(1), 
+    city: 'Delhi', 
+    product: 'Other', 
+    leadSource: 'Website Inquiry', 
+    leadType: 'Fresh', 
+    remarks: [] 
+  },
+  { 
+    id: 'dealer-4', 
+    leadId: 'DLSE04', 
+    name: 'Delhi Service Center', 
+    contactNumbers: [{ value: '9820398203' }],
+    status: 'Partial Docs', 
+    anchorId: 'anchor-1', 
+    assignedTo: 'user-2', 
+    createdAt: daysAgo(10), 
+    leadDate: daysAgo(10), 
+    product: 'Primary', 
+    leadSource: 'Anchor Ecosystem (Cross-sell)', 
+    leadType: 'Fresh', 
+    nextBestAction: { recommendedAction: 'Mark as Unqualified', justification: 'No response after multiple follow-ups over two weeks.' }, 
+    remarks: [] 
+  },
+];
 
 export const mockVendors: Vendor[] = [
-  { id: 'vendor-1', leadId: 'SKPA01', name: 'Shree Krishna Parts', contacts: [{id: 'vc-1', name: 'Shree Krishna', phone: '8123456780', email: 'skp@gmail.com', designation: 'Owner', isPrimary: true}], status: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), leadDate: today.toISOString(), product: 'Primary', leadSource: 'Anchor Ecosystem (Cross-sell)', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'Fresh', remarks: [] },
-  { id: 'vendor-2', leadId: 'BACO02', name: 'Balaji Components', contacts: [{id: 'vc-2', name: 'Balaji', phone: '8123456781', email: '', designation: 'Manager', isPrimary: true}], status: 'Partial Docs', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), leadDate: today.toISOString(), product: 'Primary', leadSource: 'Connector', leadType: 'Fresh', nextBestAction: { recommendedAction: 'Address a Specific Question', justification: 'KYC is pending, follow up to see if they have any questions holding them back.' }, remarks: [] },
-  { id: 'vendor-3', leadId: 'UNVE03', name: 'Unassigned Vendors Inc', contacts: [{id: 'vc-3', name: 'Unassigned', phone: '8123456782', email: 'contact@unassigned.co', designation: 'Contact', isPrimary: true}], status: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), leadDate: today.toISOString(), city: 'Chennai', product: 'Other', leadSource: 'Website Inquiry', leadType: 'Fresh', remarks: [] },
+  { id: 'vendor-1', leadId: 'SKPA01', name: 'Shree Krishna Parts', contactNumbers: [{ value: '8123456780' }], status: 'Active', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), leadDate: today.toISOString(), product: 'Primary', leadSource: 'Anchor Ecosystem (Cross-sell)', leadScore: 90, leadScoreReason: "Long-standing supplier for a major anchor, indicating reliability.", leadType: 'Fresh', remarks: [] },
+  { id: 'vendor-2', leadId: 'BACO02', name: 'Balaji Components', contactNumbers: [{ value: '8123456781' }], status: 'Partial Docs', anchorId: 'anchor-1', assignedTo: 'user-1', createdAt: today.toISOString(), leadDate: today.toISOString(), product: 'Primary', leadSource: 'Connector', leadType: 'Fresh', nextBestAction: { recommendedAction: 'Address a Specific Question', justification: 'KYC is pending, follow up to see if they have any questions holding them back.' }, remarks: [] },
+  { id: 'vendor-3', leadId: 'UNVE03', name: 'Unassigned Vendors Inc', contactNumbers: [{ value: '8123456782' }], status: 'Unassigned Lead', anchorId: null, assignedTo: null, createdAt: today.toISOString(), leadDate: today.toISOString(), city: 'Chennai', product: 'Other', leadSource: 'Website Inquiry', leadType: 'Fresh', remarks: [] },
 ];
 
 export const mockTasks: Task[] = [

@@ -58,7 +58,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     resolver: zodResolver(NewSpokeSchema),
     defaultValues: {
       name: '',
-      contactNumber: '',
+      contactNumbers: [{ value: '' }],
       anchorId: anchorId || '',
       email: '',
       gstin: '',
@@ -88,7 +88,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
     if (open) {
         form.reset({
             name: '',
-            contactNumber: '',
+            contactNumbers: [{ value: '' }],
             anchorId: anchorId || '',
             email: '',
             gstin: '',
