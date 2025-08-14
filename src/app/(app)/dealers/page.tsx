@@ -97,7 +97,7 @@ export default function DealersPage() {
         states.add(state.name);
       });
     });
-    return ['all', ...Array.from(states).sort()];
+    return Array.from(states).sort();
   }, []);
 
   const { visibleDealers, exUserDealers } = useMemo(() => {
@@ -278,7 +278,7 @@ export default function DealersPage() {
                  <Select value={anchorFilter} onValueChange={setAnchorFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Anchors" /></SelectTrigger><SelectContent><SelectItem value="all">Anchors</SelectItem>{anchors.filter(a => a.status !== 'Archived').map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select>
                  <Select value={productFilter} onValueChange={setProductFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Products" /></SelectTrigger><SelectContent><SelectItem value="all">Products</SelectItem>{products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                  <Select value={zoneFilter} onValueChange={setZoneFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Zones" /></SelectTrigger><SelectContent><SelectItem value="all">Zones</SelectItem>{regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select>
-                 <Select value={stateFilter} onValueChange={setStateFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="States" /></SelectTrigger><SelectContent><SelectItem value="all">All States</SelectItem>{allStates.filter(s => s !== 'all').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+                 <Select value={stateFilter} onValueChange={setStateFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="States" /></SelectTrigger><SelectContent><SelectItem value="all">All States</SelectItem>{allStates.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
                  <Select value={lenderFilter} onValueChange={setLenderFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]"><SelectValue placeholder="Lenders" /></SelectTrigger><SelectContent><SelectItem value="all">All Lenders</SelectItem>{lenders.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select>
                  {canShowAssignedToFilter && <Select value={assignedToFilter} onValueChange={setAssignedToFilter}><SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]"><SelectValue placeholder="Users" /></SelectTrigger><SelectContent><SelectItem value="all">All Users</SelectItem><SelectItem value="unassigned">Unassigned</SelectItem>{visibleUsers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}</SelectContent></Select>}
             </div>
@@ -332,7 +332,7 @@ export default function DealersPage() {
       <div className="grid gap-4 md:hidden">
           {paginatedDealers.map(dealer => (
               <Card key={dealer.id} className="relative">
-                  {canBulkAction && <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}><Checkbox className="h-5 w-5" checked={selectedRows[dealer.id] || false} onCheckedChange={(checked) => handleRowSelect(dealer.id, checked as boolean)} aria-label="Select row"/></div>}
+                  {canBulkAction && <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}><Checkbox className="h-5 w-5" checked={selectedRows[dealer.id] || false} onCheckedChange={(checked) => handleRowSelect(dealer.id, checked as boolean)} aria-label="Select row" /></div>}
                   <div onClick={() => setSelectedDealer(dealer)} className="cursor-pointer">
                       <CardHeader><CardTitle className="hover:text-primary pr-8 flex items-center gap-2">{dealer.priority === 'High' && <Flame className="h-5 w-5 text-destructive" />}{dealer.name}</CardTitle><CardDescription>{getAnchorName(dealer.anchorId)}</CardDescription></CardHeader>
                       <CardContent className="space-y-2">

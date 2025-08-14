@@ -82,16 +82,26 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
 
-  const availableStates = useMemo(() => {
-    if (!watchZone) return [];
-    return IndianStatesAndCities.find(region => region.region === watchZone)?.states || [];
-  }, [watchZone]);
+  const allStates = useMemo(() => {
+    const states = new Set<string>();
+    IndianStatesAndCities.forEach(region => {
+      region.states.forEach(state => {
+        states.add(state.name);
+      });
+    });
+    return Array.from(states).sort();
+  }, []);
 
   const availableCities = useMemo(() => {
     if (!watchState) return [];
-    const selectedState = availableStates.find(state => state.name === watchState);
-    return selectedState?.cities || [];
-  }, [watchState, availableStates]);
+    for (const region of IndianStatesAndCities) {
+      const foundState = region.states.find(state => state.name === watchState);
+      if (foundState) {
+        return foundState.cities;
+      }
+    }
+    return [];
+  }, [watchState]);
 
   const isManagerCreating = currentUser && managerRoles.includes(currentUser.role);
   
@@ -139,7 +149,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
         const finalAnchorId = anchorId || values.anchorId || null;
         
         if (!finalAnchorId) {
-            toast({ variant: 'destructive', title: 'Validation Error', description: 'An anchor must be selected.' });
+            toast({ variant: 'destructive', title: 'Validation Error', description: 'An anchor must be associated with the lead.' });
             setIsSubmitting(false);
             return;
         }
@@ -326,8 +336,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                           field.onChange(value);
                           form.setValue('city', '');
                         }}
-                        defaultValue={field.value}
-                        disabled={!watchZone}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -335,9 +344,9 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableStates.map((state) => (
-                            <SelectItem key={state.name} value={state.name}>
-                              {state.name}
+                          {allStates.map((state) => (
+                            <SelectItem key={state} value={state}>
+                              {state}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -352,7 +361,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>City</FormLabel>
-                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchState}>
+                       <Select onValueChange={field.onChange} value={field.value} disabled={!watchState}>
                          <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a city" />
