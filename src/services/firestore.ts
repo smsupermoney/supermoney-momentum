@@ -1,6 +1,5 @@
 
 
-
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -233,7 +232,8 @@ export const addTask = async (task: Omit<Task, 'id'>) => {
 export const updateTask = async (task: Task) => {
     if (!db) throw new Error("Firestore not initialized");
     const { id, ...taskData } = task;
-    await updateDoc(doc(db, 'tasks', id), { ...taskData });
+    // Use set with merge to prevent error if doc doesn't exist
+    await setDoc(doc(db, 'tasks', id), { ...taskData }, { merge: true });
 };
 export const deleteTask = async (taskId: string) => {
     if (!db) throw new Error("Firestore not initialized");
