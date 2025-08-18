@@ -124,3 +124,22 @@ export const EditUserSchema = z.object({
     managerId: z.string().optional().nullable(),
     territoryAccess: TerritoryAccessSchema,
 });
+
+// Schema for the custom dashboard configuration form
+export const DashboardConfigSchema = z.object({
+  id: z.string().optional(),
+  userId: z.string(),
+  name: z.string().min(3, "Dashboard name is required."),
+  selectedAnchors: z.array(z.string()).min(1, "At least one anchor must be selected."),
+  selectedStates: z.array(z.string()).min(1, "At least one state must be selected."),
+  statusToTrack: z.string().min(1, "A status to track must be selected."),
+  targets: z.record( // Anchor ID
+    z.record( // YYYY-MM
+      z.object({
+        statusCount: z.coerce.number().optional(),
+        dealValue: z.coerce.number().optional(),
+        sanctionValue: z.coerce.number().optional()
+      }).optional()
+    ).optional()
+  ).optional()
+});

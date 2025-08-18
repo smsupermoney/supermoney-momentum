@@ -53,25 +53,28 @@ function MultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between h-10", className)}
+          className={cn("w-full justify-between h-auto min-h-10", className)}
           onClick={() => setOpen(!open)}
         >
           <div className="flex gap-1 flex-wrap">
             {selected.length > 0 ? (
-              selected.map((item) => (
-                <Badge
-                  variant="secondary"
-                  key={item}
-                  className="mr-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUnselect(item);
-                  }}
-                >
-                  {options.find(opt => opt.value === item)?.label ?? item}
-                  <X className="ml-1 h-3 w-3" />
-                </Badge>
-              ))
+              selected.map((item) => {
+                const label = options.find(opt => opt.value === item)?.label ?? item;
+                return (
+                  <Badge
+                    variant="secondary"
+                    key={item}
+                    className="mr-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUnselect(item);
+                    }}
+                  >
+                    {label}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                )
+              })
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}

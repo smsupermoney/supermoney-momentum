@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, SanctionData, AumData, Target } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData, mockTargets } from '@/lib/mock-data';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData } from '@/lib/mock-data';
 import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
@@ -62,9 +62,9 @@ interface AppContextType {
   addAnchorSPOC: (spoc: Omit<AnchorSPOC, 'id'>) => void;
   updateAnchorSPOC: (spoc: AnchorSPOC) => void;
   customDashboards: CustomDashboardConfig[];
+  saveDashboardConfig: (config: CustomDashboardConfig) => void;
   sanctionData: SanctionData[];
   aumData: AumData[];
-  targets: Target[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -111,7 +111,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [customDashboards, setCustomDashboards] = useState<CustomDashboardConfig[]>([]);
   const [sanctionData, setSanctionData] = useState<SanctionData[]>([]);
   const [aumData, setAumData] = useState<AumData[]>([]);
-  const [targets, setTargets] = useState<Target[]>([]);
 
 
   const loadMockData = useCallback(() => {
@@ -127,7 +126,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCustomDashboards(mockCustomDashboardConfigs);
     setSanctionData(mockSanctionData);
     setAumData(mockAumData);
-    setTargets(mockTargets);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -1229,6 +1227,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setAnchorSPOCs(prev => prev.map(s => s.id === sanitizedSpoc.id ? sanitizedSpoc : s));
   };
   
+  const saveDashboardConfig = (config: CustomDashboardConfig) => {
+    // In a real app, this would save to Firestore. For now, we update local state.
+    setCustomDashboards(prev => {
+        const index = prev.findIndex(d => d.id === config.id);
+        if (index > -1) {
+            const newDashboards = [...prev];
+            newDashboards[index] = config;
+            return newDashboards;
+        } else {
+            return [...prev, { ...config, id: `config-${config.userId}` }];
+        }
+    });
+    toast({ title: "Dashboard configuration saved." });
+  }
+  
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
     if(params) {
@@ -1284,9 +1297,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     addAnchorSPOC,
     updateAnchorSPOC,
     customDashboards,
+    saveDashboardConfig,
     sanctionData,
     aumData,
-    targets,
     t
   };
 
