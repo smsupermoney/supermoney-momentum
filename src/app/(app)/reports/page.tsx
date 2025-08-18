@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -259,7 +260,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </CardHeader>
+                </Header>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -735,9 +736,3 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
-
-    
-
-    
-
-    
