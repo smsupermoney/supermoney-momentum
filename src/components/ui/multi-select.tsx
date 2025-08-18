@@ -35,12 +35,13 @@ interface MultiSelectProps {
 
 function MultiSelect({
   options,
-  value: selected,
+  value,
   onChange,
   className,
   placeholder = "Select...",
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const selected = value || [];
 
   const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item));

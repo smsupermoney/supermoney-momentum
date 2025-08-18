@@ -60,16 +60,18 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
 
   const anchorOptions = React.useMemo(() => anchors.map(a => ({ value: a.id, label: a.name })), [anchors]);
   const stateOptions = React.useMemo(() => {
-    return IndianStatesAndCities.flatMap(region => region.states.map(state => ({ value: state.name, label: state.name }))).sort((a,b) => a.label.localeCompare(b.label));
+    return [
+      { value: 'all', label: 'All States' },
+      ...IndianStatesAndCities.flatMap(region => region.states.map(state => ({ value: state.name, label: state.name }))).sort((a,b) => a.label.localeCompare(b.label)),
+    ];
   }, []);
   
   const selectedAnchors = form.watch('selectedAnchors');
 
   const monthOptions = React.useMemo(() => {
     const options: string[] = [];
-    const endDate = new Date(2026, 2, 1); // Up to March 2026
-    let currentDate = new Date(2025, 3, 1); // Start from April 2025
-    while (currentDate <= endDate) {
+    let currentDate = new Date(2025, 7, 1); // Start from August 2025
+    for(let i=0; i<3; i++) {
       options.push(format(currentDate, 'yyyy-MM'));
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
@@ -108,10 +110,10 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                 )}/>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="selectedAnchors" render={({ field }) => (
-                    <FormItem><FormLabel>Anchors</FormLabel><MultiSelect options={anchorOptions} {...field} placeholder="Select anchors..." /><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Anchors</FormLabel><MultiSelect value={field.value} onChange={field.onChange} options={anchorOptions} placeholder="Select anchors..." /><FormMessage /></FormItem>
                   )}/>
                   <FormField control={form.control} name="selectedStates" render={({ field }) => (
-                    <FormItem><FormLabel>States</FormLabel><MultiSelect options={stateOptions} {...field} placeholder="Select states..." /><FormMessage /></FormItem>
+                    <FormItem><FormLabel>States</FormLabel><MultiSelect value={field.value} onChange={field.onChange} options={stateOptions} placeholder="Select states..." /><FormMessage /></FormItem>
                   )}/>
                 </div>
                 <FormField control={form.control} name="statusToTrack" render={({ field }) => (
@@ -147,7 +149,7 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                                             {monthOptions.map((month, monthIndex) => (
                                                 <TableRow key={`${anchorId}-${month}`}>
                                                     {monthIndex === 0 && <TableCell rowSpan={monthOptions.length} className="font-medium align-top pt-4">{anchor?.name}</TableCell>}
-                                                    <TableCell>{format(new Date(month), 'MMM yyyy')}</TableCell>
+                                                    <TableCell>{format(new Date(month + '-02'), 'MMM yyyy')}</TableCell>
                                                     <TableCell>
                                                         <FormField control={form.control} name={`targets.${anchorId}.${month}.statusCount`} render={({ field }) => (
                                                             <Input type="number" placeholder="0" {...field} />
