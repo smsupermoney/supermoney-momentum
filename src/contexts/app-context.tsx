@@ -1,11 +1,10 @@
 
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, SanctionData, AumData } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData } from '@/lib/mock-data';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, SanctionData, AumData, Target } from '@/lib/types';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData, mockTargets } from '@/lib/mock-data';
 import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
@@ -65,6 +64,7 @@ interface AppContextType {
   customDashboards: CustomDashboardConfig[];
   sanctionData: SanctionData[];
   aumData: AumData[];
+  targets: Target[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -111,6 +111,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [customDashboards, setCustomDashboards] = useState<CustomDashboardConfig[]>([]);
   const [sanctionData, setSanctionData] = useState<SanctionData[]>([]);
   const [aumData, setAumData] = useState<AumData[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
 
 
   const loadMockData = useCallback(() => {
@@ -126,6 +127,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setCustomDashboards(mockCustomDashboardConfigs);
     setSanctionData(mockSanctionData);
     setAumData(mockAumData);
+    setTargets(mockTargets);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -1284,6 +1286,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     customDashboards,
     sanctionData,
     aumData,
+    targets,
     t
   };
 
