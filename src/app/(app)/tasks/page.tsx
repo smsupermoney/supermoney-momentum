@@ -23,10 +23,7 @@ export default function TasksPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('all');
 
   const userAnchors = anchors.filter(anchor => {
-    if (currentUser.role === 'Business Development') {
-      return anchor.status === 'Onboarding';
-    }
-    // Filter out archived anchors for all other roles
+    // Show all non-archived anchors in the dropdown
     return anchor.status !== 'Archived';
   });
 
