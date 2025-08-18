@@ -260,7 +260,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </Header>
+                </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -671,7 +671,7 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
         <Card>
             <CardHeader>
                 <CardTitle>{t('reports.aiHighlights')}</CardTitle>
-                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardDescription>
+                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardHeader>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -736,3 +736,6 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+
+    
