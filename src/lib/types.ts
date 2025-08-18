@@ -225,13 +225,3 @@ export interface Lender {
   id: string;
   name: string;
 }
-
-export interface Target {
-  id: string;
-  userId: string;
-  month: string; // e.g., "2024-07-01T00:00:00.000Z"
-  anchorId: string;
-  lenderId: string;
-  targetLogins: number;
-  targetValue: number; // in Cr
-}

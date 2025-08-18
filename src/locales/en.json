@@ -9,8 +9,7 @@
     "tasks": "Tasks / Visit Plan",
     "reports": "Reports",
     "admin": "Admin Panel",
-    "onboarding": "Onboarding",
-    "targets": "Targets"
+    "onboarding": "Onboarding"
   },
   "userSwitcher": {
     "logout": "Log out"

@@ -1,6 +1,6 @@
 
 
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Target } from './types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -345,42 +345,3 @@ export const mockActivityLogs: ActivityLog[] = [
 ];
 
 export const mockDailyActivities: DailyActivity[] = [];
-
-export const mockTargets: Target[] = [
-  {
-    id: 'target-1',
-    userId: 'user-1',
-    month: '2024-07-01T00:00:00.000Z',
-    anchorId: 'anchor-1',
-    lenderId: 'lender-1',
-    targetLogins: 10,
-    targetValue: 5.0, // in Cr
-  },
-  {
-    id: 'target-2',
-    userId: 'user-1',
-    month: '2024-07-01T00:00:00.000Z',
-    anchorId: 'anchor-2',
-    lenderId: 'lender-2',
-    targetLogins: 5,
-    targetValue: 2.5,
-  },
-  {
-    id: 'target-3',
-    userId: 'user-2',
-    month: '2024-07-01T00:00:00.000Z',
-    anchorId: 'anchor-3',
-    lenderId: 'lender-1',
-    targetLogins: 8,
-    targetValue: 4.0,
-  },
-   {
-    id: 'target-4',
-    userId: 'user-1',
-    month: '2024-06-01T00:00:00.000Z',
-    anchorId: 'anchor-4',
-    lenderId: 'lender-1',
-    targetLogins: 12,
-    targetValue: 6.0,
-  },
-];
