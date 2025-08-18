@@ -1,8 +1,6 @@
 
 
-
-
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, CustomDashboardConfig } from './types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, CustomDashboardConfig, Target } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -387,3 +385,5 @@ export const mockCustomDashboardConfigs: CustomDashboardConfig[] = [
         }
     }
 ];
+
+export const mockTargets: Target[] = [];

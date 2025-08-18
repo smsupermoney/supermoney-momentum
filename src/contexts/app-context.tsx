@@ -3,8 +3,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, SanctionData, AumData, Target } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData, mockTargets } from '@/lib/mock-data';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, Target } from '@/lib/types';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockTargets } from '@/lib/mock-data';
 import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
@@ -63,8 +63,7 @@ interface AppContextType {
   updateAnchorSPOC: (spoc: AnchorSPOC) => void;
   customDashboards: CustomDashboardConfig[];
   saveDashboardConfig: (config: CustomDashboardConfig) => void;
-  sanctionData: SanctionData[];
-  aumData: AumData[];
+  targets: Target[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,8 +108,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [lenders, setLenders] = useState<Lender[]>([]);
   const [anchorSPOCs, setAnchorSPOCs] = useState<AnchorSPOC[]>([]);
   const [customDashboards, setCustomDashboards] = useState<CustomDashboardConfig[]>([]);
-  const [sanctionData, setSanctionData] = useState<SanctionData[]>([]);
-  const [aumData, setAumData] = useState<AumData[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
 
 
@@ -125,8 +122,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setLenders([{ id: 'lender-1', name: 'HDFC Bank'}, { id: 'lender-2', name: 'ICICI Bank'}]);
     setAnchorSPOCs([]);
     setCustomDashboards(mockCustomDashboardConfigs);
-    setSanctionData(mockSanctionData);
-    setAumData(mockAumData);
     setTargets(mockTargets);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
@@ -171,7 +166,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const allUsers = await firestoreService.getUsers();
             setUsers(allUsers);
     
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData, spocsData] = await Promise.all([
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData, spocsData, dashboardConfigsData] = await Promise.all([
               firestoreService.getAnchors(),
               firestoreService.getDealers(),
               firestoreService.getVendors(),
@@ -180,6 +175,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               firestoreService.getDailyActivities(),
               firestoreService.getLenders(),
               firestoreService.getAnchorSPOCs(),
+              firestoreService.getDashboardConfigs(),
             ]);
     
             setAnchors(anchorsData);
@@ -190,6 +186,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setDailyActivities(dailyActivitiesData);
             setLenders(lendersData);
             setAnchorSPOCs(spocsData);
+            setCustomDashboards(dashboardConfigsData);
           } else {
             console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
             await logout();
@@ -1229,15 +1226,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setAnchorSPOCs(prev => prev.map(s => s.id === sanitizedSpoc.id ? sanitizedSpoc : s));
   };
   
-  const saveDashboardConfig = (config: CustomDashboardConfig) => {
+  const saveDashboardConfig = async (config: CustomDashboardConfig) => {
+    const isNew = !config.id;
+    const configToSave = { ...config };
+    if (isNew) {
+      configToSave.id = generateUniqueId('dash');
+    }
+
+    const sanitizedConfig = sanitizeForFirestore(configToSave);
+
+    if (firebaseEnabled) {
+      if (isNew) {
+        await firestoreService.addDashboardConfig(sanitizedConfig);
+      } else {
+        await firestoreService.updateDashboardConfig(sanitizedConfig);
+      }
+    }
+    
     setCustomDashboards(prev => {
-        const index = prev.findIndex(d => d.id === config.id);
+        const index = prev.findIndex(d => d.id === sanitizedConfig.id);
         if (index > -1) {
             const newDashboards = [...prev];
-            newDashboards[index] = config;
+            newDashboards[index] = sanitizedConfig;
             return newDashboards;
         } else {
-            return [...prev, { ...config, id: `config-${config.userId}` }];
+            return [...prev, sanitizedConfig];
         }
     });
     toast({ title: "Dashboard configuration saved." });
@@ -1299,9 +1312,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     updateAnchorSPOC,
     customDashboards,
     saveDashboardConfig,
-    sanctionData,
-    aumData,
-    targets: [],
+    targets,
     t
   };
 

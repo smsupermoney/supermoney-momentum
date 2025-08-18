@@ -17,7 +17,7 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender, AnchorSPOC } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender, AnchorSPOC, CustomDashboardConfig } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -322,4 +322,25 @@ export const updateAnchorSPOC = async (spoc: AnchorSPOC) => {
     const { id, ...spocData } = spoc;
     const docRef = doc(db, 'anchorSPOCs', id);
     await updateDoc(docRef, { ...spocData, lastModified: new Date().toISOString() });
+};
+
+// --- Custom Dashboard Service ---
+export const getDashboardConfigs = async (): Promise<CustomDashboardConfig[]> => {
+    if (!db) return [];
+    const configsCollection = collection(db, 'dashboardConfigs');
+    const snapshot = await getDocs(configsCollection);
+    return snapshotToData<Omit<CustomDashboardConfig, 'id'>>(snapshot);
+};
+
+export const addDashboardConfig = async (config: Omit<CustomDashboardConfig, 'id'>): Promise<CustomDashboardConfig> => {
+    if (!db) throw new Error("Firestore not initialized");
+    const docRef = await addDoc(collection(db, 'dashboardConfigs'), config);
+    return { id: docRef.id, ...config };
+};
+
+export const updateDashboardConfig = async (config: CustomDashboardConfig) => {
+    if (!db) throw new Error("Firestore not initialized");
+    const { id, ...configData } = config;
+    const docRef = doc(db, 'dashboardConfigs', id);
+    await updateDoc(docRef, configData);
 };
