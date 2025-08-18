@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types';
 import { DocsApprovalQueue } from '@/components/dashboard/docs-approval-queue';
 import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
+import { ManagerTargetsOverview } from '@/components/reports/manager-targets-overview';
 import { TargetVsAchievementCard } from '@/components/reports/target-vs-achievement-card';
 
 
@@ -197,7 +198,7 @@ function AdminDashboard() {
         <>
             <DocsApprovalQueue />
             <SalesPipelineCard />
-            <TargetVsAchievementCard />
+            <ManagerTargetsOverview />
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />

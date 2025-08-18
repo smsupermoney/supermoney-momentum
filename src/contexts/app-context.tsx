@@ -65,7 +65,6 @@ interface AppContextType {
   saveDashboardConfig: (config: CustomDashboardConfig) => void;
   sanctionData: SanctionData[];
   aumData: AumData[];
-  targets: Target[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -1231,7 +1230,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const saveDashboardConfig = (config: CustomDashboardConfig) => {
-    // In a real app, this would save to Firestore. For now, we update local state.
     setCustomDashboards(prev => {
         const index = prev.findIndex(d => d.id === config.id);
         if (index > -1) {
@@ -1303,7 +1301,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     saveDashboardConfig,
     sanctionData,
     aumData,
-    targets,
+    targets: [],
     t
   };
 
