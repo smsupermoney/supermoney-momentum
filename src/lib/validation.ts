@@ -1,5 +1,6 @@
 
 
+
 import { z } from 'zod';
 import { parse, isValid } from 'date-fns';
 
@@ -138,8 +139,23 @@ export const DashboardConfigSchema = z.object({
       z.object({
         statusCount: z.coerce.number().optional(),
         dealValue: z.coerce.number().optional(),
-        sanctionValue: z.coerce.number().optional()
+        sanctionValue: z.coerce.number().optional(),
+        aumValue: z.coerce.number().optional(),
       }).optional()
     ).optional()
   ).optional()
+}).refine(data => {
+    // This custom refinement checks if for at least one selected anchor,
+    // there is at least one month target object,
+    // and that target object has a defined aumValue.
+    return data.selectedAnchors.some(anchorId => {
+        const anchorTargets = data.targets?.[anchorId];
+        if (!anchorTargets) return false;
+        return Object.values(anchorTargets).some(monthlyTarget => monthlyTarget?.aumValue !== undefined);
+    });
+}, {
+    message: "At least one anchor must have an AUM target set for at least one month.",
+    // You can specify a path to show the error near a specific field,
+    // but for a complex cross-field validation, showing it at the root is fine.
+    path: ["targets"], 
 });

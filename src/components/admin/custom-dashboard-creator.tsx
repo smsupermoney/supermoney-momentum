@@ -16,7 +16,7 @@ export function CustomDashboardCreator() {
     const [selectedConfig, setSelectedConfig] = useState<CustomDashboardConfig | null>(null);
 
     const managers = useMemo(() => {
-        return users.filter(u => u.role === 'Regional Sales Manager' || u.role === 'ETB Manager');
+        return users.filter(u => u.role === 'Regional Sales Manager' || u.role === 'ETB Manager' || u.role === 'Internal Sales');
     }, [users]);
 
     const handleConfigureClick = (manager: User) => {

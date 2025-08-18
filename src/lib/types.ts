@@ -227,6 +227,16 @@ export interface Lender {
   name: string;
 }
 
+export interface Target {
+  id: string;
+  userId: string;
+  month: string; // "YYYY-MM"
+  anchorId: string;
+  lenderId: string;
+  targetLogins: number;
+  targetValue: number; // in Cr
+}
+
 // New Types for Custom Dashboards
 export interface CustomDashboardConfig {
   id: string; // e.g., 'config-user-2'
@@ -240,6 +250,7 @@ export interface CustomDashboardConfig {
       statusCount?: number;
       dealValue?: number;
       sanctionValue?: number;
+      aumValue?: number;
     }
   }>;
 }

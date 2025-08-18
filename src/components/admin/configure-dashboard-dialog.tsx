@@ -139,6 +139,7 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                                       <TableHead>Target Logins</TableHead>
                                       <TableHead>Target Value (Cr)</TableHead>
                                       <TableHead>Sanction Value (Cr)</TableHead>
+                                      <TableHead>AUM Target (Cr)</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -162,6 +163,11 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                                                     </TableCell>
                                                      <TableCell>
                                                         <FormField control={form.control} name={`targets.${anchorId}.${month}.sanctionValue`} render={({ field }) => (
+                                                             <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
+                                                        )}/>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.aumValue`} render={({ field }) => (
                                                              <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
