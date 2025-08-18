@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -22,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 import { products, lenders } from '@/lib/types';
 import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
-import { TargetVsAchievementCard } from '@/components/reports/target-vs-achievement-card';
 import { safeFormatDate } from '@/lib/utils';
 
 // Helper function to truncate long strings for Excel export
@@ -187,7 +185,6 @@ export default function ReportsPage() {
       >
         {(currentUser?.role === 'Admin' || currentUser?.role === 'Business Development' || currentUser?.role === 'BIU') && adminActions}
       </PageHeader>
-      
       {renderReports()}
     </>
   );
@@ -262,7 +259,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </Header>
+                </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -738,6 +735,8 @@ function ConversionRateItem({from, to, value}: {from: string, to: string, value:
         </div>
     )
 }
+
+    
 
     
 
