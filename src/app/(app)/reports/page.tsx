@@ -170,16 +170,12 @@ export default function ReportsPage() {
       </PageHeader>
       
       <Tabs defaultValue="leads" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="leads">Leads</TabsTrigger>
-          <TabsTrigger value="targets">Target vs Achievement</TabsTrigger>
           <TabsTrigger value="data-chat">Data Chat</TabsTrigger>
         </TabsList>
         <TabsContent value="leads" className="mt-4">
           <LeadsDashboard />
-        </TabsContent>
-        <TabsContent value="targets" className="mt-4">
-            <TargetVsAchievementCard />
         </TabsContent>
         <TabsContent value="data-chat" className="mt-4">
            <AdminDataChat />
