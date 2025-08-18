@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -22,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import * as XLSX from 'xlsx';
 import { products, lenders } from '@/lib/types';
 import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
+import { TargetVsAchievementCard } from '@/components/reports/target-vs-achievement-card';
 import { safeFormatDate } from '@/lib/utils';
 
 // Helper function to truncate long strings for Excel export
@@ -41,15 +41,17 @@ const truncateForExcel = (data: any[]): any[] => {
 
 // Main Page Component
 export default function ReportsPage() {
-  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t, lenders } = useApp();
+  const { currentUser, anchors, users, dealers, vendors, activityLogs, tasks, dailyActivities, t, lenders, visibleUserIds } = useApp();
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [isDownloadingRecent, setIsDownloadingRecent] = useState(false);
 
   const generateAndDownloadWorkbook = (data: Record<string, any[]>, filename: string) => {
     const wb = XLSX.utils.book_new();
     for (const sheetName in data) {
-      const processedData = truncateForExcel(data[sheetName]);
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedData), sheetName);
+      if (data[sheetName].length > 0) {
+        const processedData = truncateForExcel(data[sheetName]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(processedData), sheetName);
+      }
     }
     XLSX.writeFile(wb, filename);
   };
@@ -57,25 +59,34 @@ export default function ReportsPage() {
   const handleDownloadRecent = () => {
     setIsDownloadingRecent(true);
     const sinceDate = subHours(new Date(), 72);
+    
+    const visibleUsersData = users.filter(u => visibleUserIds.includes(u.uid));
+    const visibleAnchors = anchors.filter(a => a.createdBy && visibleUserIds.includes(a.createdBy));
+    const visibleDealers = dealers.filter(d => d.assignedTo && visibleUserIds.includes(d.assignedTo));
+    const visibleVendors = vendors.filter(v => v.assignedTo && visibleUserIds.includes(v.assignedTo));
+    const visibleTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
+    const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
+    const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
+    const visibleLenders = lenders; // Lenders are global
 
     const getSpokeData = (spoke: Dealer | Vendor) => ({
       Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
     });
 
-    const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string }) => {
-        const dateToCheck = item.updatedAt || item.createdAt || item.timestamp;
+    const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string, activityTimestamp?: string }) => {
+        const dateToCheck = item.updatedAt || item.createdAt || item.timestamp || item.activityTimestamp;
         if (!dateToCheck) return false;
         return isAfter(new Date(dateToCheck), sinceDate);
     };
 
     const recentData = {
-      "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
-      "Anchors": anchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? safeFormatDate(a.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
-      "Dealers": dealers.filter(isRecent).map(getSpokeData),
-      "Vendors": vendors.filter(isRecent).map(getSpokeData),
-      "Tasks": tasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? safeFormatDate(t.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
-      "Interaction Logs": activityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
-      "Daily Activities": dailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Users": visibleUsersData.filter(isRecent).map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": visibleAnchors.filter(isRecent).map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': a.updatedAt ? safeFormatDate(a.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Dealers": visibleDealers.filter(isRecent).map(getSpokeData),
+      "Vendors": visibleVendors.filter(isRecent).map(getSpokeData),
+      "Tasks": visibleTasks.filter(isRecent).map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm'), 'Updated At': t.updatedAt ? safeFormatDate(t.updatedAt, 'yyyy-MM-dd HH:mm') : 'N/A' })),
+      "Interaction Logs": visibleActivityLogs.filter(isRecent).map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": visibleDailyActivities.filter(isRecent).map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
       "Lenders": [], // Lenders don't have timestamps, so we exclude them from "recent"
     };
 
@@ -86,19 +97,28 @@ export default function ReportsPage() {
   const handleDownloadAll = () => {
     setIsDownloadingAll(true);
     
+    const visibleUsersData = users.filter(u => visibleUserIds.includes(u.uid));
+    const visibleAnchors = anchors.filter(a => a.createdBy && visibleUserIds.includes(a.createdBy));
+    const visibleDealers = dealers.filter(d => d.assignedTo && visibleUserIds.includes(d.assignedTo));
+    const visibleVendors = vendors.filter(v => v.assignedTo && visibleUserIds.includes(v.assignedTo));
+    const visibleTasks = tasks.filter(t => visibleUserIds.includes(t.assignedTo));
+    const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
+    const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
+    const visibleLenders = lenders; // Lenders are global
+
     const getSpokeData = (spoke: Dealer | Vendor) => ({
       Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
     });
 
     const allData = {
-      "Users": users.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
-      "Anchors": anchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm') })),
-      "Dealers": dealers.map(getSpokeData),
-      "Vendors": vendors.map(getSpokeData),
-      "Tasks": tasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm') })),
-      "Interaction Logs": activityLogs.map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
-      "Daily Activities": dailyActivities.map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
-      "Lenders": lenders.map(l => ({ Name: l.name }))
+      "Users": visibleUsersData.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),
+      "Anchors": visibleAnchors.map(a => ({ Name: a.name, Industry: a.industry, Status: a.status, 'Annual Turnover': a.annualTurnover, 'Credit Rating': a.creditRating || 'N/A', Address: a.address || 'N/A', 'Lead Score': a.leadScore, 'Lead Score Reason': a.leadScoreReason, 'Primary Contact Name': (a.contacts.find(c => c.isPrimary) || a.contacts[0])?.name || 'N/A', 'Created At': safeFormatDate(a.createdAt, 'yyyy-MM-dd HH:mm') })),
+      "Dealers": visibleDealers.map(getSpokeData),
+      "Vendors": visibleVendors.map(getSpokeData),
+      "Tasks": visibleTasks.map(t => ({ Title: t.title, 'Assigned To': users.find(u => u.uid === t.assignedTo)?.name || 'N/A', Type: t.type, Status: t.status, Priority: t.priority, 'Due Date': safeFormatDate(t.dueDate, 'yyyy-MM-dd'), 'Created At': safeFormatDate(t.createdAt, 'yyyy-MM-dd HH:mm') })),
+      "Interaction Logs": visibleActivityLogs.map(log => ({ User: log.userName, Timestamp: safeFormatDate(log.timestamp, 'yyyy-MM-dd HH:mm'), Type: log.type, Title: log.title, Outcome: log.outcome })),
+      "Daily Activities": visibleDailyActivities.map(activity => ({ User: activity.userName, Timestamp: safeFormatDate(activity.activityTimestamp, 'yyyy-MM-dd HH:mm'), Type: activity.activityType, Title: activity.title, Notes: activity.notes })),
+      "Lenders": visibleLenders.map(l => ({ Name: l.name }))
     };
 
     generateAndDownloadWorkbook(allData, `Supermoney_CRM_Export_${safeFormatDate(new Date(), 'yyyy-MM-dd')}.xlsx`);
@@ -127,22 +147,6 @@ export default function ReportsPage() {
     }
   }
 
-  const renderReports = () => {
-    if (!currentUser) return null;
-    switch(currentUser.role) {
-        case 'Admin':
-        case 'Business Development':
-        case 'National Sales Manager':
-        case 'Regional Sales Manager':
-        case 'Zonal Sales Manager':
-             return <LeadsDashboard />;
-        case 'Area Sales Manager': 
-        case 'Internal Sales':
-             return <SalespersonDashboard />;
-        default: return <div className="text-center p-8">{t('reports.noReports')}</div>
-    }
-  }
-
   const adminActions = (
     <div className="flex flex-col sm:flex-row gap-2">
       <Button onClick={handleDownloadRecent} disabled={isDownloadingRecent} size="sm" variant="outline">
@@ -162,9 +166,26 @@ export default function ReportsPage() {
         title={getPageTitle(currentUser.role)}
         description={getPageDescription(currentUser.role)}
       >
-        {(currentUser?.role === 'Admin' || currentUser?.role === 'Business Development') && adminActions}
+        {(currentUser?.role === 'Admin' || currentUser?.role === 'Business Development' || currentUser?.role === 'BIU') && adminActions}
       </PageHeader>
-      {renderReports()}
+      
+      <Tabs defaultValue="leads" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="targets">Target vs Achievement</TabsTrigger>
+          <TabsTrigger value="data-chat">Data Chat</TabsTrigger>
+        </TabsList>
+        <TabsContent value="leads" className="mt-4">
+          <LeadsDashboard />
+        </TabsContent>
+        <TabsContent value="targets" className="mt-4">
+            <TargetVsAchievementCard />
+        </TabsContent>
+        <TabsContent value="data-chat" className="mt-4">
+           <AdminDataChat />
+           <InactiveUsersReport />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
@@ -238,7 +259,7 @@ function SalespersonDashboard() {
              <Card>
                 <CardHeader>
                     <CardTitle>{t('reports.activities7Days')}</CardTitle>
-                </CardHeader>
+                </Header>
                 <CardContent className="grid grid-cols-3 gap-4 text-center">
                     <ActivityStat icon={Phone} label={t('reports.calls')} value={weeklyActivities.Call} />
                     <ActivityStat icon={Mail} label={t('reports.emails')} value={weeklyActivities.Email} />
@@ -258,7 +279,8 @@ function LeadsDashboard() {
     const [period, setPeriod] = useState<'this_month' | 'this_quarter' | 'ytd'>('this_month');
     const [productFilter, setProductFilter] = useState('all');
 
-    const salesUsers = users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Zonal Sales Manager');
+    const salesUsers = users.filter(u => u.status !== 'Ex-User' && (u.role === 'Area Sales Manager' || u.role === 'Internal Sales' || u.role === 'Zonal Sales Manager'));
+    
     const allSpokes = useMemo(() => {
         return [...dealers, ...vendors].filter(spoke => visibleUserIds.includes(spoke.assignedTo || ''));
     }, [dealers, vendors, visibleUserIds]);
@@ -326,15 +348,13 @@ function LeadsDashboard() {
     const newToOnboarding = allLeadsCount > 0 ? (allOnboardingCount / allLeadsCount) * 100 : 0;
     const onboardingToActive = allOnboardingCount > 0 ? (allActiveCount / allOnboardingCount) * 100 : 0;
 
-    const activeAnchors = anchors.filter(a => a.status === 'Active');
+    const activeAnchors = anchors.filter(a => a.status === 'Active' && a.createdBy && visibleUserIds.includes(a.createdBy));
     const totalSpokes = [...dealers, ...vendors].filter(s => activeAnchors.some(a => a.id === s.anchorId));
     const activeSpokes = totalSpokes.filter(s => s.status === 'Active');
     const spokeActivationRate = totalSpokes.length > 0 ? (activeSpokes.length / totalSpokes.length) * 100 : 0;
 
     return (
         <div className="grid gap-4">
-        <AdminDataChat />
-        <InactiveUsersReport />
         <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
         <Card>
             <CardHeader>
