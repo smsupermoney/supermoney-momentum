@@ -152,17 +152,17 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                                                     <TableCell>{format(new Date(month + '-02'), 'MMM yyyy')}</TableCell>
                                                     <TableCell>
                                                         <FormField control={form.control} name={`targets.${anchorId}.${month}.statusCount`} render={({ field }) => (
-                                                            <Input type="number" placeholder="0" {...field} />
+                                                            <Input type="number" placeholder="0" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
                                                     <TableCell>
                                                         <FormField control={form.control} name={`targets.${anchorId}.${month}.dealValue`} render={({ field }) => (
-                                                             <Input type="number" placeholder="0.00" {...field} />
+                                                             <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
                                                      <TableCell>
                                                         <FormField control={form.control} name={`targets.${anchorId}.${month}.sanctionValue`} render={({ field }) => (
-                                                             <Input type="number" placeholder="0.00" {...field} />
+                                                             <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
                                                 </TableRow>
