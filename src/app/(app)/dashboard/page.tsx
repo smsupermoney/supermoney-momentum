@@ -11,7 +11,7 @@ import { StaleLeadsCard } from '@/components/dashboard/stale-leads-card';
 import { TeamProgressCard } from '@/components/dashboard/team-progress-card';
 import { generateDailyDigest } from '@/ai/flows/generate-daily-digest-flow';
 import { isPast, isToday } from 'date-fns';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SalesPipelineCard } from '@/components/reports/sales-pipeline-card';
 import { Mail, Loader2 } from 'lucide-react';
@@ -87,11 +87,10 @@ export default function DashboardPage() {
             case 'Telecaller':
                 return <SalesDashboard />;
             case 'Zonal Sales Manager':
-                return <ManagerDashboard />;
             case 'Regional Sales Manager':
             case 'National Sales Manager':
             case 'ETB Manager':
-                return <ManagerDashboard withCustomDashboard={false} />;
+                return <ManagerDashboard />;
             case 'Business Development':
             case 'Admin':
             case 'BIU':
@@ -158,13 +157,26 @@ function SalesDashboard() {
 }
 
 // Manager Dashboard (for ZSM, RSM, NSM, ETB Manager)
-function ManagerDashboard({ withCustomDashboard = false }: { withCustomDashboard?: boolean }) {
+function ManagerDashboard() {
     const { currentUser, customDashboards } = useApp();
-    const userDashboardConfig = customDashboards.find(d => d.userId === currentUser?.uid);
+    
+    // Find the config for the current manager
+    const managerConfig = useMemo(() => {
+        if (!currentUser) return null;
+        return customDashboards.find(d => d.userId === currentUser.uid);
+    }, [currentUser, customDashboards]);
+
+    // Find the config for the manager's manager, to show team members the same view
+    const teamConfig = useMemo(() => {
+        if (!currentUser?.managerId) return null;
+        return customDashboards.find(d => d.userId === currentUser.managerId);
+    }, [currentUser, customDashboards]);
+
+    const displayConfig = managerConfig || teamConfig;
     
     return (
         <>
-            {withCustomDashboard && userDashboardConfig && <CustomDashboardViewer config={userDashboardConfig} />}
+            {displayConfig && <CustomDashboardViewer config={displayConfig} />}
             <SalesPipelineCard />
             <TargetVsAchievementCard />
             <TeamProgressCard />
