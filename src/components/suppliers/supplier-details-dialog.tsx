@@ -110,6 +110,19 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   }, [watchState, availableStates]);
 
   const canEditAsApprover = currentUser && ['Business Development', 'BIU'].includes(currentUser.role);
+  const isAdminOrBIU = currentUser && ['Admin', 'BIU'].includes(currentUser.role);
+
+  const availableStatuses = useMemo(() => {
+      if (isAdminOrBIU) {
+          return spokeStatuses;
+      }
+      const limitedStatuses: SpokeStatus[] = ['Follow Up', 'Not Interested'];
+      // Ensure the current status is always visible, even if it's not in the limited list
+      if (!limitedStatuses.includes(vendor.status)) {
+          return [vendor.status, ...limitedStatuses];
+      }
+      return limitedStatuses;
+  }, [isAdminOrBIU, vendor.status]);
 
   useEffect(() => {
     if (open && vendor) {
@@ -230,7 +243,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                           <Select onValueChange={(v) => handleStatusChange(v as SpokeStatus)} defaultValue={vendor.status}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                  {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                  {availableStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                               </SelectContent>
                           </Select>
                       </div>
