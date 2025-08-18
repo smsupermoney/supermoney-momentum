@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Team' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
 export type UserStatus = 'Active' | 'Ex-User';
 
@@ -224,4 +225,34 @@ export interface Notification {
 export interface Lender {
   id: string;
   name: string;
+}
+
+// New Types for Custom Dashboards
+export interface CustomDashboardConfig {
+  id: string; // e.g., 'config-user-2'
+  userId: string; // The manager this dashboard is for (e.g., 'user-2')
+  name: string; // e.g., "Kamlesh Gupta's Dashboard"
+  selectedAnchors: string[]; // array of anchor IDs
+  selectedStates: string[]; // array of state names
+  statusToTrack: SpokeStatus;
+  targets: Record<string, { // key is anchorId
+    [month: string]: { // key is 'YYYY-MM'
+      statusCount?: number;
+      dealValue?: number;
+      sanctionValue?: number;
+    }
+  }>;
+}
+
+export interface SanctionData {
+  id: string; // e.g., 'anchorId-YYYY-MM'
+  anchorId: string;
+  month: string; // 'YYYY-MM'
+  value: number; // in Cr
+}
+
+export interface AumData {
+    id: string; // e.g., 'anchorId'
+    anchorId: string;
+    value: number; // in Cr
 }

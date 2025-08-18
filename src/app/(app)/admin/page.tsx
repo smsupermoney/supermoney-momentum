@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useApp } from '@/contexts/app-context';
@@ -12,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { NewUserDialog } from '@/components/admin/new-user-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
-import { PlusCircle, Trash2, ArrowRight, Pencil, UserX, Search } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowRight, Pencil, UserX, Search, LayoutDashboard } from 'lucide-react';
 import type { User, Anchor, Dealer, Vendor, UserRole, Lender } from '@/lib/types';
 import { useLanguage } from '@/contexts/language-context';
 import {
@@ -29,6 +30,7 @@ import { ArchivedAnchorsTable } from '@/components/admin/archived-anchors-table'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { CustomDashboardCreator } from '@/components/admin/custom-dashboard-creator';
 
 
 // Define a union type for the different kinds of leads
@@ -331,6 +333,7 @@ export default function AdminPage() {
   const canViewAdminPanel = currentUser && (currentUser.role === 'Admin' || managerialRoles.includes(currentUser.role) || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
   const canManageLenders = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU');
   const canManageUsers = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Business Development' || currentUser.role === 'BIU' || currentUser.role === 'ETB Manager');
+  const canConfigureDashboards = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'BIU');
   const canMarkAsExUser = currentUser && ['Admin', 'Business Development', 'BIU'].includes(currentUser.role);
 
 
@@ -409,6 +412,7 @@ export default function AdminPage() {
             </CardContent>
         </Card>
         
+        {canConfigureDashboards && <CustomDashboardCreator />}
         {canManageLenders && <LenderManagement />}
 
         {/* Section for Admins & BD */}

@@ -1,10 +1,11 @@
 
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC } from '@/lib/types';
-import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities } from '@/lib/mock-data';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Notification, Lender, AnchorSPOC, CustomDashboardConfig, SanctionData, AumData } from '@/lib/types';
+import { mockUsers, mockAnchors, mockDealers, mockVendors, mockTasks, mockActivityLogs, mockDailyActivities, mockCustomDashboardConfigs, mockSanctionData, mockAumData } from '@/lib/mock-data';
 import { isPast, isToday, format, differenceInDays } from 'date-fns';
 import { useLanguage } from './language-context';
 import { firebaseEnabled, auth, onAuthStateChanged, signOut as firebaseSignOut } from '@/lib/firebase';
@@ -61,6 +62,9 @@ interface AppContextType {
   anchorSPOCs: AnchorSPOC[];
   addAnchorSPOC: (spoc: Omit<AnchorSPOC, 'id'>) => void;
   updateAnchorSPOC: (spoc: AnchorSPOC) => void;
+  customDashboards: CustomDashboardConfig[];
+  sanctionData: SanctionData[];
+  aumData: AumData[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -104,6 +108,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [lenders, setLenders] = useState<Lender[]>([]);
   const [anchorSPOCs, setAnchorSPOCs] = useState<AnchorSPOC[]>([]);
+  const [customDashboards, setCustomDashboards] = useState<CustomDashboardConfig[]>([]);
+  const [sanctionData, setSanctionData] = useState<SanctionData[]>([]);
+  const [aumData, setAumData] = useState<AumData[]>([]);
 
 
   const loadMockData = useCallback(() => {
@@ -116,6 +123,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setDailyActivities(mockDailyActivities);
     setLenders([{ id: 'lender-1', name: 'HDFC Bank'}, { id: 'lender-2', name: 'ICICI Bank'}]);
     setAnchorSPOCs([]);
+    setCustomDashboards(mockCustomDashboardConfigs);
+    setSanctionData(mockSanctionData);
+    setAumData(mockAumData);
     try {
       const storedUser = sessionStorage.getItem('currentUser');
       if (storedUser) {
@@ -1271,6 +1281,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     anchorSPOCs,
     addAnchorSPOC,
     updateAnchorSPOC,
+    customDashboards,
+    sanctionData,
+    aumData,
     t
   };
 

@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -18,6 +19,7 @@ import { Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types';
 import { DocsApprovalQueue } from '@/components/dashboard/docs-approval-queue';
+import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
 
 
 export default function DashboardPage() {
@@ -85,10 +87,11 @@ export default function DashboardPage() {
             case 'Telecaller':
                 return <SalesDashboard />;
             case 'Zonal Sales Manager':
+                return <ManagerDashboard />;
             case 'Regional Sales Manager':
             case 'National Sales Manager':
             case 'ETB Manager':
-                return <ManagerDashboard />;
+                return <ManagerDashboard withCustomDashboard={true} />;
             case 'Business Development':
             case 'Admin':
             case 'BIU':
@@ -121,7 +124,7 @@ export default function DashboardPage() {
                 title={t('dashboard.welcome', { name: currentUser.name.split(' ')[0] })} 
                 description={getHeaderDescription(currentUser.role)}
             >
-              {['Area Sales Manager', 'Internal Sales', 'ETB Team', 'Telecaller'].includes(currentUser.role) && (
+              {['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(currentUser.role) && (
                 <Button variant="outline" onClick={handleSendDigest} disabled={isDigestLoading}>
                   {isDigestLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -154,9 +157,13 @@ function SalesDashboard() {
 }
 
 // Manager Dashboard (for ZSM, RSM, NSM, ETB Manager)
-function ManagerDashboard() {
+function ManagerDashboard({ withCustomDashboard = false }: { withCustomDashboard?: boolean }) {
+    const { currentUser, customDashboards } = useApp();
+    const userDashboardConfig = customDashboards.find(d => d.userId === currentUser?.uid);
+    
     return (
         <>
+            {withCustomDashboard && userDashboardConfig && <CustomDashboardViewer config={userDashboardConfig} />}
             <SalesPipelineCard />
             <TeamProgressCard />
             <StaleLeadsCard />

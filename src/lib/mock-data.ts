@@ -1,6 +1,7 @@
 
 
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity } from './types';
+
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, CustomDashboardConfig, SanctionData, AumData } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -13,6 +14,10 @@ export const mockUsers: User[] = [
   { id: 'user-2', uid: 'user-2', name: 'Kamlesh Gupta', email: 'zsm@supermoney.in', role: 'Zonal Sales Manager', managerId: 'user-admin', region: 'West' },
   { id: 'user-3', uid: 'user-3', name: 'Falak Chawla', email: 'bd@supermoney.in', role: 'Business Development', region: 'National' },
   { id: 'user-admin', uid: 'user-admin', name: 'Admin User', email: 'admin@supermoney.in', role: 'Admin', region: 'National' },
+  { id: 'user-4', uid: 'user-4', name: 'Rajesh Kumar', email: 'rsm@supermoney.in', role: 'Regional Sales Manager', managerId: 'user-admin', region: 'North' },
+  { id: 'user-5', uid: 'user-5', name: 'Priya Sharma', email: 'etbm@supermoney.in', role: 'ETB Manager', managerId: 'user-admin', region: 'South' },
+  { id: 'user-6', uid: 'user-6', name: 'Amit Verma', email: 'asm-north@supermoney.in', role: 'Area Sales Manager', managerId: 'user-4', region: 'North' },
+  { id: 'user-7', uid: 'user-7', name: 'Sunita Reddy', email: 'etb-team@supermoney.in', role: 'ETB Team', managerId: 'user-5', region: 'South' },
 ];
 
 export const mockAnchors: Anchor[] = [
@@ -136,32 +141,36 @@ export const mockDealers: Dealer[] = [
     leadId: 'MUMO01', 
     name: 'Mumbai Motors', 
     contactNumbers: [{ value: '9820098200' }],
-    status: 'Active', 
+    status: 'Login done', 
     anchorId: 'anchor-1', 
     assignedTo: 'user-1', 
-    createdAt: daysAgo(5), 
-    leadDate: daysAgo(5), 
+    createdAt: '2025-08-05T10:00:00.000Z', 
+    leadDate: '2025-08-05T10:00:00.000Z', 
     product: 'Primary', 
     leadSource: 'Connector', 
     leadScore: 85, 
     leadScoreReason: "Associated with a strong anchor. Good potential.", 
     leadType: 'Fresh', 
-    remarks: [] 
+    remarks: [],
+    state: 'Maharashtra',
+    dealValue: 1.5, // Cr
   },
   { 
     id: 'dealer-2', 
     leadId: 'PUAU02', 
     name: 'Pune Auto', 
     contactNumbers: [{ value: '9820198201' }],
-    status: 'Awaiting Docs Approval', 
+    status: 'Login done', 
     anchorId: 'anchor-2', 
-    assignedTo: 'user-3', 
-    createdAt: daysAgo(3), 
-    leadDate: daysAgo(3), 
+    assignedTo: 'user-1', 
+    createdAt: '2025-08-10T10:00:00.000Z',
+    leadDate: '2025-08-10T10:00:00.000Z',
     product: 'Primary', 
     leadSource: 'Connector', 
     leadType: 'Fresh', 
-    remarks: [] 
+    remarks: [],
+    state: 'Maharashtra',
+    dealValue: 2.0, // Cr
   },
   { 
     id: 'dealer-3', 
@@ -186,14 +195,16 @@ export const mockDealers: Dealer[] = [
     contactNumbers: [{ value: '9820398203' }],
     status: 'Partial Docs', 
     anchorId: 'anchor-1', 
-    assignedTo: 'user-2', 
-    createdAt: daysAgo(10), 
-    leadDate: daysAgo(10), 
+    assignedTo: 'user-6', 
+    createdAt: '2025-08-12T10:00:00.000Z',
+    leadDate: '2025-08-12T10:00:00.000Z',
     product: 'Primary', 
     leadSource: 'Anchor Ecosystem (Cross-sell)', 
     leadType: 'Fresh', 
     nextBestAction: { recommendedAction: 'Mark as Unqualified', justification: 'No response after multiple follow-ups over two weeks.' }, 
-    remarks: [] 
+    remarks: [],
+    state: 'Delhi',
+    dealValue: 0.75, // Cr
   },
 ];
 
@@ -345,3 +356,41 @@ export const mockActivityLogs: ActivityLog[] = [
 ];
 
 export const mockDailyActivities: DailyActivity[] = [];
+
+export const mockCustomDashboardConfigs: CustomDashboardConfig[] = [
+    {
+        id: 'config-user-4', // For Rajesh Kumar (RSM)
+        userId: 'user-4',
+        name: "Rajesh Kumar's North Region Dashboard",
+        selectedAnchors: ['anchor-1', 'anchor-2'],
+        selectedStates: ['Delhi', 'Punjab'],
+        statusToTrack: 'Login done',
+        targets: {
+            'anchor-1': {
+                '2025-08': {
+                    statusCount: 5,
+                    dealValue: 10, // Cr
+                    sanctionValue: 8, // Cr
+                }
+            },
+            'anchor-2': {
+                '2025-08': {
+                    statusCount: 3,
+                    dealValue: 5, // Cr
+                    sanctionValue: 4.5, // Cr
+                }
+            }
+        }
+    }
+];
+
+export const mockSanctionData: SanctionData[] = [
+    { id: 'anchor-1-2025-08', anchorId: 'anchor-1', month: '2025-08', value: 7.5 },
+    { id: 'anchor-2-2025-08', anchorId: 'anchor-2', month: '2025-08', value: 5.0 },
+];
+
+export const mockAumData: AumData[] = [
+    { id: 'anchor-1', anchorId: 'anchor-1', value: 50.5 },
+    { id: 'anchor-2', anchorId: 'anchor-2', value: 30.0 },
+    { id: 'anchor-3', anchorId: 'anchor-3', value: 25.2 },
+];
