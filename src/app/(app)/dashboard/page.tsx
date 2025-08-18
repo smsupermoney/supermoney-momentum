@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -20,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types';
 import { DocsApprovalQueue } from '@/components/dashboard/docs-approval-queue';
 import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
+import { TargetVsAchievementCard } from '@/components/reports/target-vs-achievement-card';
 
 
 export default function DashboardPage() {
@@ -91,7 +91,7 @@ export default function DashboardPage() {
             case 'Regional Sales Manager':
             case 'National Sales Manager':
             case 'ETB Manager':
-                return <ManagerDashboard withCustomDashboard={true} />;
+                return <ManagerDashboard withCustomDashboard={false} />;
             case 'Business Development':
             case 'Admin':
             case 'BIU':
@@ -147,6 +147,7 @@ function SalesDashboard() {
     return (
         <>
             <SalesPipelineCard />
+            <TargetVsAchievementCard />
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -165,6 +166,7 @@ function ManagerDashboard({ withCustomDashboard = false }: { withCustomDashboard
         <>
             {withCustomDashboard && userDashboardConfig && <CustomDashboardViewer config={userDashboardConfig} />}
             <SalesPipelineCard />
+            <TargetVsAchievementCard />
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
@@ -183,6 +185,7 @@ function AdminDashboard() {
         <>
             <DocsApprovalQueue />
             <SalesPipelineCard />
+            <TargetVsAchievementCard />
             <TeamProgressCard />
             <StaleLeadsCard />
             <PipelineCard />
