@@ -227,16 +227,6 @@ export interface Lender {
   name: string;
 }
 
-export interface Target {
-  id: string;
-  userId: string;
-  month: string; // "YYYY-MM"
-  anchorId: string;
-  lenderId: string;
-  targetLogins: number;
-  targetValue: number; // in Cr
-}
-
 // New Types for Custom Dashboards
 export interface CustomDashboardConfig {
   id: string; // e.g., 'config-user-2'
@@ -249,21 +239,10 @@ export interface CustomDashboardConfig {
     [month: string]: { // key is 'YYYY-MM'
       statusCount?: number;
       dealValue?: number;
-      sanctionValue?: number;
-      aumValue?: number;
+      sanctionValueTarget?: number;
+      sanctionValueAchieved?: number;
+      aumValueTarget?: number;
+      aumValueAchieved?: number;
     }
   }>;
-}
-
-export interface SanctionData {
-  id: string; // e.g., 'anchorId-YYYY-MM'
-  anchorId: string;
-  month: string; // 'YYYY-MM'
-  value: number; // in Cr
-}
-
-export interface AumData {
-    id: string; // e.g., 'anchorId'
-    anchorId: string;
-    value: number; // in Cr
 }

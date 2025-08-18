@@ -130,16 +130,18 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                 {selectedAnchors && selectedAnchors.length > 0 && (
                     <div>
                         <FormLabel>Monthly Targets</FormLabel>
-                        <div className="rounded-md border mt-2">
+                        <div className="rounded-md border mt-2 overflow-x-auto">
                           <Table>
                               <TableHeader>
                                   <TableRow>
                                       <TableHead>Anchor</TableHead>
                                       <TableHead>Month</TableHead>
-                                      <TableHead>Target Logins</TableHead>
-                                      <TableHead>Target Value (Cr)</TableHead>
-                                      <TableHead>Sanction Value (Cr)</TableHead>
-                                      <TableHead>AUM Target (Cr)</TableHead>
+                                      <TableHead className="text-center">Target Logins</TableHead>
+                                      <TableHead className="text-center">Target Value (Cr)</TableHead>
+                                      <TableHead className="text-center">Sanction Target (Cr)</TableHead>
+                                      <TableHead className="text-center">Sanction Achieved (Cr)</TableHead>
+                                      <TableHead className="text-center">AUM Target (Cr)</TableHead>
+                                      <TableHead className="text-center">AUM Achieved (Cr)</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -161,13 +163,23 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                                                              <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
-                                                     <TableCell>
-                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.sanctionValue`} render={({ field }) => (
+                                                    <TableCell>
+                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.sanctionValueTarget`} render={({ field }) => (
                                                              <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.aumValue`} render={({ field }) => (
+                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.sanctionValueAchieved`} render={({ field }) => (
+                                                             <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
+                                                        )}/>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.aumValueTarget`} render={({ field }) => (
+                                                             <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
+                                                        )}/>
+                                                    </TableCell>
+                                                     <TableCell>
+                                                        <FormField control={form.control} name={`targets.${anchorId}.${month}.aumValueAchieved`} render={({ field }) => (
                                                              <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                                                         )}/>
                                                     </TableCell>

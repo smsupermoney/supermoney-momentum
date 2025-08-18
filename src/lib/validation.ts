@@ -70,6 +70,7 @@ export const NewSpokeSchema = z.object({
 
 
 export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
+    contactNumbers: z.array(ContactNumberSchema).optional(),
     leadDate: z.date({ invalid_type_error: "Lead Date must be a valid date." }).optional(),
     initialLeadDate: z.date({ invalid_type_error: "Initial Lead Date must be a valid date." }).optional().nullable(),
 });
@@ -139,8 +140,10 @@ export const DashboardConfigSchema = z.object({
       z.object({
         statusCount: z.coerce.number().optional(),
         dealValue: z.coerce.number().optional(),
-        sanctionValue: z.coerce.number().optional(),
-        aumValue: z.coerce.number().optional(),
+        sanctionValueTarget: z.coerce.number().optional(),
+        sanctionValueAchieved: z.coerce.number().optional(),
+        aumValueTarget: z.coerce.number().optional(),
+        aumValueAchieved: z.coerce.number().optional(),
       }).optional()
     ).optional()
   ).optional()
@@ -151,7 +154,7 @@ export const DashboardConfigSchema = z.object({
     return data.selectedAnchors.some(anchorId => {
         const anchorTargets = data.targets?.[anchorId];
         if (!anchorTargets) return false;
-        return Object.values(anchorTargets).some(monthlyTarget => monthlyTarget?.aumValue !== undefined);
+        return Object.values(anchorTargets).some(monthlyTarget => monthlyTarget?.aumValueTarget !== undefined && monthlyTarget?.aumValueTarget !== null);
     });
 }, {
     message: "At least one anchor must have an AUM target set for at least one month.",

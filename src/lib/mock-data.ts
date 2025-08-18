@@ -1,7 +1,8 @@
 
 
 
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, CustomDashboardConfig, SanctionData, AumData } from './types';
+
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, CustomDashboardConfig } from './types';
 
 // Let's assume today is 2024-07-26 for consistent mock data
 const today = new Date('2024-07-26T10:00:00.000Z');
@@ -18,6 +19,7 @@ export const mockUsers: User[] = [
   { id: 'user-5', uid: 'user-5', name: 'Priya Sharma', email: 'etbm@supermoney.in', role: 'ETB Manager', managerId: 'user-admin', region: 'South' },
   { id: 'user-6', uid: 'user-6', name: 'Amit Verma', email: 'asm-north@supermoney.in', role: 'Area Sales Manager', managerId: 'user-4', region: 'North' },
   { id: 'user-7', uid: 'user-7', name: 'Sunita Reddy', email: 'etb-team@supermoney.in', role: 'ETB Team', managerId: 'user-5', region: 'South' },
+  { id: 'user-8', uid: 'user-8', name: 'Vikas Mehra', email: 'is@supermoney.in', role: 'Internal Sales', managerId: 'user-2', region: 'West' },
 ];
 
 export const mockAnchors: Anchor[] = [
@@ -370,27 +372,18 @@ export const mockCustomDashboardConfigs: CustomDashboardConfig[] = [
                 '2025-08': {
                     statusCount: 5,
                     dealValue: 10, // Cr
-                    sanctionValue: 8, // Cr
+                    sanctionValueTarget: 8, // Cr
+                    aumValueTarget: 50,
                 }
             },
             'anchor-2': {
                 '2025-08': {
                     statusCount: 3,
                     dealValue: 5, // Cr
-                    sanctionValue: 4.5, // Cr
+                    sanctionValueTarget: 4.5, // Cr
+                    aumValueTarget: 30,
                 }
             }
         }
     }
-];
-
-export const mockSanctionData: SanctionData[] = [
-    { id: 'anchor-1-2025-08', anchorId: 'anchor-1', month: '2025-08', value: 7.5 },
-    { id: 'anchor-2-2025-08', anchorId: 'anchor-2', month: '2025-08', value: 5.0 },
-];
-
-export const mockAumData: AumData[] = [
-    { id: 'anchor-1', anchorId: 'anchor-1', value: 50.5 },
-    { id: 'anchor-2', anchorId: 'anchor-2', value: 30.0 },
-    { id: 'anchor-3', anchorId: 'anchor-3', value: 25.2 },
 ];

@@ -16,15 +16,13 @@ interface CustomDashboardViewerProps {
 }
 
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
-    const { users, anchors, lenders, dealers, vendors, sanctionData, aumData } = useApp();
+    const { users, anchors, lenders, dealers, vendors } = useApp();
     const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(2025, 7, 1), 'yyyy-MM'));
 
     const monthOptions = useMemo(() => {
         const options: { value: string; label: string }[] = [];
-        const startDate = new Date(2025, 7, 1); // August 2025
-        const endDate = new Date();
-        let currentDate = startDate;
-
+        let currentDate = new Date(2025, 7, 1); // August 2025
+        const endDate = new Date(2025, 10, 1); // October 2025, to show 3 months
         while (currentDate <= endDate) {
             options.push({
                 value: format(currentDate, 'yyyy-MM'),
@@ -39,7 +37,12 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         if (!config) return [];
 
         const teamUserIds = [config.userId, ...users.filter(u => u.managerId === config.userId).map(u => u.uid)];
-        const teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
+        
+        let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
+
+        if (!config.selectedStates.includes('all')) {
+            teamLeads = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
+        }
 
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
@@ -60,48 +63,35 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 .filter(l => l.status === config.statusToTrack)
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
-            const achievedSanctionValue = sanctionData
-                .find(d => d.anchorId === anchorId && d.month === selectedMonth)?.value || 0;
-            
-            const aum = aumData.find(d => d.anchorId === anchorId)?.value || 0;
-
-            // Get targets
+            // Get targets and manual achievements
             const targets = config.targets?.[anchorId]?.[selectedMonth] || {};
+            
+            const sanctionTarget = targets.sanctionValueTarget || 0;
+            const sanctionAchieved = targets.sanctionValueAchieved || 0;
+            const aumTarget = targets.aumValueTarget || 0;
+            const aumAchieved = targets.aumValueAchieved || 0;
+
             const targetLogins = targets.statusCount || 0;
             const targetDealValue = targets.dealValue || 0;
-            const targetSanctionValue = targets.sanctionValue || 0;
-
-            // Grand totals
-            const totalLogins = leadsForAnchor.filter(l => l.status === config.statusToTrack).length;
-            const totalSanction = sanctionData.filter(s => s.anchorId === anchorId).reduce((sum, s) => sum + s.value, 0);
-
+            
             return {
                 anchorId,
                 anchorName: anchor.name,
                 lenderName: lenders.find(l => leadsForAnchor[0]?.lenderId === l.id)?.name || 'N/A',
-                state: leadsForAnchor[0]?.state || 'N/A', // Simplified for now
+                state: config.selectedStates.includes('all') ? 'All' : config.selectedStates.join(', '),
                 targetLogins,
                 achievedLogins: achievedStatusCount,
                 targetValue: targetDealValue,
                 achievedValue: achievedDealValue,
-                sanctionValue: achievedSanctionValue,
-                aum,
-                totalLogins,
-                totalSanction,
-                totalAum: aum,
+                sanctionTarget,
+                sanctionAchieved,
+                aumTarget,
+                aumAchieved
             }
         }).filter(Boolean);
-    }, [config, selectedMonth, users, anchors, dealers, vendors, sanctionData, aumData, lenders]);
+    }, [config, selectedMonth, users, anchors, dealers, vendors, lenders]);
     
     if (!config) return null;
-
-    const grandTotals = dashboardData.reduce((totals, row) => {
-        if (!row) return totals;
-        totals.logins += row.totalLogins;
-        totals.sanction += row.totalSanction;
-        totals.aum += row.totalAum;
-        return totals;
-    }, { logins: 0, sanction: 0, aum: 0});
 
     return (
         <Card>
@@ -120,7 +110,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -129,14 +119,18 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                             <TableHead rowSpan={2} className="align-bottom">Lender</TableHead>
                             <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack})</TableHead>
                             <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack})</TableHead>
-                            <TableHead rowSpan={2} className="align-bottom">Sanction Value (Cr)</TableHead>
-                            <TableHead rowSpan={2} className="align-bottom">AUM</TableHead>
+                            <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
+                            <TableHead colSpan={2} className="text-center">AUM (Cr)</TableHead>
                         </TableRow>
                         <TableRow>
                             <TableHead className="text-center">Target</TableHead>
                             <TableHead className="text-center">Achieved</TableHead>
-                            <TableHead className="text-center">Target (Cr)</TableHead>
-                            <TableHead className="text-center">Achieved (Cr)</TableHead>
+                            <TableHead className="text-center">Target</TableHead>
+                            <TableHead className="text-center">Achieved</TableHead>
+                            <TableHead className="text-center">Target</TableHead>
+                            <TableHead className="text-center">Achieved</TableHead>
+                             <TableHead className="text-center">Target</TableHead>
+                            <TableHead className="text-center">Achieved</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -149,17 +143,13 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                                 <TableCell className="text-center">{row.achievedLogins}</TableCell>
                                 <TableCell className="text-center">{row.targetValue}</TableCell>
                                 <TableCell className="text-center">{row.achievedValue.toFixed(2)}</TableCell>
-                                <TableCell className="text-center">{row.sanctionValue.toFixed(2)}</TableCell>
-                                <TableCell className="text-center">{row.aum.toFixed(2)}</TableCell>
+                                <TableCell className="text-center">{row.sanctionTarget}</TableCell>
+                                <TableCell className="text-center">{row.sanctionAchieved}</TableCell>
+                                <TableCell className="text-center">{row.aumTarget}</TableCell>
+                                <TableCell className="text-center">{row.aumAchieved}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
-                    <TableRow className="font-bold bg-secondary hover:bg-secondary">
-                        <TableCell colSpan={3}>Grand Total</TableCell>
-                        <TableCell colSpan={4}></TableCell>
-                        <TableCell className="text-center">{grandTotals.sanction.toFixed(2)}</TableCell>
-                        <TableCell className="text-center">{grandTotals.aum.toFixed(2)}</TableCell>
-                    </TableRow>
                 </Table>
                 </div>
             </CardContent>
