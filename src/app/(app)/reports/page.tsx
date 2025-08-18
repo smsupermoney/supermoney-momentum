@@ -356,102 +356,92 @@ function LeadsDashboard() {
 
     return (
         <div className="grid gap-4">
-            <Tabs defaultValue="leads" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="leads">Leads Analysis</TabsTrigger>
-                    <TabsTrigger value="data-chat">Data Chat</TabsTrigger>
-                </TabsList>
-                <TabsContent value="leads" className="mt-4 space-y-4">
-                    <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
-                                <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Select value={productFilter} onValueChange={setProductFilter}>
-                                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
-                                    <SelectContent>
-                                    <SelectItem value="all">All Products</SelectItem>
-                                    {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <Tabs value={period} onValueChange={(v) => setPeriod(v as 'this_month' | 'this_quarter' | 'ytd')} className="w-full sm:w-auto">
-                                    <TabsList className="grid w-full grid-cols-3">
-                                        <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
-                                        <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
-                                        <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
-                                <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                                    <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
-                                    <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
-                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                    {pipelineValueData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
-                                    ))}
-                                    </Bar>
-                                </BarChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <Card className="lg:col-span-1">
-                        <CardHeader>
-                            <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
-                            <CardDescription>Top performers for {periodLabel}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableBody>
-                                    {activityCounts.map((user, index) => (
-                                        <TableRow key={user.name}>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
-                                                    <div><p className="font-medium">{user.name}</p></div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <span className="text-lg font-bold">{user.activities}</span>
-                                                <span className="text-sm text-muted-foreground"> activities</span>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                        </Card>
-                        <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
-                        <div className="lg:col-span-1 space-y-4">
-                            <Card className="lg:col-span-1">
-                            <CardHeader>
-                                <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
-                                <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4 pt-2">
-                                <ConversionRateItem from="New" to="Onboarding" value={newToOnboarding} />
-                                <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
-                            </CardContent>
-                        </Card>
-                        <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>
-                        </div>
-                    </div>
-                </TabsContent>
-                 <TabsContent value="data-chat" className="mt-4">
-                    <AdminDataChat />
-                    <InactiveUsersReport />
-                </TabsContent>
-            </Tabs>
+        <AdminDataChat />
+        <InactiveUsersReport />
+        <KeyHighlights period={periodLabel} anchors={anchors.filter(a => periodSpokes.some(s => s.anchorId === a.id))} activityLogs={periodLogs} users={salesUsers} />
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <CardTitle>{t('reports.pipelineValue', { period: periodLabel })}</CardTitle>
+                    <CardDescription>{t('reports.pipelineValueDescription')}</CardDescription>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={productFilter} onValueChange={setProductFilter}>
+                        <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Product" /></SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="all">All Products</SelectItem>
+                        {products.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Tabs value={period} onValueChange={(v) => setPeriod(v as 'this_month' | 'this_quarter' | 'ytd')} className="w-full sm:w-auto">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="this_month">{t('reports.month')}</TabsTrigger>
+                            <TabsTrigger value="this_quarter">{t('reports.quarter')}</TabsTrigger>
+                            <TabsTrigger value="ytd">{t('reports.ytd')}</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{ value: { label: "Value (Cr)" } }} className="h-[300px]">
+                    <BarChart data={pipelineValueData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                        <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                        <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} unit=" Cr" />
+                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent indicator="dot" />} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {pipelineValueData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                        ))}
+                        </Bar>
+                    </BarChart>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle>{t('reports.activityLeaderboard', { period: '' })}</CardTitle>
+                <CardDescription>Top performers for {periodLabel}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableBody>
+                        {activityCounts.map((user, index) => (
+                            <TableRow key={user.name}>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-muted-foreground">{index + 1}.</span>
+                                        <div><p className="font-medium">{user.name}</p></div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <span className="text-lg font-bold">{user.activities}</span>
+                                    <span className="text-sm text-muted-foreground"> activities</span>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {activityCounts.length === 0 && <TableRow><TableCell colSpan={2} className="text-center h-24">No activity this period.</TableCell></TableRow>}
+                    </TableBody>
+                </Table>
+            </CardContent>
+            </Card>
+            <OverdueTasksByExecutive tasks={tasks.filter(t => visibleUserIds.includes(t.assignedTo))} users={users.filter(u => u.role !== 'Admin')} />
+            <div className="lg:col-span-1 space-y-4">
+                <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>{t('reports.stageConversionRates')}</CardTitle>
+                    <CardDescription>{t('reports.stageConversionRatesDescription', { period: periodLabel })}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                    <ConversionRateItem from="New" to="Onboarding" value={newToOnboarding} />
+                    <ConversionRateItem from="Onboarding" to="Active" value={onboardingToActive} />
+                </CardContent>
+            </Card>
+            <StatCard title={t('reports.spokeActivationRate')} value={`${spokeActivationRate.toFixed(1)}%`} description={t('reports.spokeActivationRateDescription')} icon={CheckCircle}/>
+            </div>
+        </div>
         </div>
     );
 }
@@ -671,7 +661,7 @@ function KeyHighlights({ period, anchors, activityLogs, users }: { period: strin
         <Card>
             <CardHeader>
                 <CardTitle>{t('reports.aiHighlights')}</CardTitle>
-                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardHeader>
+                <CardDescription>{t('reports.aiHighlightsDescription', { period: period })}</CardDescription>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
