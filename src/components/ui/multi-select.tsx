@@ -27,7 +27,7 @@ export type MultiSelectOption = {
 
 interface MultiSelectProps {
   options: MultiSelectOption[];
-  selected: string[];
+  value: string[];
   onChange: (selected: string[]) => void;
   className?: string;
   placeholder?: string;
@@ -35,7 +35,7 @@ interface MultiSelectProps {
 
 function MultiSelect({
   options,
-  selected,
+  value: selected,
   onChange,
   className,
   placeholder = "Select...",
@@ -57,7 +57,7 @@ function MultiSelect({
           onClick={() => setOpen(!open)}
         >
           <div className="flex gap-1 flex-wrap">
-            {selected.length > 0 ? (
+            {selected && selected.length > 0 ? (
               selected.map((item) => {
                 const label = options.find(opt => opt.value === item)?.label ?? item;
                 return (
@@ -92,10 +92,11 @@ function MultiSelect({
                 <CommandItem
                   key={option.value}
                   onSelect={() => {
+                    const currentSelected = selected || [];
                     onChange(
-                      selected.includes(option.value)
-                        ? selected.filter((item) => item !== option.value)
-                        : [...selected, option.value]
+                      currentSelected.includes(option.value)
+                        ? currentSelected.filter((item) => item !== option.value)
+                        : [...currentSelected, option.value]
                     );
                     setOpen(true);
                   }}
@@ -103,7 +104,7 @@ function MultiSelect({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      selected.includes(option.value)
+                      selected && selected.includes(option.value)
                         ? "opacity-100"
                         : "opacity-0"
                     )}
