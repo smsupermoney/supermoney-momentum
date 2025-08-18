@@ -1,6 +1,5 @@
 
 
-
 import { z } from 'zod';
 import { parse, isValid } from 'date-fns';
 
@@ -66,6 +65,7 @@ export const NewSpokeSchema = z.object({
   tat: z.number().int().optional(),
   priority: z.enum(['High', 'Normal']).optional(),
   assignedTo: z.string().optional().nullable(),
+  internalReferralId: z.string().optional().nullable(),
 });
 
 

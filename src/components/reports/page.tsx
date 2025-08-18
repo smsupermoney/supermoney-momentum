@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
@@ -56,6 +55,22 @@ export default function ReportsPage() {
     XLSX.writeFile(wb, filename);
   };
   
+  const getSpokeData = (spoke: Dealer | Vendor) => ({
+    Name: spoke.name, 
+    'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), 
+    Email: spoke.email || 'N/A', 
+    'Onboarding Status': spoke.status, 
+    'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 
+    'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 
+    'Product Interest': spoke.product || 'N/A', 
+    'Lead Type': spoke.leadType || 'N/A', 
+    'Lead Score': spoke.leadScore, 
+    'Lead Score Reason': spoke.leadScoreReason, 
+    'Potential Deal Value (INR)': spoke.dealValue, 
+    'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
+    'Remarks': (spoke.remarks || []).map(r => `${r.userName} (${safeFormatDate(r.timestamp, 'yyyy-MM-dd HH:mm')}): ${r.text}`).join('\n'),
+  });
+
   const handleDownloadRecent = () => {
     setIsDownloadingRecent(true);
     const sinceDate = subHours(new Date(), 72);
@@ -68,10 +83,6 @@ export default function ReportsPage() {
     const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
     const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
     const visibleLenders = lenders; // Lenders are global
-
-    const getSpokeData = (spoke: Dealer | Vendor) => ({
-      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
-    });
 
     const isRecent = (item: { updatedAt?: string, createdAt?: string, timestamp?: string, activityTimestamp?: string }) => {
         const dateToCheck = item.updatedAt || item.createdAt || item.timestamp || item.activityTimestamp;
@@ -105,10 +116,6 @@ export default function ReportsPage() {
     const visibleActivityLogs = activityLogs.filter(log => visibleUserIds.includes(log.userId));
     const visibleDailyActivities = dailyActivities.filter(da => visibleUserIds.includes(da.userId));
     const visibleLenders = lenders; // Lenders are global
-
-    const getSpokeData = (spoke: Dealer | Vendor) => ({
-      Name: spoke.name, 'Contact Numbers': (spoke.contactNumbers || []).map(cn => cn.value).join(', '), Email: spoke.email || 'N/A', 'Onboarding Status': spoke.status, 'Assigned To': users.find(u => u.uid === spoke.assignedTo)?.name || 'Unassigned', 'Associated Anchor': anchors.find(a => a.id === spoke.anchorId)?.name || 'N/A', 'Product Interest': spoke.product || 'N/A', 'Lead Type': spoke.leadType || 'N/A', 'Lead Score': spoke.leadScore, 'Lead Score Reason': spoke.leadScoreReason, 'Potential Deal Value (INR)': spoke.dealValue, 'Created At': safeFormatDate(spoke.createdAt, 'yyyy-MM-dd HH:mm'),
-    });
 
     const allData = {
       "Users": visibleUsersData.map(u => ({ Name: u.name, Email: u.email, Role: u.role, Region: u.region || 'N/A', Manager: users.find(m => m.uid === u.managerId)?.name || 'N/A' })),

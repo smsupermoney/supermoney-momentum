@@ -1,6 +1,5 @@
 
 
-
 export type UserRole = 'Admin' | 'Area Sales Manager' | 'Zonal Sales Manager' | 'Regional Sales Manager' | 'National Sales Manager' | 'Business Development' | 'BIU' | 'ETB Team' | 'ETB Manager' | 'Telecaller' | 'Internal Sales';
 export type UserStatus = 'Active' | 'Ex-User';
 
@@ -108,6 +107,7 @@ export interface BaseLead {
   initialLeadDate?: string | null; // For 'Revive' lead type
   tat?: number; // Turn Around Time in days, for bulk uploads
   priority?: 'High' | 'Normal';
+  internalReferralId?: string | null;
 }
 
 export interface Anchor {
@@ -245,4 +245,13 @@ export interface CustomDashboardConfig {
       aumValueAchieved?: number;
     }
   }>;
+}
+
+export interface Target {
+  id: string;
+  userId: string;
+  anchorId: string;
+  month: string; // YYYY-MM format
+  statusCount?: number;
+  dealValue?: number;
 }

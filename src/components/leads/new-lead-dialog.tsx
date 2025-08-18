@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import type { Dealer, Vendor, LeadType as LeadTypeEnum, UserRole } from '@/lib/types';
 import { spokeScoring, SpokeScoringInput } from '@/ai/flows/spoke-scoring';
-import { Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 import { generateUniqueId } from '@/lib/utils';
 import { NewSpokeSchema, regions } from '@/lib/validation';
 import { IndianStatesAndCities } from '@/lib/india-states-cities';
@@ -37,6 +37,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Trash2 } from 'lucide-react';
 
 type NewLeadFormValues = z.infer<typeof NewSpokeSchema>;
 
@@ -75,7 +76,13 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
       dealValue: undefined,
       initialLeadDate: undefined,
       assignedTo: currentUser?.uid,
+      internalReferralId: '',
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "contactNumbers",
   });
 
   const watchLeadType = form.watch("leadType");
@@ -129,6 +136,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
             dealValue: undefined,
             initialLeadDate: undefined,
             assignedTo: currentUser?.uid,
+            internalReferralId: '',
         });
     }
   }, [open, anchorId, form, currentUser]);
@@ -177,6 +185,7 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
           leadScore: scoreResult.score,
           leadScoreReason: scoreResult.reason,
           remarks: [],
+          internalReferralId: values.internalReferralId || null,
         };
 
         if (type === 'Dealer') {
@@ -258,34 +267,39 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                  control={form.control}
-                  name={`contactNumber`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter 10-digit phone number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name={`email`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="contact@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div className="space-y-2">
+                <FormLabel>Contact Numbers</FormLabel>
+                {fields.map((field, index) => (
+                  <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={`contactNumbers.${index}.value`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormControl><Input {...field} placeholder="Enter 10-digit phone number" /></FormControl>
+                          {fields.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add Phone Number</Button>
             </div>
+            <FormField
+              control={form.control}
+              name={`email`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="contact@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
                 control={form.control}
                 name="spoc"
@@ -516,6 +530,23 @@ export function NewLeadDialog({ type, open, onOpenChange, anchorId }: NewLeadDia
                     />
                 )}
              </div>
+             <FormField
+                  control={form.control}
+                  name="internalReferralId"
+                  render={({ field }) => (
+                      <FormItem><FormLabel>Internal Referral (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select referring team member" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                              {users.filter(u => u.status !== 'Ex-User').map(user => (
+                                  <SelectItem key={user.uid} value={user.uid}>{user.name}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+              />
             
             <DialogFooter className="pt-4">
                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
