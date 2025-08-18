@@ -84,6 +84,9 @@ const sanitizeForFirestore = <T extends {}>(obj: T): T => {
     for (const key in sanitizedObj) {
         if (sanitizedObj[key] === undefined) {
             (sanitizedObj as any)[key] = null;
+        } else if (typeof sanitizedObj[key] === 'object' && sanitizedObj[key] !== null) {
+            // Recursively sanitize nested objects
+            (sanitizedObj as any)[key] = sanitizeForFirestore(sanitizedObj[key]);
         }
     }
     return sanitizedObj;
