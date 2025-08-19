@@ -294,6 +294,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       <FormItem><FormLabel>Dealer SPOC</FormLabel><FormControl><Input placeholder="Single Point of Contact" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
 
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -490,7 +491,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                 </div>
 
                 <FormField control={form.control} name="gstin" render={({ field }) => (
-                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage />
                 )}/>
 
                 <div className="space-y-2">
@@ -498,7 +499,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {(form.getValues('remarks') || []).map((remark, index) => (
+                                  {Array.isArray(form.getValues('remarks')) && form.getValues('remarks').map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>
