@@ -187,7 +187,8 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
     };
-    const currentRemarks = form.getValues('remarks') || [];
+    const currentRemarksValue = form.getValues('remarks');
+    const currentRemarks = Array.isArray(currentRemarksValue) ? currentRemarksValue : [];
     form.setValue('remarks', [...currentRemarks, remark]);
     setNewRemark('');
   };
@@ -499,7 +500,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {(form.getValues('remarks') || []).map((remark, index) => (
+                                  {Array.isArray(form.getValues('remarks')) && form.getValues('remarks').map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>

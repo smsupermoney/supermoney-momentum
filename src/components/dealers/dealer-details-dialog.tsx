@@ -187,7 +187,8 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
     };
-    const currentRemarks = form.getValues('remarks') || [];
+    const currentRemarksValue = form.getValues('remarks');
+    const currentRemarks = Array.isArray(currentRemarksValue) ? currentRemarksValue : [];
     form.setValue('remarks', [...currentRemarks, remark]);
     setNewRemark('');
   };
