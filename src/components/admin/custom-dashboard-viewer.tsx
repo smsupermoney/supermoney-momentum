@@ -40,9 +40,15 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         
         let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        if (Array.isArray(config.selectedStates) && !config.selectedStates.includes('all')) {
+        const isAllStatesSelected = Array.isArray(config.selectedStates) && config.selectedStates.includes('all');
+
+        if (!isAllStatesSelected && Array.isArray(config.selectedStates)) {
             teamLeads = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
         }
+
+        const relevantStates = isAllStatesSelected 
+            ? Array.from(new Set(teamLeads.map(l => l.state).filter(Boolean))).join(', ') || 'All States'
+            : (config.selectedStates || []).join(', ');
 
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
@@ -78,7 +84,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 anchorId,
                 anchorName: anchor.name,
                 lenderName: lenders.find(l => leadsForAnchor[0]?.lenderId === l.id)?.name || 'N/A',
-                state: Array.isArray(config.selectedStates) && config.selectedStates.includes('all') ? 'All' : (config.selectedStates || []).join(', '),
+                state: relevantStates,
                 targetLogins,
                 achievedLogins: achievedStatusCount,
                 targetValue: targetDealValue,
@@ -163,5 +169,3 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         </Card>
     )
 }
-
-
