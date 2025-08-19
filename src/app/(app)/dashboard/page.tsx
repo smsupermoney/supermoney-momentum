@@ -21,6 +21,12 @@ import { DocsApprovalQueue } from '@/components/dashboard/docs-approval-queue';
 import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
 import { ManagerTargetsOverview } from '@/components/reports/manager-targets-overview';
 import { TargetVsAchievementCard } from '@/components/reports/target-vs-achievement-card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 
 export default function DashboardPage() {
@@ -180,8 +186,14 @@ function ManagerDashboard() {
             {displayConfig && <CustomDashboardViewer config={displayConfig} />}
             <SalesPipelineCard />
             <TargetVsAchievementCard />
-            <TeamProgressCard />
-            <StaleLeadsCard />
+            <Accordion type="multiple" className="w-full space-y-4">
+                 <AccordionItem value="team-progress" className="border-none">
+                    <TeamProgressCard />
+                </AccordionItem>
+                 <AccordionItem value="stale-leads" className="border-none">
+                    <StaleLeadsCard />
+                </AccordionItem>
+            </Accordion>
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
@@ -199,8 +211,14 @@ function AdminDashboard() {
             <DocsApprovalQueue />
             <SalesPipelineCard />
             <ManagerTargetsOverview />
-            <TeamProgressCard />
-            <StaleLeadsCard />
+            <Accordion type="multiple" className="w-full space-y-4">
+                 <AccordionItem value="team-progress" className="border-none">
+                    <TeamProgressCard />
+                </AccordionItem>
+                 <AccordionItem value="stale-leads" className="border-none">
+                    <StaleLeadsCard />
+                </AccordionItem>
+            </Accordion>
             <PipelineCard />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <RecentActivityCard className="lg:col-span-2" />
