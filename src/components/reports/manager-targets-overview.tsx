@@ -5,12 +5,14 @@ import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
-import { Users } from 'lucide-react';
+import { Users, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../ui/button';
 
 export function ManagerTargetsOverview() {
     const { customDashboards, users, currentUser } = useApp();
     const [openItems, setOpenItems] = useState<string[]>([]);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     if (!currentUser || !['Admin', 'BIU'].includes(currentUser.role)) {
         return null;
@@ -24,12 +26,23 @@ export function ManagerTargetsOverview() {
         setOpenItems(value);
     }
     
+    const handleRefresh = () => {
+        // Incrementing the key will cause child components to re-mount and re-calculate data
+        setRefreshKey(prev => prev + 1);
+    }
+
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    <CardTitle>All Manager Dashboards</CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        <CardTitle>All Manager Dashboards</CardTitle>
+                    </div>
+                    <Button onClick={handleRefresh} variant="outline" size="sm">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Refresh Achievements
+                    </Button>
                 </div>
                 <CardDescription>
                     An overview of all configured Target vs. Achievement dashboards for managers.
@@ -53,7 +66,7 @@ export function ManagerTargetsOverview() {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent>
-                                     <CustomDashboardViewer config={config} />
+                                     <CustomDashboardViewer config={config} key={`${config.id}-${refreshKey}`} />
                                 </AccordionContent>
                             </AccordionItem>
                         );

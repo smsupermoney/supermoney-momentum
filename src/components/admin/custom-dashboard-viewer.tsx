@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useApp, getAllSubordinates } from '@/contexts/app-context';
 import type { CustomDashboardConfig, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,14 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { IndianRupee, GanttChartSquare } from 'lucide-react';
-import { format, getMonth, getYear, parse } from 'date-fns';
+import { format, parse, getMonth, getYear, isWithinInterval } from 'date-fns';
 
 interface CustomDashboardViewerProps {
     config: CustomDashboardConfig;
 }
 
+const ACHIEVEMENT_STATUSES: SpokeStatus[] = ["Login done", "Awaiting Sanction", "Approved", "Disbursed"];
+
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
-    const { anchors } = useApp();
+    const { anchors, users, dealers, vendors } = useApp();
     const [monthFilter, setMonthFilter] = useState('all');
 
     const uniqueMonths = useMemo(() => {
@@ -36,8 +38,11 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         if (!config || !config.targets) return [];
 
         const allRows: any[] = [];
+        const managerSubordinateIds = getAllSubordinates(config.userId, users).map(u => u.uid);
+        const teamIds = [config.userId, ...managerSubordinateIds];
+        const allTeamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamIds.includes(lead.assignedTo));
 
-        // Directly iterate over the configured targets
+        // Directly iterate over the configured targets to build the base structure
         for (const anchorId in config.targets) {
             const anchor = anchors.find(a => a.id === anchorId);
             if (!anchor) continue;
@@ -49,20 +54,34 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 if (monthFilter !== 'all' && monthStr !== monthFilter) continue;
 
                 const targets = monthlyTargets[monthStr] || {};
+                const targetDate = parse(monthStr, 'yyyy-MM', new Date());
+                const targetYear = getYear(targetDate);
+                const targetMonth = getMonth(targetDate);
+
+                // Calculate achievements for this specific anchor and month
+                const achievedLeads = allTeamLeads.filter(lead => {
+                    const updatedAt = lead.updatedAt ? new Date(lead.updatedAt) : new Date(lead.createdAt);
+                    return lead.anchorId === anchorId &&
+                           ACHIEVEMENT_STATUSES.includes(lead.status) &&
+                           getMonth(updatedAt) === targetMonth &&
+                           getYear(updatedAt) === targetYear;
+                });
+                
+                const achievedLogins = achievedLeads.length;
+                const achievedValue = achievedLeads.reduce((sum, lead) => sum + (lead.dealValue || 0), 0);
                 
                 allRows.push({
                     anchorId,
                     anchorName: anchor.name,
                     month: monthStr,
                     targetLogins: targets.statusCount || 0,
-                    // Per user request, do not calculate achievements. Show input data directly.
-                    achievedLogins: 0, // Not calculating this for now.
-                    achievedValue: 0, // Not calculating this for now.
+                    achievedLogins,
                     targetValue: targets.dealValue || 0,
+                    achievedValue,
                     sanctionTarget: targets.sanctionValueTarget || 0,
-                    sanctionAchieved: targets.sanctionValueAchieved || 0, // Displaying the entered value.
+                    sanctionAchieved: targets.sanctionValueAchieved || 0,
                     aumTarget: targets.aumValueTarget || 0,
-                    aumAchieved: targets.aumValueAchieved || 0, // Displaying the entered value.
+                    aumAchieved: targets.aumValueAchieved || 0,
                 });
             }
         }
@@ -73,7 +92,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             return a.month.localeCompare(b.month);
         });
 
-    }, [config, anchors, monthFilter]);
+    }, [config, anchors, monthFilter, users, dealers, vendors]);
     
     if (!config) return null;
 
@@ -107,8 +126,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         <TableRow>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Month</TableHead>
-                            <TableHead colSpan={2} className="text-center">Logins ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
-                            <TableHead colSpan={2} className="text-center">Value ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack.join(', ')})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack.join(', ')})</TableHead>
                             <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
                             <TableHead colSpan={2} className="text-center">AUM (Cr)</TableHead>
                         </TableRow>
