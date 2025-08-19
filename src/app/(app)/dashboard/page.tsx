@@ -202,11 +202,14 @@ function ManagerDashboard() {
 
 // Admin & BD Dashboard
 function AdminDashboard() {
+    const { currentUser } = useApp();
+    const canSeeManagerDashboards = currentUser && ['Admin', 'BIU'].includes(currentUser.role);
+    
     return (
         <>
             <DocsApprovalQueue />
             <SalesPipelineCard />
-            <ManagerTargetsOverview />
+            {canSeeManagerDashboards && <ManagerTargetsOverview />}
             <Accordion type="multiple" className="w-full space-y-4">
                 <AccordionItem value="team-progress" className="border-none">
                     <Card>
