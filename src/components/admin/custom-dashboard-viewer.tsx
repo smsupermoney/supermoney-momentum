@@ -18,6 +18,7 @@ interface CustomDashboardViewerProps {
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
     const { users, anchors, lenders, dealers, vendors } = useApp();
     const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(2025, 7, 1), 'yyyy-MM'));
+    const [selectedState, setSelectedState] = useState<string>('all');
 
     const monthOptions = useMemo(() => {
         const options: { value: string; label: string }[] = [];
@@ -32,6 +33,14 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         }
         return options.reverse(); // Show most recent months first
     }, []);
+    
+    const stateOptions = useMemo(() => {
+        if (!config || !Array.isArray(config.selectedStates) || config.selectedStates.length === 0) {
+            return [];
+        }
+        return ['all', ...config.selectedStates];
+    }, [config]);
+
 
     const dashboardData = useMemo(() => {
         if (!config || !Array.isArray(config.selectedAnchors)) return [];
@@ -39,37 +48,36 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         const managerSubordinates = getAllSubordinates(config.userId, users);
         const teamUserIds = [config.userId, ...managerSubordinates.map(u => u.uid)];
         
-        let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
+        const teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        const hasSelectedStates = Array.isArray(config.selectedStates) && config.selectedStates.length > 0;
-        let filteredLeadsByState = teamLeads;
+        // Filter leads based on the *configured* states first.
+        const leadsInConfiguredStates = teamLeads.filter(lead => 
+            config.selectedStates.length === 0 || (lead.state && config.selectedStates.includes(lead.state))
+        );
 
-        if (hasSelectedStates) {
-            filteredLeadsByState = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
-        }
-        
-        const relevantStates = hasSelectedStates 
-            ? (config.selectedStates || []).join(', ')
-            : 'All States';
-
+        // Then, filter by the selected state dropdown.
+        const leadsForSelectedState = selectedState === 'all' 
+            ? leadsInConfiguredStates
+            : leadsInConfiguredStates.filter(lead => lead.state === selectedState);
+            
+        // Now, iterate through every anchor configured for the dashboard
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
             if (!anchor) return null;
 
-            const leadsForAnchorInPeriod = filteredLeadsByState.filter(l => {
-                 if (l.anchorId !== anchorId) return false;
+            const leadsForThisAnchor = leadsForSelectedState.filter(l => l.anchorId === anchorId);
+
+            const leadsForThisAnchorInPeriod = leadsForThisAnchor.filter(l => {
                  const leadDate = new Date(l.createdAt);
                  return getYear(leadDate) === parseInt(selectedMonth.split('-')[0]) &&
                         getMonth(leadDate) === parseInt(selectedMonth.split('-')[1]) - 1;
             });
 
-            // Calculate achievements from the filtered leads
-            const achievedStatusCount = leadsForAnchorInPeriod.filter(l => (config.statusToTrack || []).includes(l.status)).length;
-            const achievedDealValue = leadsForAnchorInPeriod
+            const achievedStatusCount = leadsForThisAnchorInPeriod.filter(l => (config.statusToTrack || []).includes(l.status)).length;
+            const achievedDealValue = leadsForThisAnchorInPeriod
                 .filter(l => (config.statusToTrack || []).includes(l.status))
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
-            // Get targets and manual achievements for the selected month
             const targets = config.targets?.[anchorId]?.[selectedMonth] || {};
             
             const sanctionTarget = targets.sanctionValueTarget || 0;
@@ -83,8 +91,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             return {
                 anchorId,
                 anchorName: anchor.name,
-                lenderName: lenders.find(l => leadsForAnchorInPeriod[0]?.lenderId === l.id)?.name || 'N/A',
-                state: relevantStates,
+                lenderName: lenders.find(l => leadsForThisAnchorInPeriod[0]?.lenderId === l.id)?.name || 'N/A',
                 targetLogins,
                 achievedLogins: achievedStatusCount,
                 targetValue: targetDealValue,
@@ -95,7 +102,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 aumAchieved
             }
         }).filter(Boolean);
-    }, [config, selectedMonth, users, anchors, dealers, vendors, lenders]);
+    }, [config, selectedMonth, selectedState, users, anchors, dealers, vendors, lenders]);
     
     if (!config) return null;
 
@@ -107,12 +114,20 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         <CardTitle>{config.name}</CardTitle>
                         <CardDescription>Your custom Target vs. Achievement dashboard.</CardDescription>
                     </div>
-                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                        <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Select Month" /></SelectTrigger>
-                        <SelectContent>
-                            {monthOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Select value={selectedState} onValueChange={setSelectedState}>
+                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Select State" /></SelectTrigger>
+                            <SelectContent>
+                                {stateOptions.map(opt => <SelectItem key={opt} value={opt}>{opt === 'all' ? 'All Configured States' : opt}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Select Month" /></SelectTrigger>
+                            <SelectContent>
+                                {monthOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
@@ -120,7 +135,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead rowSpan={2} className="align-bottom">State</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Lender</TableHead>
                             <TableHead colSpan={2} className="text-center">Logins ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
@@ -142,7 +156,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                     <TableBody>
                         {dashboardData.map(row => row && (
                              <TableRow key={row.anchorId}>
-                                <TableCell>{row.state}</TableCell>
                                 <TableCell className="font-medium">{row.anchorName}</TableCell>
                                 <TableCell>{row.lenderName}</TableCell>
                                 <TableCell className="text-center">{row.targetLogins}</TableCell>
@@ -157,8 +170,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         ))}
                          {dashboardData.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={11} className="h-24 text-center">
-                                    No data available for the selected anchors and period.
+                                <TableCell colSpan={10} className="h-24 text-center">
+                                    No data available for the selected configuration and period.
                                 </TableCell>
                             </TableRow>
                         )}

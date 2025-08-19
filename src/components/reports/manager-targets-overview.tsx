@@ -9,9 +9,13 @@ import { Users } from 'lucide-react';
 import { useState } from 'react';
 
 export function ManagerTargetsOverview() {
-    const { customDashboards, users } = useApp();
+    const { customDashboards, users, currentUser } = useApp();
     const [openItems, setOpenItems] = useState<string[]>([]);
 
+    if (!currentUser || !['Admin', 'BIU'].includes(currentUser.role)) {
+        return null;
+    }
+    
     if (customDashboards.length === 0) {
         return null;
     }
