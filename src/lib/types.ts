@@ -233,7 +233,6 @@ export interface CustomDashboardConfig {
   userId: string; // The manager this dashboard is for (e.g., 'user-2')
   name: string; // e.g., "Kamlesh Gupta's Dashboard"
   selectedAnchors: string[]; // array of anchor IDs
-  selectedStates: string[]; // array of state names
   statusToTrack: SpokeStatus[];
   targets: Record<string, { // key is anchorId
     [month: string]: { // key is 'YYYY-MM'

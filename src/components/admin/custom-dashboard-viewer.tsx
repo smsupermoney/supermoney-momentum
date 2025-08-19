@@ -42,17 +42,12 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         
         const teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        // Filter leads based on the *configured* states.
-        const leadsInConfiguredStates = (config.selectedStates && config.selectedStates.length > 0)
-            ? teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state))
-            : teamLeads;
-            
-        // Now, iterate through every anchor configured for the dashboard
+        // Iterate through every anchor configured for the dashboard
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
             if (!anchor) return null;
 
-            const leadsForThisAnchor = leadsInConfiguredStates.filter(l => l.anchorId === anchorId);
+            const leadsForThisAnchor = teamLeads.filter(l => l.anchorId === anchorId);
 
             const leadsForThisAnchorInPeriod = leadsForThisAnchor.filter(l => {
                  const leadDate = new Date(l.createdAt);

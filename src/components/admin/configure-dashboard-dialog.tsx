@@ -52,18 +52,12 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
       userId: manager.uid,
       name: `${manager.name}'s Dashboard`,
       selectedAnchors: [],
-      selectedStates: [],
       statusToTrack: ['Login done'],
       targets: {},
     },
   });
 
   const anchorOptions = React.useMemo(() => anchors.map(a => ({ value: a.id, label: a.name })), [anchors]);
-  const stateOptions = React.useMemo(() => {
-    return [
-      ...IndianStatesAndCities.flatMap(region => region.states.map(state => ({ value: state.name, label: state.name }))).sort((a,b) => a.label.localeCompare(b.label)),
-    ];
-  }, []);
 
   const statusOptions: MultiSelectOption[] = spokeStatuses.map(s => ({ value: s, label: s}));
   
@@ -113,16 +107,13 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                   <FormField control={form.control} name="selectedAnchors" render={({ field }) => (
                     <FormItem><FormLabel>Anchors</FormLabel><MultiSelect options={anchorOptions} {...field} placeholder="Select anchors..." /><FormMessage /></FormItem>
                   )}/>
-                  <FormField control={form.control} name="selectedStates" render={({ field }) => (
-                    <FormItem><FormLabel>States</FormLabel><MultiSelect options={stateOptions} {...field} placeholder="Select states..." /><FormMessage /></FormItem>
+                  <FormField control={form.control} name="statusToTrack" render={({ field }) => (
+                    <FormItem><FormLabel>Status to Track for Achievements</FormLabel>
+                      <MultiSelect options={statusOptions} {...field} placeholder="Select statuses..." />
+                      <FormMessage />
+                    </FormItem>
                   )}/>
                 </div>
-                <FormField control={form.control} name="statusToTrack" render={({ field }) => (
-                  <FormItem><FormLabel>Status to Track for Achievements</FormLabel>
-                    <MultiSelect options={statusOptions} {...field} placeholder="Select statuses..." />
-                    <FormMessage />
-                  </FormItem>
-                )}/>
                 
                 {selectedAnchors && selectedAnchors.length > 0 && (
                     <div>

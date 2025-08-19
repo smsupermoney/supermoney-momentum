@@ -133,7 +133,6 @@ export const DashboardConfigSchema = z.object({
   userId: z.string(),
   name: z.string().min(3, "Dashboard name is required."),
   selectedAnchors: z.array(z.string()).min(1, "At least one anchor must be selected."),
-  selectedStates: z.array(z.string()).min(1, "At least one state must be selected."),
   statusToTrack: z.array(z.string()).min(1, "At least one status must be selected."),
   targets: z.record( // Anchor ID
     z.record( // YYYY-MM
@@ -151,6 +150,8 @@ export const DashboardConfigSchema = z.object({
     // This custom refinement checks if for at least one selected anchor,
     // there is at least one month target object,
     // and that target object has a defined aumValue.
+    if (!data.targets) return true; // Pass if no targets are set yet
+    
     return data.selectedAnchors.some(anchorId => {
         const anchorTargets = data.targets?.[anchorId];
         if (!anchorTargets) return false;
