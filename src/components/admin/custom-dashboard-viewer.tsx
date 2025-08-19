@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useApp } from '@/contexts/app-context';
+import { useApp, getAllSubordinates } from '@/contexts/app-context';
 import type { CustomDashboardConfig, Dealer, Vendor, SpokeStatus } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,36 +36,36 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
     const dashboardData = useMemo(() => {
         if (!config || !Array.isArray(config.selectedAnchors)) return [];
 
-        const teamUserIds = [config.userId, ...users.filter(u => u.managerId === config.userId).map(u => u.uid)];
+        const managerSubordinates = getAllSubordinates(config.userId, users);
+        const teamUserIds = [config.userId, ...managerSubordinates.map(u => u.uid)];
         
         let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
         const hasSelectedStates = Array.isArray(config.selectedStates) && config.selectedStates.length > 0;
+        let filteredLeadsByState = teamLeads;
 
         if (hasSelectedStates) {
-            teamLeads = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
+            filteredLeadsByState = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
         }
-
+        
         const relevantStates = hasSelectedStates 
             ? (config.selectedStates || []).join(', ')
-            : Array.from(new Set(teamLeads.map(l => l.state).filter(Boolean))).join(', ') || 'All States';
+            : 'All States';
 
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
             if (!anchor) return null;
 
-            const leadsForAnchor = teamLeads.filter(l => l.anchorId === anchorId);
-            
-            // Filter leads by selected month based on creation date
-            const monthLeads = leadsForAnchor.filter(l => {
-                const leadDate = new Date(l.createdAt);
-                return getYear(leadDate) === parseInt(selectedMonth.split('-')[0]) &&
-                       getMonth(leadDate) === parseInt(selectedMonth.split('-')[1]) - 1;
+            const leadsForAnchorInPeriod = filteredLeadsByState.filter(l => {
+                 if (l.anchorId !== anchorId) return false;
+                 const leadDate = new Date(l.createdAt);
+                 return getYear(leadDate) === parseInt(selectedMonth.split('-')[0]) &&
+                        getMonth(leadDate) === parseInt(selectedMonth.split('-')[1]) - 1;
             });
 
-            // Calculate achievements
-            const achievedStatusCount = monthLeads.filter(l => (config.statusToTrack || []).includes(l.status)).length;
-            const achievedDealValue = monthLeads
+            // Calculate achievements from the filtered leads
+            const achievedStatusCount = leadsForAnchorInPeriod.filter(l => (config.statusToTrack || []).includes(l.status)).length;
+            const achievedDealValue = leadsForAnchorInPeriod
                 .filter(l => (config.statusToTrack || []).includes(l.status))
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
@@ -83,7 +83,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             return {
                 anchorId,
                 anchorName: anchor.name,
-                lenderName: lenders.find(l => leadsForAnchor[0]?.lenderId === l.id)?.name || 'N/A',
+                lenderName: lenders.find(l => leadsForAnchorInPeriod[0]?.lenderId === l.id)?.name || 'N/A',
                 state: relevantStates,
                 targetLogins,
                 achievedLogins: achievedStatusCount,
