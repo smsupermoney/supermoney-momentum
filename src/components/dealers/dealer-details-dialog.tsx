@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Loader2, Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { Separator } from '../ui/separator';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,6 +48,7 @@ import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { safeFormatDate } from '@/lib/utils';
+import { Separator } from '../ui/separator';
 
 type FormValues = z.infer<typeof UpdateSpokeSchema>;
 
@@ -491,7 +491,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                 </div>
 
                 <FormField control={form.control} name="gstin" render={({ field }) => (
-                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage />
+                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
 
                 <div className="space-y-2">
