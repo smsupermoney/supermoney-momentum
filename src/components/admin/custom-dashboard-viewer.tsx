@@ -126,8 +126,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         <TableRow>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Month</TableHead>
-                            <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack.join(', ')})</TableHead>
-                            <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack.join(', ')})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Logins </TableHead>
+                            <TableHead colSpan={2} className="text-center">Value </TableHead>
                             <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
                             <TableHead colSpan={2} className="text-center">AUM (Cr)</TableHead>
                         </TableRow>
