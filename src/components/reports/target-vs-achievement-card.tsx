@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -15,7 +14,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { CustomDashboardViewer } from '../admin/custom-dashboard-viewer';
 
 export function TargetVsAchievementCard() {
-    const { currentUser, customDashboards } = useApp();
+    const { currentUser, customDashboards, users } = useApp();
     const { t } = useLanguage();
     
     const displayConfig = useMemo(() => {
