@@ -16,7 +16,7 @@ interface CustomDashboardViewerProps {
 }
 
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
-    const { users, anchors, lenders, dealers, vendors } = useApp();
+    const { users, anchors, dealers, vendors } = useApp();
     const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(2025, 7, 1), 'yyyy-MM'));
 
     const monthOptions = useMemo(() => {
@@ -73,7 +73,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             return {
                 anchorId,
                 anchorName: anchor.name,
-                lenderName: lenders.find(l => leadsForThisAnchorInPeriod[0]?.lenderId === l.id)?.name || 'N/A',
                 targetLogins,
                 achievedLogins: achievedStatusCount,
                 targetValue: targetDealValue,
@@ -84,7 +83,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 aumAchieved
             }
         }).filter(Boolean);
-    }, [config, selectedMonth, users, anchors, dealers, vendors, lenders]);
+    }, [config, selectedMonth, users, anchors, dealers, vendors]);
     
     if (!config) return null;
 
@@ -112,7 +111,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
-                            <TableHead rowSpan={2} className="align-bottom">Lender</TableHead>
                             <TableHead colSpan={2} className="text-center">Logins ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
                             <TableHead colSpan={2} className="text-center">Value ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
                             <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
@@ -133,7 +131,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         {dashboardData.map(row => row && (
                              <TableRow key={row.anchorId}>
                                 <TableCell className="font-medium">{row.anchorName}</TableCell>
-                                <TableCell>{row.lenderName}</TableCell>
                                 <TableCell className="text-center">{row.targetLogins}</TableCell>
                                 <TableCell className="text-center">{row.achievedLogins}</TableCell>
                                 <TableCell className="text-center">{row.targetValue}</TableCell>
@@ -146,7 +143,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         ))}
                          {dashboardData.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={9} className="h-24 text-center">
                                     No data available for the selected configuration and period.
                                 </TableCell>
                             </TableRow>
