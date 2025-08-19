@@ -69,7 +69,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 .filter(l => (config.statusToTrack || []).includes(l.status))
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
-            // Get targets and manual achievements
+            // Get targets and manual achievements for the selected month
             const targets = config.targets?.[anchorId]?.[selectedMonth] || {};
             
             const sanctionTarget = targets.sanctionValueTarget || 0;
