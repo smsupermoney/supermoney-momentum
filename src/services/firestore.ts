@@ -342,5 +342,6 @@ export const updateDashboardConfig = async (config: CustomDashboardConfig) => {
     if (!db) throw new Error("Firestore not initialized");
     const { id, ...configData } = config;
     const docRef = doc(db, 'dashboardConfigs', id);
-    await updateDoc(docRef, configData);
+    // Use set with merge to create the document if it doesn't exist, or update if it does.
+    await setDoc(docRef, configData, { merge: true });
 };
