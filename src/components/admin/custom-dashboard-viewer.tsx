@@ -34,7 +34,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
     }, []);
 
     const dashboardData = useMemo(() => {
-        if (!config) return [];
+        if (!config || !Array.isArray(config.selectedAnchors)) return [];
 
         const teamUserIds = [config.userId, ...users.filter(u => u.managerId === config.userId).map(u => u.uid)];
         
@@ -163,4 +163,5 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         </Card>
     )
 }
+
 
