@@ -41,7 +41,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 const monthDate = parse(monthStr, 'yyyy-MM', new Date());
 
                 const leadsForThisAnchorInMonth = teamLeads.filter(l => {
-                    const leadDate = new Date(l.createdAt);
+                    const leadDate = new Date(l.leadDate);
                     return l.anchorId === anchorId &&
                            getYear(leadDate) === getYear(monthDate) &&
                            getMonth(leadDate) === getMonth(monthDate);
