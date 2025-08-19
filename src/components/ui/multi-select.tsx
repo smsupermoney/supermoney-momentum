@@ -41,7 +41,7 @@ function MultiSelect({
   placeholder = "Select...",
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const selected = value || [];
+  const selected = Array.isArray(value) ? value : [];
 
   const handleUnselect = (item: string) => {
     onChange(selected.filter((i) => i !== item));
