@@ -40,7 +40,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         
         let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        if (!config.selectedStates.includes('all')) {
+        if (Array.isArray(config.selectedStates) && !config.selectedStates.includes('all')) {
             teamLeads = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
         }
 
@@ -58,9 +58,9 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             });
 
             // Calculate achievements
-            const achievedStatusCount = monthLeads.filter(l => config.statusToTrack.includes(l.status)).length;
+            const achievedStatusCount = monthLeads.filter(l => (config.statusToTrack || []).includes(l.status)).length;
             const achievedDealValue = monthLeads
-                .filter(l => config.statusToTrack.includes(l.status))
+                .filter(l => (config.statusToTrack || []).includes(l.status))
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
             // Get targets and manual achievements
@@ -78,7 +78,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 anchorId,
                 anchorName: anchor.name,
                 lenderName: lenders.find(l => leadsForAnchor[0]?.lenderId === l.id)?.name || 'N/A',
-                state: config.selectedStates.includes('all') ? 'All' : config.selectedStates.join(', '),
+                state: Array.isArray(config.selectedStates) && config.selectedStates.includes('all') ? 'All' : (config.selectedStates || []).join(', '),
                 targetLogins,
                 achievedLogins: achievedStatusCount,
                 targetValue: targetDealValue,
@@ -117,8 +117,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                             <TableHead rowSpan={2} className="align-bottom">State</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Lender</TableHead>
-                            <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack.join(', ')})</TableHead>
-                            <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack.join(', ')})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Logins ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Value ({Array.isArray(config.statusToTrack) ? config.statusToTrack.join(', ') : ''})</TableHead>
                             <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
                             <TableHead colSpan={2} className="text-center">AUM (Cr)</TableHead>
                         </TableRow>
@@ -163,3 +163,4 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         </Card>
     )
 }
+
