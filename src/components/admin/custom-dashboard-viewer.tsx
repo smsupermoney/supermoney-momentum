@@ -18,7 +18,6 @@ interface CustomDashboardViewerProps {
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
     const { users, anchors, lenders, dealers, vendors } = useApp();
     const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(2025, 7, 1), 'yyyy-MM'));
-    const [selectedState, setSelectedState] = useState<string>('all');
 
     const monthOptions = useMemo(() => {
         const options: { value: string; label: string }[] = [];
@@ -33,13 +32,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         }
         return options.reverse(); // Show most recent months first
     }, []);
-    
-    const stateOptions = useMemo(() => {
-        if (!config || !Array.isArray(config.selectedStates) || config.selectedStates.length === 0) {
-            return [];
-        }
-        return ['all', ...config.selectedStates];
-    }, [config]);
 
 
     const dashboardData = useMemo(() => {
@@ -50,22 +42,17 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         
         const teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        // Filter leads based on the *configured* states first.
-        const leadsInConfiguredStates = teamLeads.filter(lead => 
-            config.selectedStates.length === 0 || (lead.state && config.selectedStates.includes(lead.state))
-        );
-
-        // Then, filter by the selected state dropdown.
-        const leadsForSelectedState = selectedState === 'all' 
-            ? leadsInConfiguredStates
-            : leadsInConfiguredStates.filter(lead => lead.state === selectedState);
+        // Filter leads based on the *configured* states.
+        const leadsInConfiguredStates = (config.selectedStates && config.selectedStates.length > 0)
+            ? teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state))
+            : teamLeads;
             
         // Now, iterate through every anchor configured for the dashboard
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);
             if (!anchor) return null;
 
-            const leadsForThisAnchor = leadsForSelectedState.filter(l => l.anchorId === anchorId);
+            const leadsForThisAnchor = leadsInConfiguredStates.filter(l => l.anchorId === anchorId);
 
             const leadsForThisAnchorInPeriod = leadsForThisAnchor.filter(l => {
                  const leadDate = new Date(l.createdAt);
@@ -102,7 +89,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                 aumAchieved
             }
         }).filter(Boolean);
-    }, [config, selectedMonth, selectedState, users, anchors, dealers, vendors, lenders]);
+    }, [config, selectedMonth, users, anchors, dealers, vendors, lenders]);
     
     if (!config) return null;
 
@@ -115,12 +102,6 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         <CardDescription>Your custom Target vs. Achievement dashboard.</CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <Select value={selectedState} onValueChange={setSelectedState}>
-                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Select State" /></SelectTrigger>
-                            <SelectContent>
-                                {stateOptions.map(opt => <SelectItem key={opt} value={opt}>{opt === 'all' ? 'All Configured States' : opt}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
                          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                             <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Select Month" /></SelectTrigger>
                             <SelectContent>
