@@ -16,76 +16,48 @@ interface CustomDashboardViewerProps {
 }
 
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
-    const { users, anchors, dealers, vendors } = useApp();
+    const { users, anchors } = useApp();
 
     const dashboardData = useMemo(() => {
-        if (!config || !Array.isArray(config.selectedAnchors)) return [];
-
-        const managerSubordinates = getAllSubordinates(config.userId, users);
-        const teamUserIds = [config.userId, ...managerSubordinates.map(u => u.uid)];
-        
-        const teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
+        if (!config || !config.targets) return [];
 
         const allRows: any[] = [];
 
-        // Iterate through each anchor configured for the dashboard
-        config.selectedAnchors.forEach(anchorId => {
+        // Directly iterate over the configured targets
+        for (const anchorId in config.targets) {
             const anchor = anchors.find(a => a.id === anchorId);
-            if (!anchor) return;
-            
-            const anchorTargetsByMonth = config.targets?.[anchorId];
-            if (!anchorTargetsByMonth) return;
+            if (!anchor) continue;
 
-            // For each anchor, iterate through all the months that have targets defined
-            Object.keys(anchorTargetsByMonth).forEach(monthStr => { // monthStr is "YYYY-MM"
-                const monthDate = parse(monthStr, 'yyyy-MM', new Date());
+            const monthlyTargets = config.targets[anchorId];
+            if (!monthlyTargets) continue;
 
-                const leadsForThisAnchorInMonth = teamLeads.filter(l => {
-                    const leadDate = new Date(l.leadDate);
-                    return l.anchorId === anchorId &&
-                           getYear(leadDate) === getYear(monthDate) &&
-                           getMonth(leadDate) === getMonth(monthDate);
-                });
-
-                const achievedStatusCount = leadsForThisAnchorInMonth.filter(l => (config.statusToTrack || []).includes(l.status)).length;
-                const achievedDealValue = leadsForThisAnchorInMonth
-                    .filter(l => (config.statusToTrack || []).includes(l.status))
-                    .reduce((sum, l) => sum + (l.dealValue || 0), 0);
+            for (const monthStr in monthlyTargets) {
+                const targets = monthlyTargets[monthStr] || {};
                 
-                const targets = anchorTargetsByMonth[monthStr] || {};
-                
-                const sanctionTarget = targets.sanctionValueTarget || 0;
-                const sanctionAchieved = targets.sanctionValueAchieved || 0;
-                const aumTarget = targets.aumValueTarget || 0;
-                const aumAchieved = targets.aumValueAchieved || 0;
-
-                const targetLogins = targets.statusCount || 0;
-                const targetDealValue = targets.dealValue || 0;
-
                 allRows.push({
                     anchorId,
                     anchorName: anchor.name,
                     month: monthStr,
-                    targetLogins,
-                    achievedLogins: achievedStatusCount,
-                    targetValue: targetDealValue,
-                    achievedValue: achievedDealValue,
-                    sanctionTarget,
-                    sanctionAchieved,
-                    aumTarget,
-                    aumAchieved
+                    targetLogins: targets.statusCount || 0,
+                    // Per user request, do not calculate achievements. Show input data directly.
+                    achievedLogins: 0, // Not calculating this for now.
+                    achievedValue: 0, // Not calculating this for now.
+                    targetValue: targets.dealValue || 0,
+                    sanctionTarget: targets.sanctionValueTarget || 0,
+                    sanctionAchieved: targets.sanctionValueAchieved || 0, // Displaying the entered value.
+                    aumTarget: targets.aumValueTarget || 0,
+                    aumAchieved: targets.aumValueAchieved || 0, // Displaying the entered value.
                 });
-            });
-        });
+            }
+        }
         
-        // Sort by anchor name, then by month
         return allRows.sort((a,b) => {
             if (a.anchorName < b.anchorName) return -1;
             if (a.anchorName > b.anchorName) return 1;
             return a.month.localeCompare(b.month);
         });
 
-    }, [config, users, anchors, dealers, vendors]);
+    }, [config, anchors]);
     
     if (!config) return null;
 
