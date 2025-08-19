@@ -3,7 +3,7 @@
 
 import { useApp } from '@/contexts/app-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Accordion, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CustomDashboardViewer } from '@/components/admin/custom-dashboard-viewer';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
@@ -48,9 +48,9 @@ export function ManagerTargetsOverview() {
                                         <p className="text-sm text-muted-foreground">{manager?.name || 'Unknown Manager'}</p>
                                     </div>
                                 </AccordionTrigger>
-                                <div className="pb-4">
+                                <AccordionContent>
                                      <CustomDashboardViewer config={config} />
-                                </div>
+                                </AccordionContent>
                             </AccordionItem>
                         );
                     })}
@@ -59,4 +59,3 @@ export function ManagerTargetsOverview() {
         </Card>
     );
 }
-
