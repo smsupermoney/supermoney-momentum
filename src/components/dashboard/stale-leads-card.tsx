@@ -11,6 +11,12 @@ import type { Dealer, Vendor, UserRole } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 
 type StaleLead = (Dealer | Vendor) & { type: 'Dealer' | 'Vendor' };
 type InactiveUser = {
@@ -23,7 +29,11 @@ type AlertItem = StaleLead | InactiveUser;
 
 const ALERTS_PER_PAGE = 20;
 
-export function StaleLeadsCard() {
+interface StaleLeadsCardProps {
+  isAccordion?: boolean;
+}
+
+export function StaleLeadsCard({ isAccordion = false }: StaleLeadsCardProps) {
     const { dealers, vendors, users, currentUser, visibleUserIds, dailyActivities } = useApp();
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -116,94 +126,114 @@ export function StaleLeadsCard() {
             default: return '/dashboard';
         }
     }
+    
+    const CardHeaderContent = () => (
+        <CardHeader className={isAccordion ? 'p-0 text-left' : ''}>
+            <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                <CardTitle className="text-amber-700 dark:text-amber-400">Team Activity Alert</CardTitle>
+            </div>
+            <CardDescription className="text-amber-600 dark:text-amber-500">
+                Inactive users (last 24h) or stale leads that may require attention.
+            </CardDescription>
+        </CardHeader>
+    );
 
+    const CardBodyContent = () => (
+        <CardContent className={isAccordion ? 'pt-0' : ''}>
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800">
+                <Table>
+                    <TableBody>
+                        {paginatedAlerts.map(alert => {
+                            if (alert.type === 'Inactive User') {
+                                return (
+                                    <TableRow key={alert.id}>
+                                        <TableCell>
+                                            <div className="font-medium text-destructive">{alert.name}</div>
+                                            <div className="text-xs text-muted-foreground">Area Sales Manager</div>
+                                        </TableCell>
+                                        <TableCell colSpan={2} className="text-right">
+                                            <div className="flex items-center justify-end gap-2 text-sm text-destructive">
+                                                <Activity className="h-3 w-3" />
+                                                <span>No activity logged in last 24h</span>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            } else {
+                                const lead = alert as StaleLead;
+                                return (
+                                    <TableRow key={`${lead.type}-${lead.id}`}>
+                                        <TableCell>
+                                            <Link href={getLeadLink(lead)} className="font-medium text-primary hover:underline">{lead.name}</Link>
+                                            <div className="text-xs text-muted-foreground">{lead.type} &bull; Status: {lead.status}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <User className="h-3 w-3" />
+                                                <span>{getUserName(lead.assignedTo)}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-2 text-sm">
+                                                <Clock className="h-3 w-3" />
+                                                <span>{formatDistanceToNow(new Date(lead.updatedAt || lead.createdAt), { addSuffix: true })}</span>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            }
+                        })}
+                    </TableBody>
+                </Table>
+            </div>
+             {totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 pt-4">
+                    <span className="text-sm text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous Page</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next Page</span>
+                    </Button>
+                </div>
+            )}
+        </CardContent>
+    );
+
+    if (isAccordion) {
+        return (
+            <Card className="border-amber-500 bg-amber-50/50 dark:bg-amber-900/10">
+                <AccordionTrigger className="p-6 hover:no-underline [&>svg]:mx-6">
+                    <CardHeaderContent />
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CardBodyContent />
+                </AccordionContent>
+            </Card>
+        )
+    }
 
     return (
         <Card className="border-amber-500 bg-amber-50/50 dark:bg-amber-900/10">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-                    <CardTitle className="text-amber-700 dark:text-amber-400">Team Activity Alert</CardTitle>
-                </div>
-                <CardDescription className="text-amber-600 dark:text-amber-500">
-                    Inactive users (last 24h) or stale leads that may require attention.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="rounded-lg border border-amber-200 dark:border-amber-800">
-                    <Table>
-                        <TableBody>
-                            {paginatedAlerts.map(alert => {
-                                if (alert.type === 'Inactive User') {
-                                    return (
-                                        <TableRow key={alert.id}>
-                                            <TableCell>
-                                                <div className="font-medium text-destructive">{alert.name}</div>
-                                                <div className="text-xs text-muted-foreground">Area Sales Manager</div>
-                                            </TableCell>
-                                            <TableCell colSpan={2} className="text-right">
-                                                <div className="flex items-center justify-end gap-2 text-sm text-destructive">
-                                                    <Activity className="h-3 w-3" />
-                                                    <span>No activity logged in last 24h</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                } else {
-                                    const lead = alert as StaleLead;
-                                    return (
-                                        <TableRow key={`${lead.type}-${lead.id}`}>
-                                            <TableCell>
-                                                <Link href={getLeadLink(lead)} className="font-medium text-primary hover:underline">{lead.name}</Link>
-                                                <div className="text-xs text-muted-foreground">{lead.type} &bull; Status: {lead.status}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <User className="h-3 w-3" />
-                                                    <span>{getUserName(lead.assignedTo)}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-2 text-sm">
-                                                    <Clock className="h-3 w-3" />
-                                                    <span>{formatDistanceToNow(new Date(lead.updatedAt || lead.createdAt), { addSuffix: true })}</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                }
-                            })}
-                        </TableBody>
-                    </Table>
-                </div>
-                 {totalPages > 1 && (
-                    <div className="flex items-center justify-end space-x-2 pt-4">
-                        <span className="text-sm text-muted-foreground">
-                            Page {currentPage} of {totalPages}
-                        </span>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            <span className="sr-only">Previous Page</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                            <span className="sr-only">Next Page</span>
-                        </Button>
-                    </div>
-                )}
-            </CardContent>
+            <CardHeaderContent />
+            <CardBodyContent />
         </Card>
     );
 }

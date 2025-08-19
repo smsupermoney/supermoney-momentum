@@ -27,6 +27,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 
 export default function DashboardPage() {
@@ -165,33 +166,28 @@ function SalesDashboard() {
 
 // Manager Dashboard (for ZSM, RSM, NSM, ETB Manager)
 function ManagerDashboard() {
-    const { currentUser, customDashboards } = useApp();
-    
-    // Find the config for the current manager
-    const managerConfig = useMemo(() => {
-        if (!currentUser) return null;
-        return customDashboards.find(d => d.userId === currentUser.uid);
-    }, [currentUser, customDashboards]);
-
-    // Find the config for the manager's manager, to show team members the same view
-    const teamConfig = useMemo(() => {
-        if (!currentUser?.managerId) return null;
-        return customDashboards.find(d => d.userId === currentUser.managerId);
-    }, [currentUser, customDashboards]);
-
-    const displayConfig = managerConfig || teamConfig;
-    
     return (
         <>
-            {displayConfig && <CustomDashboardViewer config={displayConfig} />}
-            <SalesPipelineCard />
             <TargetVsAchievementCard />
+            <SalesPipelineCard />
             <Accordion type="multiple" className="w-full space-y-4">
-                 <AccordionItem value="team-progress" className="border-none">
-                    <TeamProgressCard />
+                <AccordionItem value="team-progress" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline [&>svg]:mx-6">
+                            <CardHeader className="p-0 text-left">
+                                <TeamProgressCard.Title />
+                                <TeamProgressCard.Description />
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="pt-0">
+                                <TeamProgressCard.Content />
+                           </CardContent>
+                        </AccordionContent>
+                    </Card>
                 </AccordionItem>
-                 <AccordionItem value="stale-leads" className="border-none">
-                    <StaleLeadsCard />
+                <AccordionItem value="stale-leads" className="border-none">
+                    <StaleLeadsCard isAccordion />
                 </AccordionItem>
             </Accordion>
             <PipelineCard />
@@ -212,11 +208,23 @@ function AdminDashboard() {
             <SalesPipelineCard />
             <ManagerTargetsOverview />
             <Accordion type="multiple" className="w-full space-y-4">
-                 <AccordionItem value="team-progress" className="border-none">
-                    <TeamProgressCard />
+                <AccordionItem value="team-progress" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline [&>svg]:mx-6">
+                             <CardHeader className="p-0 text-left">
+                                <TeamProgressCard.Title />
+                                <TeamProgressCard.Description />
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="pt-0">
+                                <TeamProgressCard.Content />
+                           </CardContent>
+                        </AccordionContent>
+                    </Card>
                 </AccordionItem>
-                 <AccordionItem value="stale-leads" className="border-none">
-                    <StaleLeadsCard />
+                <AccordionItem value="stale-leads" className="border-none">
+                    <StaleLeadsCard isAccordion />
                 </AccordionItem>
             </Accordion>
             <PipelineCard />
