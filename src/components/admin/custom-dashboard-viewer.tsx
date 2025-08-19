@@ -16,7 +16,21 @@ interface CustomDashboardViewerProps {
 }
 
 export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
-    const { users, anchors } = useApp();
+    const { anchors } = useApp();
+    const [monthFilter, setMonthFilter] = useState('all');
+
+    const uniqueMonths = useMemo(() => {
+        if (!config || !config.targets) return [];
+        const months = new Set<string>();
+        for (const anchorId in config.targets) {
+            const monthlyTargets = config.targets[anchorId];
+            if (monthlyTargets) {
+                Object.keys(monthlyTargets).forEach(monthStr => months.add(monthStr));
+            }
+        }
+        return Array.from(months).sort();
+    }, [config]);
+
 
     const dashboardData = useMemo(() => {
         if (!config || !config.targets) return [];
@@ -32,6 +46,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             if (!monthlyTargets) continue;
 
             for (const monthStr in monthlyTargets) {
+                if (monthFilter !== 'all' && monthStr !== monthFilter) continue;
+
                 const targets = monthlyTargets[monthStr] || {};
                 
                 allRows.push({
@@ -57,7 +73,7 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             return a.month.localeCompare(b.month);
         });
 
-    }, [config, anchors]);
+    }, [config, anchors, monthFilter]);
     
     if (!config) return null;
 
@@ -69,6 +85,19 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                         <CardTitle>{config.name}</CardTitle>
                         <CardDescription>Your custom Target vs. Achievement dashboard.</CardDescription>
                     </div>
+                     <Select value={monthFilter} onValueChange={setMonthFilter}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Filter by Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Months</SelectItem>
+                            {uniqueMonths.map(month => (
+                                <SelectItem key={month} value={month}>
+                                    {format(parse(month, 'yyyy-MM', new Date()), 'MMM yyyy')}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </CardHeader>
             <CardContent>
