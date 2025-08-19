@@ -234,7 +234,7 @@ export interface CustomDashboardConfig {
   name: string; // e.g., "Kamlesh Gupta's Dashboard"
   selectedAnchors: string[]; // array of anchor IDs
   selectedStates: string[]; // array of state names
-  statusToTrack: SpokeStatus;
+  statusToTrack: SpokeStatus[];
   targets: Record<string, { // key is anchorId
     [month: string]: { // key is 'YYYY-MM'
       statusCount?: number;

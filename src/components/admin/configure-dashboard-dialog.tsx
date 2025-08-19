@@ -20,7 +20,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2 } from 'lucide-react';
 import type { User, CustomDashboardConfig, Anchor, SpokeStatus } from '@/lib/types';
@@ -53,7 +53,7 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
       name: `${manager.name}'s Dashboard`,
       selectedAnchors: [],
       selectedStates: [],
-      statusToTrack: 'Login done',
+      statusToTrack: ['Login done'],
       targets: {},
     },
   });
@@ -65,6 +65,8 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
       ...IndianStatesAndCities.flatMap(region => region.states.map(state => ({ value: state.name, label: state.name }))).sort((a,b) => a.label.localeCompare(b.label)),
     ];
   }, []);
+
+  const statusOptions: MultiSelectOption[] = spokeStatuses.map(s => ({ value: s, label: s}));
   
   const selectedAnchors = form.watch('selectedAnchors');
 
@@ -110,20 +112,16 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
                 )}/>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="selectedAnchors" render={({ field }) => (
-                    <FormItem><FormLabel>Anchors</FormLabel><MultiSelect value={field.value} onChange={field.onChange} options={anchorOptions} placeholder="Select anchors..." /><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Anchors</FormLabel><MultiSelect options={anchorOptions} {...field} placeholder="Select anchors..." /><FormMessage /></FormItem>
                   )}/>
                   <FormField control={form.control} name="selectedStates" render={({ field }) => (
-                    <FormItem><FormLabel>States</FormLabel><MultiSelect value={field.value} onChange={field.onChange} options={stateOptions} placeholder="Select states..." /><FormMessage /></FormItem>
+                    <FormItem><FormLabel>States</FormLabel><MultiSelect options={stateOptions} {...field} placeholder="Select states..." /><FormMessage /></FormItem>
                   )}/>
                 </div>
                 <FormField control={form.control} name="statusToTrack" render={({ field }) => (
                   <FormItem><FormLabel>Status to Track for Achievements</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Select a status" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {spokeStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select><FormMessage />
+                    <MultiSelect options={statusOptions} {...field} placeholder="Select statuses..." />
+                    <FormMessage />
                   </FormItem>
                 )}/>
                 

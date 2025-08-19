@@ -58,9 +58,9 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
             });
 
             // Calculate achievements
-            const achievedStatusCount = monthLeads.filter(l => l.status === config.statusToTrack).length;
+            const achievedStatusCount = monthLeads.filter(l => config.statusToTrack.includes(l.status)).length;
             const achievedDealValue = monthLeads
-                .filter(l => l.status === config.statusToTrack)
+                .filter(l => config.statusToTrack.includes(l.status))
                 .reduce((sum, l) => sum + (l.dealValue || 0), 0);
 
             // Get targets and manual achievements
@@ -117,8 +117,8 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                             <TableHead rowSpan={2} className="align-bottom">State</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Anchor</TableHead>
                             <TableHead rowSpan={2} className="align-bottom">Lender</TableHead>
-                            <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack})</TableHead>
-                            <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Logins ({config.statusToTrack.join(', ')})</TableHead>
+                            <TableHead colSpan={2} className="text-center">Value ({config.statusToTrack.join(', ')})</TableHead>
                             <TableHead colSpan={2} className="text-center">Sanction Value (Cr)</TableHead>
                             <TableHead colSpan={2} className="text-center">AUM (Cr)</TableHead>
                         </TableRow>
@@ -149,6 +149,13 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
                                 <TableCell className="text-center">{row.aumAchieved}</TableCell>
                             </TableRow>
                         ))}
+                         {dashboardData.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={11} className="h-24 text-center">
+                                    No data available for the selected anchors and period.
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
                 </div>

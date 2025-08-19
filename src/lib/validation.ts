@@ -134,7 +134,7 @@ export const DashboardConfigSchema = z.object({
   name: z.string().min(3, "Dashboard name is required."),
   selectedAnchors: z.array(z.string()).min(1, "At least one anchor must be selected."),
   selectedStates: z.array(z.string()).min(1, "At least one state must be selected."),
-  statusToTrack: z.string().min(1, "A status to track must be selected."),
+  statusToTrack: z.array(z.string()).min(1, "At least one status must be selected."),
   targets: z.record( // Anchor ID
     z.record( // YYYY-MM
       z.object({
