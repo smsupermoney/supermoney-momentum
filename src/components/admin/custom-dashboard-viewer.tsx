@@ -40,15 +40,15 @@ export function CustomDashboardViewer({ config }: CustomDashboardViewerProps) {
         
         let teamLeads = [...dealers, ...vendors].filter(lead => lead.assignedTo && teamUserIds.includes(lead.assignedTo));
 
-        const isAllStatesSelected = Array.isArray(config.selectedStates) && config.selectedStates.includes('all');
+        const hasSelectedStates = Array.isArray(config.selectedStates) && config.selectedStates.length > 0;
 
-        if (!isAllStatesSelected && Array.isArray(config.selectedStates)) {
+        if (hasSelectedStates) {
             teamLeads = teamLeads.filter(lead => lead.state && config.selectedStates.includes(lead.state));
         }
 
-        const relevantStates = isAllStatesSelected 
-            ? Array.from(new Set(teamLeads.map(l => l.state).filter(Boolean))).join(', ') || 'All States'
-            : (config.selectedStates || []).join(', ');
+        const relevantStates = hasSelectedStates 
+            ? (config.selectedStates || []).join(', ')
+            : Array.from(new Set(teamLeads.map(l => l.state).filter(Boolean))).join(', ') || 'All States';
 
         return config.selectedAnchors.map(anchorId => {
             const anchor = anchors.find(a => a.id === anchorId);

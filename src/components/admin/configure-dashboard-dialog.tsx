@@ -61,7 +61,6 @@ export function ConfigureDashboardDialog({ open, onOpenChange, manager, existing
   const anchorOptions = React.useMemo(() => anchors.map(a => ({ value: a.id, label: a.name })), [anchors]);
   const stateOptions = React.useMemo(() => {
     return [
-      { value: 'all', label: 'All States' },
       ...IndianStatesAndCities.flatMap(region => region.states.map(state => ({ value: state.name, label: state.name }))).sort((a,b) => a.label.localeCompare(b.label)),
     ];
   }, []);
