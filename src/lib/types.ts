@@ -247,10 +247,9 @@ export interface CustomDashboardConfig {
 }
 
 export interface Target {
-  id: string;
-  userId: string;
-  anchorId: string;
-  month: string; // YYYY-MM format
-  statusCount?: number;
-  dealValue?: number;
+  id: string; // Will correspond to a team ID, e.g., 'team-south'
+  logins: number;
+  sanctionLimit: number;
+  aum: number;
+  revenue: number;
 }

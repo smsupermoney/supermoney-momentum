@@ -6,7 +6,7 @@ import { useApp } from '@/contexts/app-context';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { isWithinInterval, startOfMonth, parse } from 'date-fns';
+import { isWithinInterval, parse } from 'date-fns';
 import type { Target } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
