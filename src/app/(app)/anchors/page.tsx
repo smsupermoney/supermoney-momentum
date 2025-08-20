@@ -86,7 +86,9 @@ export default function AnchorsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {allActiveAnchors.map(anchor => {
-          const primaryContact = anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0];
+          const primaryContact = Array.isArray(anchor.contacts) && anchor.contacts.length > 0 
+            ? anchor.contacts.find(c => c.isPrimary) || anchor.contacts[0] 
+            : null;
           const leadCount = getLeadCountForAnchor(anchor.id);
           return (
             <Link key={anchor.id} href={`/anchors/${anchor.id}`} className="block">
