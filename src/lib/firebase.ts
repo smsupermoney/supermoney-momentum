@@ -12,14 +12,15 @@ export const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Enable Firebase to use live authentication and database
-export const firebaseEnabled = true;
+// Firebase is enabled only if a project ID is provided in the environment variables.
+// Otherwise, the app will fall back to using mock data.
+export const firebaseEnabled = !!firebaseConfig.projectId;
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 
-if (firebaseEnabled && firebaseConfig.apiKey) {
+if (firebaseEnabled) {
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
@@ -27,8 +28,8 @@ if (firebaseEnabled && firebaseConfig.apiKey) {
   } catch (e) {
     console.error("Failed to initialize Firebase. Please check your .env file.", e);
   }
-} else if (firebaseEnabled && !firebaseConfig.apiKey) {
-    console.error("Firebase is enabled, but the API key is missing. Please check your .env file.");
+} else {
+    console.log("Firebase not configured. Using mock data.");
 }
 
 export { db, auth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut };
