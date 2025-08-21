@@ -204,6 +204,9 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     const updatedDealerData: Partial<Dealer> & { id: string } = {
       id: dealer.id,
       ...cleanedValues,
+      leadDate: values.leadDate ? new Date(values.leadDate).toISOString() : new Date().toISOString(),
+      initialLeadDate: values.initialLeadDate ? new Date(values.initialLeadDate).toISOString() : null,
+      updatedAt: new Date().toISOString(),
     };
 
     updateDealer(updatedDealerData);

@@ -204,6 +204,9 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
     const updatedVendorData: Partial<Vendor> & {id: string} = {
       id: vendor.id,
       ...cleanedValues,
+      leadDate: values.leadDate ? new Date(values.leadDate).toISOString() : new Date().toISOString(),
+      initialLeadDate: values.initialLeadDate ? new Date(values.initialLeadDate).toISOString() : null,
+      updatedAt: new Date().toISOString(),
     };
     
     updateVendor(updatedVendorData);
