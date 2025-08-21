@@ -42,13 +42,12 @@ const ContactNumberSchema = z.object({
   value: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).or(z.literal(''))
 });
 
-export const NewSpokeSchema = z.object({
+// Base schema for a spoke (dealer/vendor) without transformations
+const BaseSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   contactNumbers: z.array(ContactNumberSchema).optional(),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
-  
-  // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
   gstin: z.string().optional(),
@@ -68,9 +67,17 @@ export const NewSpokeSchema = z.object({
   internalReferralId: z.string().optional().nullable(),
 });
 
+// Schema for creating new spokes, with transformation
+export const NewSpokeSchema = BaseSpokeSchema.transform((data) => {
+    // If contactNumbers exists and the first entry is an empty string, treat it as empty.
+    if (data.contactNumbers && data.contactNumbers.length > 0 && data.contactNumbers[0].value === '') {
+        return { ...data, contactNumbers: [] };
+    }
+    return data;
+});
 
-export const UpdateSpokeSchema = NewSpokeSchema.partial().extend({
-    contactNumbers: z.array(ContactNumberSchema).optional(),
+// Schema for updating spokes, derived from the base schema
+export const UpdateSpokeSchema = BaseSpokeSchema.partial().extend({
     leadDate: z.union([z.date(), z.string()]).optional(),
     initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
 });
