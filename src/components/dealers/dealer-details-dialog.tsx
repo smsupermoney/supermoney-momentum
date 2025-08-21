@@ -67,27 +67,32 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateSpokeSchema),
-    defaultValues: {
-      name: '',
-      contactNumbers: [{value: ''}],
-      email: '',
-      gstin: '',
-      city: '',
-      state: '',
-      zone: '',
-      product: '',
-      leadSource: '',
-      lenderId: '',
-      remarks: [],
-      leadType: 'Fresh',
-      dealValue: undefined,
-      leadDate: new Date(),
-      spoc: '',
-      initialLeadDate: undefined,
-      anchorId: '',
-      priority: 'Normal',
-    },
   });
+
+  useEffect(() => {
+    if (open && dealer) {
+        form.reset({
+          name: dealer.name || '',
+          contactNumbers: (dealer.contactNumbers && dealer.contactNumbers.length > 0) ? dealer.contactNumbers : [{value: ''}],
+          email: dealer.email || '',
+          gstin: dealer.gstin || '',
+          city: dealer.city || '',
+          state: dealer.state || '',
+          zone: dealer.zone || '',
+          product: dealer.product || '',
+          leadSource: dealer.leadSource || '',
+          lenderId: dealer.lenderId || '',
+          remarks: dealer.remarks || {},
+          leadType: dealer.leadType || 'Fresh',
+          dealValue: dealer.dealValue === null || dealer.dealValue === undefined ? undefined : dealer.dealValue,
+          leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
+          spoc: dealer.spoc || '',
+          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
+          anchorId: dealer.anchorId || '',
+          priority: dealer.priority || 'Normal',
+        });
+    }
+  }, [dealer, open]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -97,6 +102,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const watchLeadType = form.watch("leadType");
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
+  const remarks = form.watch("remarks");
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -117,41 +123,14 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           return spokeStatuses;
       }
       const limitedStatuses: SpokeStatus[] = ['Follow Up', 'Not Interested'];
-      // Ensure the current status is always visible, even if it's not in the limited list
       if (!limitedStatuses.includes(dealer.status)) {
           return [dealer.status, ...limitedStatuses];
       }
       return limitedStatuses;
   }, [isAdminOrBIU, dealer.status]);
 
-  useEffect(() => {
-    if (open && dealer) {
-        form.reset({
-          name: dealer.name || '',
-          contactNumbers: (dealer.contactNumbers && dealer.contactNumbers.length > 0) ? dealer.contactNumbers : [{value: ''}],
-          email: dealer.email || '',
-          gstin: dealer.gstin || '',
-          city: dealer.city || '',
-          state: dealer.state || '',
-          zone: dealer.zone || '',
-          product: dealer.product || '',
-          leadSource: dealer.leadSource || '',
-          lenderId: dealer.lenderId || '',
-          remarks: dealer.remarks || [],
-          leadType: dealer.leadType || 'Fresh',
-          dealValue: dealer.dealValue === null || dealer.dealValue === undefined ? undefined : dealer.dealValue,
-          leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
-          spoc: dealer.spoc || '',
-          initialLeadDate: dealer.initialLeadDate ? new Date(dealer.initialLeadDate) : undefined,
-          anchorId: dealer.anchorId || '',
-          priority: dealer.priority || 'Normal',
-        });
-    }
-  }, [dealer, form, open]);
-
   const handleStatusChange = (newStatus: SpokeStatus) => {
     let finalStatus = newStatus;
-    // If a non-approver tries to set to "Partial Docs", set to "Awaiting Docs Approval" instead
     if (newStatus === 'Partial Docs' && !canEditAsApprover) {
         finalStatus = 'Awaiting Docs Approval';
         toast({
@@ -182,17 +161,17 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
-    const remark: Remark = {
+    const currentRemarks = form.getValues('remarks') || {};
+    const newKey = (Object.keys(currentRemarks).length + 1).toString();
+
+    form.setValue(`remarks.${newKey}`, {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
-    };
-    const currentRemarksValue = form.getValues('remarks');
-    const currentRemarks = Array.isArray(currentRemarksValue) ? currentRemarksValue : [];
-    form.setValue('remarks', [...currentRemarks, remark]);
+    }, { shouldDirty: true });
     setNewRemark('');
   };
-  
+
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
@@ -503,7 +482,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {Array.isArray(form.getValues('remarks')) && form.getValues('remarks').map((remark, index) => (
+                                  {Object.values(remarks || {}).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>

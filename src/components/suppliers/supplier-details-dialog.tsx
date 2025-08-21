@@ -67,27 +67,32 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateSpokeSchema),
-    defaultValues: {
-      name: '',
-      contactNumbers: [{value: ''}],
-      email: '',
-      gstin: '',
-      city: '',
-      state: '',
-      zone: '',
-      product: '',
-      leadSource: '',
-      lenderId: '',
-      remarks: [],
-      leadType: 'Fresh',
-      dealValue: undefined,
-      leadDate: new Date(),
-      spoc: '',
-      initialLeadDate: undefined,
-      anchorId: '',
-      priority: 'Normal',
-    },
   });
+
+  useEffect(() => {
+    if (open && vendor) {
+        form.reset({
+            name: vendor.name || '',
+            contactNumbers: (vendor.contactNumbers && vendor.contactNumbers.length > 0) ? vendor.contactNumbers : [{value: ''}],
+            email: vendor.email || '',
+            gstin: vendor.gstin || '',
+            city: vendor.city || '',
+            state: vendor.state || '',
+            zone: vendor.zone || '',
+            product: vendor.product || '',
+            leadSource: vendor.leadSource || '',
+            lenderId: vendor.lenderId || '',
+            remarks: vendor.remarks || {},
+            leadType: vendor.leadType || 'Fresh',
+            dealValue: vendor.dealValue === null || vendor.dealValue === undefined ? undefined : vendor.dealValue,
+            leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
+            spoc: vendor.spoc || '',
+            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
+            anchorId: vendor.anchorId || '',
+            priority: vendor.priority || 'Normal',
+        });
+    }
+  }, [vendor, open]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -97,6 +102,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const watchLeadType = form.watch("leadType");
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
+  const remarks = form.watch("remarks");
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -117,41 +123,14 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
           return spokeStatuses;
       }
       const limitedStatuses: SpokeStatus[] = ['Follow Up', 'Not Interested'];
-      // Ensure the current status is always visible, even if it's not in the limited list
       if (!limitedStatuses.includes(vendor.status)) {
           return [vendor.status, ...limitedStatuses];
       }
       return limitedStatuses;
   }, [isAdminOrBIU, vendor.status]);
 
-  useEffect(() => {
-    if (open && vendor) {
-        form.reset({
-            name: vendor.name || '',
-            contactNumbers: (vendor.contactNumbers && vendor.contactNumbers.length > 0) ? vendor.contactNumbers : [{value: ''}],
-            email: vendor.email || '',
-            gstin: vendor.gstin || '',
-            city: vendor.city || '',
-            state: vendor.state || '',
-            zone: vendor.zone || '',
-            product: vendor.product || '',
-            leadSource: vendor.leadSource || '',
-            lenderId: vendor.lenderId || '',
-            remarks: vendor.remarks || [],
-            leadType: vendor.leadType || 'Fresh',
-            dealValue: vendor.dealValue === null || vendor.dealValue === undefined ? undefined : vendor.dealValue,
-            leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
-            spoc: vendor.spoc || '',
-            initialLeadDate: vendor.initialLeadDate ? new Date(vendor.initialLeadDate) : undefined,
-            anchorId: vendor.anchorId || '',
-            priority: vendor.priority || 'Normal',
-        });
-    }
-  }, [vendor, form, open]);
-
   const handleStatusChange = (newStatus: SpokeStatus) => {
     let finalStatus = newStatus;
-    // If a non-approver tries to set to "Partial Docs", set to "Awaiting Docs Approval" instead
     if (newStatus === 'Partial Docs' && !canEditAsApprover) {
         finalStatus = 'Awaiting Docs Approval';
         toast({
@@ -182,14 +161,14 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
    const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
-    const remark: Remark = {
+    const currentRemarks = form.getValues('remarks') || {};
+    const newKey = (Object.keys(currentRemarks).length + 1).toString();
+    
+    form.setValue(`remarks.${newKey}`, {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
-    };
-    const currentRemarksValue = form.getValues('remarks');
-    const currentRemarks = Array.isArray(currentRemarksValue) ? currentRemarksValue : [];
-    form.setValue('remarks', [...currentRemarks, remark]);
+    }, { shouldDirty: true });
     setNewRemark('');
   };
   
@@ -503,7 +482,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {Array.isArray(form.getValues('remarks')) && form.getValues('remarks').map((remark, index) => (
+                                  {Object.values(remarks || {}).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>

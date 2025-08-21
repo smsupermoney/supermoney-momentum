@@ -58,7 +58,7 @@ export const NewSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.array(RemarkSchema).optional(),
+  remarks: z.record(RemarkSchema).optional(),
   leadDate: z.string().optional(),
   spoc: z.string().optional(),
   initialLeadDate: z.string().nullable().optional(),
