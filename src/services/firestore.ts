@@ -17,7 +17,7 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender, AnchorSPOC, CustomDashboardConfig } from '@/lib/types';
+import type { User, Anchor, Dealer, Vendor, Task, ActivityLog, DailyActivity, Lender, AnchorSPOC, CustomDashboardConfig, Target } from '@/lib/types';
 
 // Generic function to convert a snapshot to an array of objects
 const snapshotToData = <T extends {}>(snapshot: QuerySnapshot<DocumentData>): T[] => {
@@ -344,4 +344,22 @@ export const updateDashboardConfig = async (config: CustomDashboardConfig) => {
     const docRef = doc(db, 'dashboardConfigs', id);
     // Use set with merge to create the document if it doesn't exist, or update if it does.
     await setDoc(docRef, configData, { merge: true });
+};
+
+// --- Targets Service ---
+export const getTargets = async (): Promise<Target[]> => {
+  if (!db) return [];
+  const targetsCollection = collection(db, 'targets');
+  const snapshot = await getDocs(targetsCollection);
+  return snapshotToData<Omit<Target, 'id'>>(snapshot);
+};
+
+export const saveTargets = async (targets: Target[]) => {
+  if (!db) throw new Error("Firestore not initialized");
+  const batch = writeBatch(db);
+  targets.forEach(target => {
+    const docRef = doc(db, 'targets', target.id);
+    batch.set(docRef, target);
+  });
+  await batch.commit();
 };

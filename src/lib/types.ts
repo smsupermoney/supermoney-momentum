@@ -249,7 +249,7 @@ export interface CustomDashboardConfig {
 export interface Target {
   id: string; // Will correspond to a team ID, e.g., 'team-south'
   logins: number;
-  sanctionLimit: number;
-  aum: number;
-  revenue: number;
+  sanctionLimit: number; // in Cr
+  aum: number; // in Cr
+  revenue: number; // in Lacs
 }

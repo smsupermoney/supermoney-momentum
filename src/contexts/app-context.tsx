@@ -64,6 +64,7 @@ interface AppContextType {
   customDashboards: CustomDashboardConfig[];
   saveDashboardConfig: (config: CustomDashboardConfig) => void;
   targets: Target[];
+  saveTargets: (targets: Target[]) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -169,7 +170,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const allUsers = await firestoreService.getUsers();
             setUsers(allUsers);
     
-            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData, spocsData, dashboardConfigsData] = await Promise.all([
+            const [anchorsData, dealersData, vendorsData, tasksData, activityLogsData, dailyActivitiesData, lendersData, spocsData, dashboardConfigsData, targetsData] = await Promise.all([
               firestoreService.getAnchors(),
               firestoreService.getDealers(),
               firestoreService.getVendors(),
@@ -179,6 +180,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               firestoreService.getLenders(),
               firestoreService.getAnchorSPOCs(),
               firestoreService.getDashboardConfigs(),
+              firestoreService.getTargets(),
             ]);
     
             setAnchors(anchorsData);
@@ -190,6 +192,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setLenders(lendersData);
             setAnchorSPOCs(spocsData);
             setCustomDashboards(dashboardConfigsData);
+            setTargets(targetsData);
           } else {
             console.error(`Could not get or create a user profile for ${user.email}. Logging out.`);
             await logout();
@@ -1258,6 +1261,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
     toast({ title: "Dashboard configuration saved." });
   }
+
+  const saveTargets = async (newTargets: Target[]) => {
+    if (firebaseEnabled) {
+      await firestoreService.saveTargets(newTargets);
+    }
+    setTargets(newTargets);
+  };
   
   const t = useCallback((key: string, params?: Record<string, string | number>) => {
     let str = translate(key);
@@ -1316,6 +1326,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     customDashboards,
     saveDashboardConfig,
     targets,
+    saveTargets,
     t
   };
 
