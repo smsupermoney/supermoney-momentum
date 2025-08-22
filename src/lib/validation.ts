@@ -68,33 +68,26 @@ const BaseSpokeSchema = z.object({
 });
 
 // Schema for creating new spokes, with transformation
-export const NewSpokeSchema = BaseSpokeSchema.refine(data => {
+export const NewSpokeSchema = BaseSpokeSchema
+.transform(data => ({
+  ...data,
+  contactNumbers: data.contactNumbers?.filter(c => c.value !== '')
+}))
+.refine(data => {
   if (!data.contactNumbers || data.contactNumbers.length === 0) {
     return true; // No numbers, no problem
   }
-  // If there are numbers, ensure none are invalid (but allow empty strings which are filtered out later)
-  return data.contactNumbers.every(contact => contact.value === '' || /^\d{10}$/.test(contact.value));
+  return data.contactNumbers.every(contact => contact.value ? /^\d{10}$/.test(contact.value) : true);
 }, {
   path: ['contactNumbers'],
   message: 'All provided phone numbers must be 10 digits.',
-}).transform(data => ({
-  ...data,
-  // Filter out any contact number entries that are empty before final validation/submission
-  contactNumbers: data.contactNumbers?.filter(c => c.value !== '')
-}));
+});
 
 // Schema for updating spokes, derived from the base schema
 export const UpdateSpokeSchema = BaseSpokeSchema.partial().extend({
     leadDate: z.union([z.date(), z.string()]).optional(),
     initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
-}).refine(data => {
-  if (!data.contactNumbers || data.contactNumbers.length === 0) {
-    return true; // No numbers, no problem
-  }
-  return data.contactNumbers.every(contact => contact.value === '' || /^\d{10}$/.test(contact.value));
-}, {
-  path: ['contactNumbers'],
-  message: 'All provided phone numbers must be 10 digits.',
+    remarks: z.record(RemarkSchema).optional().nullable(),
 }).transform(data => ({
     ...data,
     contactNumbers: data.contactNumbers?.filter(c => c.value !== '')
