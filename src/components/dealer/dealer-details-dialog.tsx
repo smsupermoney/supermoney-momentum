@@ -182,7 +182,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     return users.filter(u => u.role === 'Area Sales Manager' || u.role === 'Internal Sales');
   }, [canReassign, users]);
 
-
+  console.log("yash", form.formState.errors)
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>

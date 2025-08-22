@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import { parse, isValid } from 'date-fns';
 
@@ -38,10 +37,7 @@ export const RemarkSchema = z.object({
 });
 
 const ContactNumberSchema = z.object({
-  value: z.string()
-    .refine(val => val === '' || /^\d{10}$/.test(val), {
-      message: 'Phone number must be 10 digits.'
-    })
+  value: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).or(z.literal(''))
 });
 
 const BaseSpokeSchema = z.object({
@@ -49,7 +45,6 @@ const BaseSpokeSchema = z.object({
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   contactNumbers: z.array(ContactNumberSchema).optional(),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
-  // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
   gstin: z.string().optional(),
@@ -59,7 +54,7 @@ const BaseSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.record(RemarkSchema).optional(),
+  remarks: z.array(RemarkSchema).optional(),
   leadDate: z.union([z.date(), z.string()]).optional(),
   spoc: z.string().optional(),
   initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
@@ -69,7 +64,19 @@ const BaseSpokeSchema = z.object({
   internalReferralId: z.string().optional().nullable(),
 });
 
-export const NewSpokeSchema = BaseSpokeSchema;
+export const NewSpokeSchema = BaseSpokeSchema.refine(data => {
+    // If contactNumbers array exists, at least one entry must be non-empty and valid,
+    // or the array can be empty. But if it has one entry, that entry cannot be just { value: '' }
+    if (data.contactNumbers && data.contactNumbers.length > 0) {
+        return data.contactNumbers.some(cn => cn.value && /^\d{10}$/.test(cn.value));
+    }
+    return true;
+}, {
+    message: "At least one valid 10-digit phone number is required if the field is provided.",
+    path: ["contactNumbers"],
+});
+
+
 export const UpdateSpokeSchema = BaseSpokeSchema.partial();
 
 
@@ -143,4 +150,20 @@ export const DashboardConfigSchema = z.object({
       }).optional()
     ).optional()
   ).optional()
+}).refine(data => {
+  // This custom refinement checks if for at least one selected anchor,
+  // there is at least one month target object,
+  // and that target object has a defined aumValue.
+  if (!data.targets) return true; // Pass if no targets are set yet
+
+  return data.selectedAnchors.some(anchorId => {
+    const anchorTargets = data.targets?.[anchorId];
+    if (!anchorTargets) return false;
+    return Object.values(anchorTargets).some(monthlyTarget => monthlyTarget?.aumValueTarget !== undefined && monthlyTarget?.aumValueTarget !== null);
+  });
+}, {
+  message: "At least one anchor must have an AUM target set for at least one month.",
+  // You can specify a path to show the error near a specific field,
+  // but for a complex cross-field validation, showing it at the root is fine.
+  path: ["targets"],
 });

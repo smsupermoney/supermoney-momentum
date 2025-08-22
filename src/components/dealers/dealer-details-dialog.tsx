@@ -67,6 +67,8 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateSpokeSchema),
+    // We intentionally leave defaultValues empty to rely on useEffect for population.
+    // This prevents re-initialization on every render and preserves user input.
   });
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           product: dealer.product || '',
           leadSource: dealer.leadSource || '',
           lenderId: dealer.lenderId || '',
-          remarks: dealer.remarks || {},
+          remarks: dealer.remarks || [], // Handle remarks as an array
           leadType: dealer.leadType || 'Fresh',
           dealValue: dealer.dealValue === null || dealer.dealValue === undefined ? undefined : dealer.dealValue,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
@@ -102,7 +104,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const watchLeadType = form.watch("leadType");
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
-  const remarks = form.watch("remarks");
+  const remarks = form.watch("remarks") || [];
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -161,17 +163,16 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
-    const currentRemarks = form.getValues('remarks') || {};
-    const newKey = (Object.keys(currentRemarks).length + 1).toString();
-
-    form.setValue(`remarks.${newKey}`, {
+    const currentRemarks = form.getValues('remarks') || [];
+    const newRemarkObject: Remark = {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
-    }, { shouldDirty: true });
+    };
+    form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
     setNewRemark('');
   };
-
+  
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
     
@@ -205,8 +206,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
     if (!canReassign) return [];
     return users.filter(u => ['Area Sales Manager', 'Internal Sales', 'ETB Executive', 'Telecaller'].includes(u.role));
   }, [canReassign, users]);
-
-
+  
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -482,7 +482,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {Object.values(remarks || {}).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
+                                  {remarks.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>
@@ -525,7 +525,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Save Changes
                         </Button>

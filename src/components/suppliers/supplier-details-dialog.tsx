@@ -82,7 +82,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             product: vendor.product || '',
             leadSource: vendor.leadSource || '',
             lenderId: vendor.lenderId || '',
-            remarks: vendor.remarks || {},
+            remarks: vendor.remarks || [],
             leadType: vendor.leadType || 'Fresh',
             dealValue: vendor.dealValue === null || vendor.dealValue === undefined ? undefined : vendor.dealValue,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
@@ -102,7 +102,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const watchLeadType = form.watch("leadType");
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
-  const remarks = form.watch("remarks");
+  const remarks = form.watch("remarks") || [];
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -161,14 +161,13 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
 
    const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
-    const currentRemarks = form.getValues('remarks') || {};
-    const newKey = (Object.keys(currentRemarks).length + 1).toString();
-    
-    form.setValue(`remarks.${newKey}`, {
+    const currentRemarks = form.getValues('remarks') || [];
+    const newRemarkObject: Remark = {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
-    }, { shouldDirty: true });
+    };
+    form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
     setNewRemark('');
   };
   
@@ -474,7 +473,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                 </div>
 
                 <FormField control={form.control} name="gstin" render={({ field }) => (
-                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage />
                 )}/>
 
                 <div className="space-y-2">
@@ -482,7 +481,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {Object.values(remarks || {}).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
+                                  {remarks.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>
@@ -525,7 +524,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Save Changes
                         </Button>

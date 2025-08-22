@@ -101,7 +101,7 @@ export interface BaseLead {
   updatedAt?: string;
   leadType?: LeadType;
   dealValue?: number;
-  remarks?: Record<string, Remark>;
+  remarks?: Remark[];
   lenderId?: string;
   spoc?: string; // Single Point of Contact
   initialLeadDate?: string | null; // For 'Revive' lead type
