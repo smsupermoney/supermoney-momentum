@@ -82,7 +82,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             product: vendor.product || '',
             leadSource: vendor.leadSource || '',
             lenderId: vendor.lenderId || '',
-            remarks: vendor.remarks || [],
+            remarks: Array.isArray(vendor.remarks) ? vendor.remarks : [],
             leadType: vendor.leadType || 'Fresh',
             dealValue: vendor.dealValue === null || vendor.dealValue === undefined ? undefined : vendor.dealValue,
             leadDate: vendor.leadDate ? new Date(vendor.leadDate) : new Date(),
@@ -103,18 +103,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
   
-  const remarks = form.watch("remarks");
-  
-  const remarksArray = useMemo(() => {
-      if (Array.isArray(remarks)) {
-          return remarks;
-      }
-      if (typeof remarks === 'object' && remarks !== null) {
-          return Object.values(remarks);
-      }
-      return [];
-  }, [remarks]);
-
+  const remarks = form.watch("remarks") || [];
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -174,22 +163,14 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
    const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
     
-    const currentRemarks = form.getValues('remarks');
+    const currentRemarks = form.getValues('remarks') || [];
     const newRemarkObject: Remark = {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
     };
 
-    if (Array.isArray(currentRemarks)) {
-        form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
-    } else {
-        // Handle as an object/map
-        const currentSize = currentRemarks ? Object.keys(currentRemarks).length : 0;
-        const newKey = (currentSize + 1).toString();
-        const updatedRemarks = { ...currentRemarks, [newKey]: newRemarkObject };
-        form.setValue('remarks', updatedRemarks, { shouldDirty: true });
-    }
+    form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
     setNewRemark('');
   };
   
@@ -503,7 +484,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {remarksArray.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
+                                  {remarks.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>

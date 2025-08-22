@@ -54,7 +54,7 @@ const BaseSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.any().optional(),
+  remarks: z.array(RemarkSchema).optional(),
   leadDate: z.union([z.date(), z.string()]).optional(),
   spoc: z.string().optional(),
   initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
@@ -65,17 +65,15 @@ const BaseSpokeSchema = z.object({
 });
 
 export const NewSpokeSchema = BaseSpokeSchema.refine(data => {
-    // If contactNumbers array exists, at least one entry must be non-empty and valid,
-    // or the array can be empty. But if it has one entry, that entry cannot be just { value: '' }
-    if (data.contactNumbers && data.contactNumbers.length > 0) {
-        return data.contactNumbers.some(cn => cn.value && /^\d{10}$/.test(cn.value));
+    if (!data.contactNumbers || data.contactNumbers.length === 0) {
+      return true; // No numbers provided, which is valid.
     }
-    return true;
+    // If numbers are provided, at least one must be a valid 10-digit number.
+    return data.contactNumbers.some(cn => cn.value && /^\d{10}$/.test(cn.value));
 }, {
-    message: "At least one valid 10-digit phone number is required if the field is provided.",
+    message: "Please provide at least one valid 10-digit phone number, or leave all number fields blank.",
     path: ["contactNumbers"],
 });
-
 
 export const UpdateSpokeSchema = BaseSpokeSchema.partial();
 
