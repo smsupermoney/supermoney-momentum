@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 import { parse, isValid } from 'date-fns';
 
@@ -24,12 +23,12 @@ export const NewAnchorSchema = z.object({
 });
 
 export const ContactSchema = z.object({
-    id: z.string().optional(),
-    name: z.string().optional(),
-    email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
-    designation: z.string().optional(),
-    isPrimary: z.boolean().optional(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
+  phone: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).optional().or(z.literal('')),
+  designation: z.string().optional(),
+  isPrimary: z.boolean().optional(),
 });
 
 export const RemarkSchema = z.object({
@@ -39,15 +38,18 @@ export const RemarkSchema = z.object({
 });
 
 const ContactNumberSchema = z.object({
-  value: z.string().regex(/^\d{10}$/, { message: 'Phone number must be 10 digits.' }).or(z.literal(''))
+  value: z.string()
+    .refine(val => val === '' || /^\d{10}$/.test(val), {
+      message: 'Phone number must be 10 digits.'
+    })
 });
 
-// Base schema for a spoke (dealer/vendor) without transformations
 const BaseSpokeSchema = z.object({
   name: z.string().min(2, "Lead name is required."),
   anchorId: z.string().min(1, "An anchor must be associated with the lead."),
   contactNumbers: z.array(ContactNumberSchema).optional(),
   email: z.string().email("A valid email is required.").optional().or(z.literal('')),
+  // Optional fields from now on
   dealValue: z.coerce.number().optional(),
   leadType: z.string().optional(),
   gstin: z.string().optional(),
@@ -58,91 +60,68 @@ const BaseSpokeSchema = z.object({
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
   remarks: z.record(RemarkSchema).optional(),
-  leadDate: z.string().optional(),
+  leadDate: z.union([z.date(), z.string()]).optional(),
   spoc: z.string().optional(),
-  initialLeadDate: z.string().nullable().optional(),
+  initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
   tat: z.number().int().optional(),
   priority: z.enum(['High', 'Normal']).optional(),
   assignedTo: z.string().optional().nullable(),
   internalReferralId: z.string().optional().nullable(),
 });
 
-// Schema for creating new spokes, with transformation
-export const NewSpokeSchema = BaseSpokeSchema
-.transform(data => ({
-  ...data,
-  contactNumbers: data.contactNumbers?.filter(c => c.value !== '')
-}))
-.refine(data => {
-  if (!data.contactNumbers || data.contactNumbers.length === 0) {
-    return true; // No numbers, no problem
-  }
-  return data.contactNumbers.every(contact => contact.value ? /^\d{10}$/.test(contact.value) : true);
-}, {
-  path: ['contactNumbers'],
-  message: 'All provided phone numbers must be 10 digits.',
-});
-
-// Schema for updating spokes, derived from the base schema
-export const UpdateSpokeSchema = BaseSpokeSchema.partial().extend({
-    leadDate: z.union([z.date(), z.string()]).optional(),
-    initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
-    remarks: z.record(RemarkSchema).optional().nullable(),
-}).transform(data => ({
-    ...data,
-    contactNumbers: data.contactNumbers?.filter(c => c.value !== '')
-}));
+export const NewSpokeSchema = BaseSpokeSchema;
+export const UpdateSpokeSchema = BaseSpokeSchema.partial();
 
 
 export const NewTaskSchema = z.object({
-    title: z.string().min(3, "Task title is required."),
-    associatedWith: z.object({
-        anchorId: z.string().optional(),
-        dealerId: z.string().optional(),
-        vendorId: z.string().optional(),
-    }).optional(),
-    visitTo: z.string().optional(),
-    planType: z.enum(['Task', 'Visit Plan']),
-    type: z.string().min(1, 'Task type is required'),
-    dueDate: z.date({ invalid_type_error: "That's not a valid date!"}).optional(),
-    priority: z.string().min(1, 'Priority is required'),
-    description: z.string().optional(),
-    assignedTo: z.string().optional().nullable(),
-    createdAt: z.string(),
-    status: z.string(),
+  title: z.string().min(3, "Task title is required."),
+  associatedWith: z.object({
+    anchorId: z.string().optional(),
+    dealerId: z.string().optional(),
+    vendorId: z.string().optional(),
+  }).optional(),
+  visitTo: z.string().optional(),
+  planType: z.enum(['Task', 'Visit Plan']),
+  type: z.string().min(1, 'Task type is required'),
+  dueDate: z.date({ invalid_type_error: "That's not a valid date!" }).optional(),
+  priority: z.string().min(1, 'Priority is required'),
+  description: z.string().optional(),
+  assignedTo: z.string().optional().nullable(),
+  createdAt: z.string(),
+  status: z.string(),
 });
 
 
 export const NewDailyActivitySchema = z.object({
-    userId: z.string().min(1, "A user must be associated with the activity."),
-    activityType: z.enum(['Client Meeting', 'Site Visit', 'Sales Presentation', 'Follow-up', 'Administrative', 'Training', 'Networking']),
-    title: z.string().min(3, "A title is required for the activity."),
-    activityTimestamp: z.string().datetime("A valid timestamp is required.").optional(),
-    location: z.object({ latitude: z.number(), longitude: z.number() }).nullable().optional(),
-    locationAddress: z.string().nullable().optional(),
+  userId: z.string().min(1, "A user must be associated with the activity."),
+  activityType: z.enum(['Client Meeting', 'Site Visit', 'Sales Presentation', 'Follow-up', 'Administrative', 'Training', 'Networking']),
+  title: z.string().min(3, "A title is required for the activity."),
+  activityTimestamp: z.string().datetime("A valid timestamp is required.").optional(),
+  location: z.object({ latitude: z.number(), longitude: z.number() }).nullable().optional(),
+  locationAddress: z.string().nullable().optional(),
 });
 
 const TerritoryAccessSchema = z.object({
-    states: z.array(z.string()),
-    cities: z.array(z.string()),
+  states: z.array(z.string()),
+  cities: z.array(z.string()),
 }).optional();
 
 export const NewUserSchema = z.object({
-    name: z.string().min(2, "User name is required."),
-    email: z.string().email("A valid email is required."),
-    role: z.enum(userRoles),
-    region: z.enum(regions).optional().or(z.literal('')),
-    managerId: z.string().optional(),
-    territoryAccess: TerritoryAccessSchema,
+  name: z.string().min(2, "User name is required."),
+  email: z.string().email("A valid email is required."),
+  role: z.enum(userRoles),
+  region: z.enum(regions).optional().or(z.literal('')),
+  managerId: z.string().optional(),
+  territoryAccess: TerritoryAccessSchema,
 });
 
 export const EditUserSchema = z.object({
-    name: z.string().min(2, "User name is required."),
-    email: z.string().email("A valid email is required.").readonly(),
-    role: z.enum(userRoles),
-    region: z.enum(regions).optional().or(z.literal('')),
-    managerId: z.string().optional().nullable(),
-    territoryAccess: TerritoryAccessSchema,
+  name: z.string().min(2, "User name is required."),
+  email: z.string().email("A valid email is required.").readonly(),
+  role: z.enum(userRoles),
+  region: z.enum(regions).optional().or(z.literal('')),
+  managerId: z.string().optional().nullable(),
+  territoryAccess: TerritoryAccessSchema,
 });
 
 // Schema for the custom dashboard configuration form
@@ -164,20 +143,4 @@ export const DashboardConfigSchema = z.object({
       }).optional()
     ).optional()
   ).optional()
-}).refine(data => {
-    // This custom refinement checks if for at least one selected anchor,
-    // there is at least one month target object,
-    // and that target object has a defined aumValue.
-    if (!data.targets) return true; // Pass if no targets are set yet
-    
-    return data.selectedAnchors.some(anchorId => {
-        const anchorTargets = data.targets?.[anchorId];
-        if (!anchorTargets) return false;
-        return Object.values(anchorTargets).some(monthlyTarget => monthlyTarget?.aumValueTarget !== undefined && monthlyTarget?.aumValueTarget !== null);
-    });
-}, {
-    message: "At least one anchor must have an AUM target set for at least one month.",
-    // You can specify a path to show the error near a specific field,
-    // but for a complex cross-field validation, showing it at the root is fine.
-    path: ["targets"], 
 });
