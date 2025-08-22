@@ -92,7 +92,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
             priority: vendor.priority || 'Normal',
         });
     }
-  }, [vendor, open]);
+  }, [vendor, open, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -123,8 +123,8 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
           return spokeStatuses;
       }
       const limitedStatuses: SpokeStatus[] = ['Follow Up', 'Not Interested'];
-      if (!limitedStatuses.includes(vendor.status)) {
-          return [vendor.status, ...limitedStatuses];
+      if (!vendor.status || !limitedStatuses.includes(vendor.status)) {
+          return [vendor.status, ...limitedStatuses].filter(Boolean) as SpokeStatus[];
       }
       return limitedStatuses;
   }, [isAdminOrBIU, vendor.status]);
@@ -473,7 +473,7 @@ export function VendorDetailsDialog({ vendor, open, onOpenChange }: VendorDetail
                 </div>
 
                 <FormField control={form.control} name="gstin" render={({ field }) => (
-                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage />
+                    <FormItem><FormLabel>GSTIN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
 
                 <div className="space-y-2">
