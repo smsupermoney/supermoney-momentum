@@ -67,8 +67,6 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const form = useForm<FormValues>({
     resolver: zodResolver(UpdateSpokeSchema),
-    // We intentionally leave defaultValues empty to rely on useEffect for population.
-    // This prevents re-initialization on every render and preserves user input.
   });
 
   useEffect(() => {
@@ -84,7 +82,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           product: dealer.product || '',
           leadSource: dealer.leadSource || '',
           lenderId: dealer.lenderId || '',
-          remarks: dealer.remarks || [], // Handle remarks as an array
+          remarks: dealer.remarks || [], // Will be handled as an array or object
           leadType: dealer.leadType || 'Fresh',
           dealValue: dealer.dealValue === null || dealer.dealValue === undefined ? undefined : dealer.dealValue,
           leadDate: dealer.leadDate ? new Date(dealer.leadDate) : new Date(),
@@ -94,7 +92,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
           priority: dealer.priority || 'Normal',
         });
     }
-  }, [dealer, open]);
+  }, [dealer, open, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -104,7 +102,19 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
   const watchLeadType = form.watch("leadType");
   const watchZone = form.watch("zone");
   const watchState = form.watch("state");
-  const remarks = form.watch("remarks") || [];
+  
+  const remarks = form.watch("remarks");
+  
+  const remarksArray = useMemo(() => {
+      if (Array.isArray(remarks)) {
+          return remarks;
+      }
+      if (typeof remarks === 'object' && remarks !== null) {
+          return Object.values(remarks);
+      }
+      return [];
+  }, [remarks]);
+
 
   const availableStates = useMemo(() => {
     if (!watchZone) return [];
@@ -163,13 +173,23 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
 
   const handleAddRemark = () => {
     if (!newRemark.trim() || !currentUser) return;
-    const currentRemarks = form.getValues('remarks') || [];
+    
+    const currentRemarks = form.getValues('remarks');
     const newRemarkObject: Remark = {
         text: newRemark.trim(),
         timestamp: new Date().toISOString(),
         userName: currentUser.name,
     };
-    form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
+
+    if (Array.isArray(currentRemarks)) {
+        form.setValue('remarks', [...currentRemarks, newRemarkObject], { shouldDirty: true });
+    } else {
+        // Handle as an object/map
+        const currentSize = currentRemarks ? Object.keys(currentRemarks).length : 0;
+        const newKey = (currentSize + 1).toString();
+        const updatedRemarks = { ...currentRemarks, [newKey]: newRemarkObject };
+        form.setValue('remarks', updatedRemarks, { shouldDirty: true });
+    }
     setNewRemark('');
   };
   
@@ -482,7 +502,7 @@ export function DealerDetailsDialog({ dealer, open, onOpenChange }: DealerDetail
                       <Card>
                           <CardContent className="p-2 space-y-2">
                               <ScrollArea className="h-24 pr-4">
-                                  {remarks.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
+                                  {remarksArray.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((remark, index) => (
                                       <div key={index} className="text-xs p-1">
                                           <div className="flex justify-between items-center">
                                               <span className="font-semibold">{remark.userName}</span>

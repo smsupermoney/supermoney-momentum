@@ -54,7 +54,7 @@ const BaseSpokeSchema = z.object({
   product: z.string().optional(),
   leadSource: z.string().optional(),
   lenderId: z.string().nullable().optional(),
-  remarks: z.array(RemarkSchema).optional(),
+  remarks: z.any().optional(),
   leadDate: z.union([z.date(), z.string()]).optional(),
   spoc: z.string().optional(),
   initialLeadDate: z.union([z.date(), z.string()]).optional().nullable(),
